@@ -20,34 +20,95 @@ import json
 #       'University Student']
 
 
-tab_2_layout = dbc.Card(
+tab_2_layout = [dbc.Card(
     dbc.CardBody(
         [
-            html.H2(['Trip Mode Choice']),
-            html.H4(['Person Type:']),
+            #html.H2(['Trip Mode Choice']),
+            dbc.CardTitle('Filters'),
+            dbc.Label('Person Type:'),
             dcc.Dropdown(
             #options=[{'label': i, 'value': i} for i in person_types],
                 value='All',
                 id='person-type-dropdown'
             ),
             html.Br(),
-            html.H4(['Destination Purpose:']),
+            dbc.Label('Destination Purpose:'),
             dcc.Dropdown(
                 #options=[{'label': i, 'value': i} for i in person_types],
                 value='All',
                 id='dpurp-dropdown'
                 ),
+            html.Br(),
             #html.Div(id='output-container-button'),
             html.Div(id='df', style={'display': 'none'}),
+            #dbc.CardFooter("Trip Mode Choice"),
+            ##html.H4(['Trip Mode Choice:']),
+            #dcc.Graph(id='mode-choice-graph'),
+            #html.Br(),
+            #dbc.CardFooter('Trip Departure Hour:'),
+            #dcc.Graph(id='trip-deptm-graph'),
+
+            #html.Div(id='dummy_div'),
+        ],
+        className = 'bg-light',
+      
+        ),
+    className='card sticky-top',
+    #className='card-deck mt-4',
+),
+
+#html.Br(),
+
+dbc.Card(
+    dbc.CardBody(
+        [
+            dbc.CardTitle("Trip Mode Choice"),
+            html.Br(),
+            dcc.RadioItems(
+                id='mode-share-type',
+                options=[{'label': i, 'value': i} for i in ['Mode Share', 'Trips by Mode']],
+                value='Mode Share',
+            ),
             dcc.Graph(id='mode-choice-graph'),
-            dcc.Graph(id='trip-deptm-graph'),
+            #html.Br(),
+            #dbc.CardFooter('Trip Departure Hour:'),
+            #dcc.Graph(id='trip-deptm-graph'),
 
             html.Div(id='dummy_div'),
+        ],
+
+    ),
+    #className='card-deck py-4',
+    style= {"margin-top": "20px"},
+     
+),
+
+#html.Br(),
+#html.Br(),
+
+dbc.Card(
+    dbc.CardBody(
+        [
+            #dbc.CardFooter("Trip Mode Choice"),
+            #dcc.Graph(id='mode-choice-graph'),
+            #html.Br(),
+            dbc.CardFooter('Trip Departure Hour:'),
+            dcc.Graph(id='trip-deptm-graph'),
+
+            #html.Div(id='dummy_div'),
         ]
     ),
-    className="mt-3",
-)
-
+    style= {"margin-top": "20px"},
+),
+html.Br(),
+html.Br(),
+html.Br(),
+html.Br(),
+html.Br(),
+html.Br(),
+html.Br(),
+html.Br(),
+]
 #tab_2_layout = html.Div([
 #   html.H2(['Trip Mode Choice']),
 #   html.H4(['Person Type:']),
@@ -103,9 +164,10 @@ def load_drop_downs(json_data, aux):
                [Input('intermediate-value', 'children'),
                 Input('person-type-dropdown', 'value'),
                 Input('dpurp-dropdown', 'value'),
+                Input('mode-share-type', 'value'),
                 Input('dummy_div', 'children')])
 
-def update_graph(json_data, person_type, dpurp, aux):
+def update_graph(json_data, person_type, dpurp, share_type, aux):
     datasets = json.loads(json_data)
     data1 = []
     data2 = []
@@ -114,8 +176,11 @@ def update_graph(json_data, person_type, dpurp, aux):
         if person_type <> 'All':
             df =df[df['pptyp'] == person_type] 
         if dpurp <> 'All':
-            df =df[df['dpurp'] == dpurp] 
-        df_mode_share= df[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+            df =df[df['dpurp'] == dpurp]
+        if share_type == 'Mode Share':
+            df_mode_share= df[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+        else:
+            df_mode_share= df[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]
         df_mode_share.reset_index(inplace=True)
 
         # mode choice graph
@@ -143,7 +208,7 @@ def update_graph(json_data, person_type, dpurp, aux):
     layout1 = go.Layout(
             barmode = 'group',
             xaxis={'title': 'mode'},
-            yaxis={'title': 'mode share'},
+            yaxis={'title': share_type},
             hovermode='closest',
             )
 

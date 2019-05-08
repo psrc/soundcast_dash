@@ -19,7 +19,7 @@ mode_dict = {1 : 'walk', 2 : 'bike', 3 : 'sov', 4 : 'hov2', 5 : 'hov3', 6 : 'w_t
 
 
 app.layout = dbc.Container([
-    html.H1('Soundcast Validation Dashboard'),
+    html.H2('Soundcast Validation Dashboard', style = {'position': 'sticky', 'top': '0'}),
     dbc.Tabs(
         [
         dbc.Tab(label="Select Scenario", tab_id="tab-1-example"),
@@ -73,4 +73,4 @@ app.css.append_css({
 })
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug='False',port=8080,host='0.0.0.0')

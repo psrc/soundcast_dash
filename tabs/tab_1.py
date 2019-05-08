@@ -10,44 +10,41 @@ import dash_bootstrap_components as dbc
 #base_dir = os.path.join(os.getcwd(), 'data')
 available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name))]
 
-tab_1_layout = dbc.Card(
-    dbc.CardBody(
-        [
-             html.H2('Select two scenarios to compare:'),
-             html.Br(),
-             html.H4('Scenario 1:'),
-             dcc.Dropdown(
-                options=[{'label': i, 'value': i} for i in available_scenarios],
-                value=available_scenarios[0],
-                id='scenario-1-dropdown'
+
+tab_1_layout =  dbc.Card(
+    [
+        dbc.CardTitle("Select Scenarios to Visualize"),
+        dbc.FormGroup(
+            [
+                dbc.Label("Scenario 1"),
+                dcc.Dropdown(
+                    id="scenario-1-dropdown",
+                    options=[
+                        {"label": col, "value": col} for col in available_scenarios
+                    ],
+                    value=available_scenarios[0],
                 ),
-            html.Br(),
-            html.H4('Scenario 2:'),
-            dcc.Dropdown(
-                options=[{'label': i, 'value': i} for i in available_scenarios],
-                value=available_scenarios[1],
-                id='scenario-2-dropdown'
+            ]
+        ),
+        dbc.FormGroup(
+            [
+                dbc.Label("Scenario 2"),
+                dcc.Dropdown(
+                    id="scenario-2-dropdown",
+                    options=[
+                        {"label": col, "value": col} for col in available_scenarios
+                    ],
+                    value=available_scenarios[1],
                 ),
-        ]
-    ),
-    className="mt-3",
+            ]
+        ),
+        #dbc.FormGroup(
+        #    [
+        #        dbc.Label("Cluster count"),
+        #        dbc.Input(id="cluster-count", type="number", value=3),
+        #    ]
+        #),
+    ],
+    body=True,
+    className = 'bg-light',
 )
-
-#tab_1_layout = html.Div([
-#    html.H2('Select two scenarios to compare:'),
-#    html.Br(),
-#    html.H4('Scenario 1:'),
-#    dcc.Dropdown(
-#            options=[{'label': i, 'value': i} for i in available_scenarios],
-#            value=available_scenarios[0],
-#            id='scenario-1-dropdown'
-#        ),
-#    html.Br(),
-#    html.H4('Scenario 2:'),
-#    dcc.Dropdown(
-#            options=[{'label': i, 'value': i} for i in available_scenarios],
-#            value=available_scenarios[1],
-#            id='scenario-2-dropdown'
-#        ),
-#])
-
