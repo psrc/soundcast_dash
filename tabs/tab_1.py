@@ -13,7 +13,7 @@ available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.p
 
 tab_1_layout =  dbc.Card(
     [
-        dbc.CardTitle("Select Scenarios to Visualize"),
+        html.H1("Select Scenarios to Visualize"),
         dbc.FormGroup(
             [
                 dbc.Label("Scenario 1"),

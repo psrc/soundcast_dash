@@ -14,7 +14,7 @@ tab_3_layout = [dbc.Card(
     dbc.CardBody(
         [
             #html.H2(['Trip Mode Choice']),
-            dbc.CardTitle('Filters'),
+            html.H1('Filters'),
             dbc.Label('Person Type:'),
             dcc.Dropdown(
             #options=[{'label': i, 'value': i} for i in person_types],
@@ -52,7 +52,7 @@ tab_3_layout = [dbc.Card(
 dbc.Card(
     dbc.CardBody(
         [
-            dbc.CardTitle("Tour Mode Choice"),
+            html.H1("Tour Mode Choice"),
             html.Br(),
             dcc.RadioItems(
                 id='tour-mode-share-type',
