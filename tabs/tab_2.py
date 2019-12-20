@@ -144,7 +144,7 @@ html.Br(),
 @app.callback(
     [Output('person-type-dropdown', 'options'),
               Output('dpurp-dropdown', 'options')],
-               [Input('intermediate-value', 'children'),
+               [Input('trips', 'children'),
                 Input('dummy_div', 'children')])
 
 def load_drop_downs(json_data, aux):
@@ -161,7 +161,7 @@ def load_drop_downs(json_data, aux):
 
 @app.callback([Output('mode-choice-graph', 'figure'),
                Output('trip-deptm-graph', 'figure')],
-               [Input('intermediate-value', 'children'),
+               [Input('trips', 'children'),
                 Input('person-type-dropdown', 'value'),
                 Input('dpurp-dropdown', 'value'),
                 Input('mode-share-type', 'value'),
