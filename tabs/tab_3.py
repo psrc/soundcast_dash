@@ -112,8 +112,8 @@ def tour_load_drop_downs(json_data, aux):
     dpurp = ['All']
 
     datasets = json.loads(json_data)
-    elem = datasets.values()[0]
-    df = pd.read_json(elem, orient='split')
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.pdpurp.unique()])
     return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
@@ -133,9 +133,9 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
     data2 = []
     for key in datasets.keys():
         df = pd.read_json(datasets[key], orient='split')
-        if person_type <> 'All':
+        if person_type != 'All':
             df =df[df['pptyp'] == person_type] 
-        if dpurp <> 'All':
+        if dpurp != 'All':
             df =df[df['dpurp'] == dpurp]
         if share_type == 'Mode Share':
             df_mode_share= df[['tmodetp','toexpfac']].groupby('tmodetp').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
@@ -153,7 +153,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
 
         # trip distance histogram
         df_deptm_share= df[['tardest_hr','toexpfac']].groupby('tardest_hr').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
-        print df_deptm_share
+        print (df_deptm_share)
         #df_deptm_share= df[['deptm_hr','trexpfac']].groupby('deptm_hr').sum()[['trexpfac']]
         df_deptm_share.reset_index(inplace=True)
        
