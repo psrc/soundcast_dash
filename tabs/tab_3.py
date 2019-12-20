@@ -136,7 +136,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
         if person_type != 'All':
             df =df[df['pptyp'] == person_type] 
         if dpurp != 'All':
-            df =df[df['dpurp'] == dpurp]
+            df =df[df['pdpurp'] == dpurp]
         if share_type == 'Mode Share':
             df_mode_share= df[['tmodetp','toexpfac']].groupby('tmodetp').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         else:
@@ -153,7 +153,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
 
         # trip distance histogram
         df_deptm_share= df[['tardest_hr','toexpfac']].groupby('tardest_hr').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
-        print (df_deptm_share)
+        #print (df_deptm_share)
         #df_deptm_share= df[['deptm_hr','trexpfac']].groupby('deptm_hr').sum()[['trexpfac']]
         df_deptm_share.reset_index(inplace=True)
        
