@@ -18,23 +18,62 @@ import json
 
 mode_dict = {1 : 'walk', 2 : 'bike', 3 : 'sov', 4 : 'hov2', 5 : 'hov3', 6 : 'w_transit', 7 : 'd_transit', 8 : 'school_bus', 9 : 'other', 0 : 'other'}
 
-
-app.layout = dbc.Container([
-    html.H2('Soundcast Validation Dashboard', style = {'position': 'sticky', 'top': '0'}),
-    dbc.Tabs(
-        [
-        dbc.Tab(label="Select Scenario", tab_id="tab-1-example"),
-        dbc.Tab(label="Trips", tab_id="tab-2-example"),
-        dbc.Tab(label="Tours", tab_id="tab-3-example"),
-        ],
-        id="tabs-example",
-        active_tab="tab-1-example",
+navbar = dbc.NavbarSimple(
+     children=[
+        dbc.NavItem(dbc.NavLink("About", href="#")),
+        dbc.DropdownMenu(
+            children=[
+                dbc.DropdownMenuItem("Page 1", header=True),
+                dbc.DropdownMenuItem("Page 2", href="#")
+            ],
+            nav=True,
+            in_navbar=True,
+            label="Other",
         ),
+    ],
+    fluid = True,
+    brand="Soundcast Validation Dashboard",
+    brand_href="#"
+
+)
+scenario_aside = tab_1.tab_1_layout
+filter_aside = html.Div(id='tabs-content-filter')
+content = html.Div(id='tabs-content-example')
+
+tabs = dbc.Tabs(
+    children=[
+        dbc.Tab(label="Trips", tab_id="tab-2-example"),
+        dbc.Tab(label="Tours", tab_id="tab-3-example")
+    ],
+    id="tabs-example"
+)
+
+main_body = html.Div(
+    dbc.Container(
+        dbc.Row(
+            children=[
+                dbc.Col(
+                    [dbc.Row([dbc.Col(scenario_aside, width=12), dbc.Col(filter_aside, width=12)], style={'position':'sticky', 'top':'0'})]
+                , width=3
+                ), # sidebar
+                dbc.Col([tabs, content], width=9) # body of visuals
+            ] #end row
+            ),
+        fluid=True
+    ),
+    className = "main-body-container"
+)
+
+hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='intermediate-value2', style={'display': 'none'}),
-    html.Div(id='tabs-content-example')
+    #html.Div(id='tabs-content-example')
 ])
+
+
+app.layout = html.Div([navbar, main_body, hidden_divs])
+
 
 @app.callback(Output('tabs-content-example', 'children'),
               [Input('tabs-example', 'active_tab')])
@@ -85,4 +124,5 @@ app.css.append_css({
 })
 
 if __name__ == '__main__':
-    app.run_server(debug='True',port=8050,host='0.0.0.0')
+    #app.run_server(debug='True',port=8050,host='0.0.0.0')
+    app.run_server(debug='False')
