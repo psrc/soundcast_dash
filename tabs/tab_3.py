@@ -9,43 +9,69 @@ import numpy as np
 from app import app
 import json
 
-
-tab_3_layout = [dbc.Card(
+tab_3_filter =  [dbc.Card(
+    [
+    dbc.CardHeader(html.H1('Filters')), 
     dbc.CardBody(
         [
-            #html.H2(['Trip Mode Choice']),
-            html.H1('Filters'),
+            
             dbc.Label('Person Type:'),
             dcc.Dropdown(
-            #options=[{'label': i, 'value': i} for i in person_types],
                 value='All',
                 id='tour-person-type-dropdown'
             ),
             html.Br(),
             dbc.Label('Destination Purpose:'),
             dcc.Dropdown(
-                #options=[{'label': i, 'value': i} for i in person_types],
                 value='All',
                 id='tour-dpurp-dropdown'
                 ),
             html.Br(),
-            #html.Div(id='output-container-button'),
             html.Div(id='df', style={'display': 'none'}),
-            #dbc.CardFooter("Trip Mode Choice"),
-            ##html.H4(['Trip Mode Choice:']),
-            #dcc.Graph(id='mode-choice-graph'),
-            #html.Br(),
-            #dbc.CardFooter('Trip Departure Hour:'),
-            #dcc.Graph(id='trip-deptm-graph'),
-
-            #html.Div(id='dummy_div'),
         ],
         className = 'bg-light',
       
-        ),
-    className='card sticky-top',
-    #className='card-deck mt-4',
-),
+        )],
+    className='aside-card'
+)   ]
+
+tab_3_layout = [
+#    dbc.Card(
+#    dbc.CardBody(
+#        [
+#            #html.H2(['Trip Mode Choice']),
+#            html.H1('Filters'),
+#            dbc.Label('Person Type:'),
+#            dcc.Dropdown(
+#            #options=[{'label': i, 'value': i} for i in person_types],
+#                value='All',
+#                id='tour-person-type-dropdown'
+#            ),
+#            html.Br(),
+#            dbc.Label('Destination Purpose:'),
+#            dcc.Dropdown(
+#                #options=[{'label': i, 'value': i} for i in person_types],
+#                value='All',
+#                id='tour-dpurp-dropdown'
+#                ),
+#            html.Br(),
+#            #html.Div(id='output-container-button'),
+#            html.Div(id='df', style={'display': 'none'}),
+#            #dbc.CardFooter("Trip Mode Choice"),
+#            ##html.H4(['Trip Mode Choice:']),
+#            #dcc.Graph(id='mode-choice-graph'),
+#            #html.Br(),
+#            #dbc.CardFooter('Trip Departure Hour:'),
+#            #dcc.Graph(id='trip-deptm-graph'),
+
+#            #html.Div(id='dummy_div'),
+#        ],
+#        className = 'bg-light',
+      
+#        ),
+#    className='card sticky-top',
+#    #className='card-deck mt-4',
+#),
 
 #html.Br(),
 
@@ -54,10 +80,11 @@ dbc.Card(
         [
             html.H1("Tour Mode Choice"),
             html.Br(),
-            dcc.RadioItems(
+            dbc.RadioItems(
                 id='tour-mode-share-type',
                 options=[{'label': i, 'value': i} for i in ['Mode Share', 'Tours by Mode']],
                 value='Mode Share',
+                inline=True
             ),
             dcc.Graph(id='tour-mode-choice-graph'),
             #html.Br(),

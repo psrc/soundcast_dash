@@ -53,8 +53,14 @@ main_body = html.Div(
         dbc.Row(
             children=[
                 dbc.Col(
-                    [dbc.Row([dbc.Col(scenario_aside, width=12), dbc.Col(filter_aside, width=12)], style={'position':'sticky', 'top':'0'})]
-                , width=3
+                    [dbc.Row(
+                        dbc.Col(scenario_aside)
+                        ),
+                     dbc.Row(
+                         dbc.Col(filter_aside)
+                         )
+                     ]
+                , width=3, style={'position':'sticky', 'top':'0'}
                 ), # sidebar
                 dbc.Col([tabs, content], width=9) # body of visuals
             ] #end row
@@ -74,13 +80,19 @@ hidden_divs = dbc.Container([
 
 app.layout = html.Div([navbar, main_body, hidden_divs])
 
+@app.callback(Output('tabs-content-filter', 'children'),
+              [Input('tabs-example', 'active_tab')])
+def render_content_filter(tab):
+    if tab == 'tab-2-example':
+        return tab_2.tab_2_filter
+    elif tab == 'tab-3-example':
+        return tab_3.tab_3_filter
+
 
 @app.callback(Output('tabs-content-example', 'children'),
               [Input('tabs-example', 'active_tab')])
 def render_content(tab):
-    if tab == 'tab-1-example':
-        return tab_1.tab_1_layout
-    elif tab == 'tab-2-example':
+    if tab == 'tab-2-example':
         return tab_2.tab_2_layout
     elif tab == 'tab-3-example':
         return tab_3.tab_3_layout
@@ -119,9 +131,9 @@ def page_1_dropdown(val1, val2):
 #    return df.to_json(orient = 'split')
 
 
-app.css.append_css({
-    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
-})
+#app.css.append_css({
+#    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
+#})
 
 if __name__ == '__main__':
     #app.run_server(debug='True',port=8050,host='0.0.0.0')
