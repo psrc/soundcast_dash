@@ -7,7 +7,6 @@ import os
 from app import app
 import dash_bootstrap_components as dbc
 
-#base_dir = os.path.join(os.getcwd(), 'data')
 available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name))]
 
 
@@ -38,12 +37,6 @@ tab_1_layout =  dbc.Card(
                 ),
             ]
         ),
-        #dbc.FormGroup(
-        #    [
-        #        dbc.Label("Cluster count"),
-        #        dbc.Input(id="cluster-count", type="number", value=3),
-        #    ]
-        #),
     ],
     body=True,
     className = 'bg-light',

@@ -72,9 +72,7 @@ main_body = html.Div(
 
 hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
-    html.Div(id='tours', style={'display': 'none'}),
-    html.Div(id='intermediate-value2', style={'display': 'none'}),
-    #html.Div(id='tabs-content-example')
+    html.Div(id='tours', style={'display': 'none'})
 ])
 
 
@@ -137,4 +135,4 @@ def page_1_dropdown(val1, val2):
 
 if __name__ == '__main__':
     #app.run_server(debug='True',port=8050,host='0.0.0.0')
-    app.run_server(debug='False')
+    app.run_server(debug='True')

@@ -28,6 +28,7 @@ tab_3_filter =  [dbc.Card(
                 ),
             html.Br(),
             html.Div(id='df', style={'display': 'none'}),
+            html.Div(id='dummy_div2'),
         ],
         className = 'bg-light',
       
@@ -36,45 +37,6 @@ tab_3_filter =  [dbc.Card(
 )   ]
 
 tab_3_layout = [
-#    dbc.Card(
-#    dbc.CardBody(
-#        [
-#            #html.H2(['Trip Mode Choice']),
-#            html.H1('Filters'),
-#            dbc.Label('Person Type:'),
-#            dcc.Dropdown(
-#            #options=[{'label': i, 'value': i} for i in person_types],
-#                value='All',
-#                id='tour-person-type-dropdown'
-#            ),
-#            html.Br(),
-#            dbc.Label('Destination Purpose:'),
-#            dcc.Dropdown(
-#                #options=[{'label': i, 'value': i} for i in person_types],
-#                value='All',
-#                id='tour-dpurp-dropdown'
-#                ),
-#            html.Br(),
-#            #html.Div(id='output-container-button'),
-#            html.Div(id='df', style={'display': 'none'}),
-#            #dbc.CardFooter("Trip Mode Choice"),
-#            ##html.H4(['Trip Mode Choice:']),
-#            #dcc.Graph(id='mode-choice-graph'),
-#            #html.Br(),
-#            #dbc.CardFooter('Trip Departure Hour:'),
-#            #dcc.Graph(id='trip-deptm-graph'),
-
-#            #html.Div(id='dummy_div'),
-#        ],
-#        className = 'bg-light',
-      
-#        ),
-#    className='card sticky-top',
-#    #className='card-deck mt-4',
-#),
-
-#html.Br(),
-
 dbc.Card(
     dbc.CardBody(
         [
@@ -91,7 +53,7 @@ dbc.Card(
             #dbc.CardFooter('Trip Departure Hour:'),
             #dcc.Graph(id='trip-deptm-graph'),
 
-            html.Div(id='dummy_div'),
+            html.Div(id='dummy_div2'),
         ],
 
     ),
@@ -132,9 +94,10 @@ html.Br(),
     [Output('tour-person-type-dropdown', 'options'),
               Output('tour-dpurp-dropdown', 'options')],
                [Input('tours', 'children'),
-                Input('dummy_div', 'children')])
+                Input('dummy_div2', 'children')])
 
 def tour_load_drop_downs(json_data, aux):
+    print ('tour filter callback')
     person_types = ['All']
     dpurp = ['All']
 
@@ -152,9 +115,10 @@ def tour_load_drop_downs(json_data, aux):
                 Input('tour-person-type-dropdown', 'value'),
                 Input('tour-dpurp-dropdown', 'value'),
                 Input('tour-mode-share-type', 'value'),
-                Input('dummy_div', 'children')])
+                Input('dummy_div2', 'children')])
 
 def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
+    print ('tour update graph callback')
     datasets = json.loads(json_data)
     data1 = []
     data2 = []

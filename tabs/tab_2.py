@@ -10,15 +10,6 @@ from app import app
 import json
 
 
-#df = pd.read_csv(r':\SoundCast\Dash\tab_multi_page\data\Survey\trips.csv')
-#person_types = ['All']
-#person_types.extend([x for x in df.pptyp.unique()])
-
-#person_types = ['Child Age 0-4', 'Child Age 5-15', 'Full-Time Worker',
-#       'High School Student Age 16+', 'Non-Working Adult Age 65+',
-#       'Non-Working Adult Age <65', 'Part-Time Worker',
-#       'University Student']
-
 tab_2_filter =  [dbc.Card(
     [
     dbc.CardHeader(html.H1('Filters')), 
@@ -38,6 +29,7 @@ tab_2_filter =  [dbc.Card(
                 ),
             html.Br(),
             html.Div(id='df', style={'display': 'none'}),
+            html.Div(id='dummy_div'),
         ],
         className = 'bg-light',
       
@@ -46,45 +38,6 @@ tab_2_filter =  [dbc.Card(
 )  ] 
 
 tab_2_layout = [
-#    dbc.Card(
-#    dbc.CardBody(
-#        [
-#            #html.H2(['Trip Mode Choice']),
-#            html.H1('Filters'),
-#            dbc.Label('Person Type:'),
-#            dcc.Dropdown(
-#            #options=[{'label': i, 'value': i} for i in person_types],
-#                value='All',
-#                id='person-type-dropdown'
-#            ),
-#            html.Br(),
-#            dbc.Label('Destination Purpose:'),
-#            dcc.Dropdown(
-#                #options=[{'label': i, 'value': i} for i in person_types],
-#                value='All',
-#                id='dpurp-dropdown'
-#                ),
-#            html.Br(),
-#            #html.Div(id='output-container-button'),
-#            html.Div(id='df', style={'display': 'none'}),
-#            #dbc.CardFooter("Trip Mode Choice"),
-#            ##html.H4(['Trip Mode Choice:']),
-#            #dcc.Graph(id='mode-choice-graph'),
-#            #html.Br(),
-#            #dbc.CardFooter('Trip Departure Hour:'),
-#            #dcc.Graph(id='trip-deptm-graph'),
-
-#            #html.Div(id='dummy_div'),
-#        ],
-#        className = 'bg-light',
-      
-#        ),
-#    className='card sticky-top',
-#    #className='card-deck mt-4',
-#),
-
-#html.Br(),
-
 dbc.Card(
     dbc.CardBody(
         [
@@ -110,9 +63,6 @@ dbc.Card(
      
 ),
 
-#html.Br(),
-#html.Br(),
-
 dbc.Card(
     dbc.CardBody(
         [
@@ -128,36 +78,6 @@ dbc.Card(
     style= {"margin-top": "20px"},
 )
 ]
-#tab_2_layout = html.Div([
-#   html.H2(['Trip Mode Choice']),
-#   html.H4(['Person Type:']),
-#    dcc.Dropdown(
-#        #options=[{'label': i, 'value': i} for i in person_types],
-#        value='All',
-#            id='person-type-dropdown'
-#        ),
-#    html.Br(),
-#    html.H4(['Destination Purpose:']),
-#    dcc.Dropdown(
-#        #options=[{'label': i, 'value': i} for i in person_types],
-#        value='All',
-#            id='dpurp-dropdown'
-#        ),
-#    #html.Div(id='output-container-button'),
-#    html.Div(id='df', style={'display': 'none'}),
-#    dcc.Graph(id='mode-choice-graph'),
-#    dcc.Graph(id='trip-deptm-graph'),
-
-#    html.Div(id='dummy_div'),
-#    #html.Div(id='dropdown-output'),
-#    #html.Div(id='intermediate-value'),
-#    #dcc.Graph(id='indicator-graphic',
-#    #          style={'width': '50%'}),
-#    #html.P(['We are on page three']),
-#])
-
-
-
 
 # load drop downs
 @app.callback(
@@ -167,6 +87,7 @@ dbc.Card(
                 Input('dummy_div', 'children')])
 
 def load_drop_downs(json_data, aux):
+    print ('trip filter callback')
     person_types = ['All']
     dpurp = ['All']
 
@@ -187,10 +108,12 @@ def load_drop_downs(json_data, aux):
                 Input('dummy_div', 'children')])
 
 def update_graph(json_data, person_type, dpurp, share_type, aux):
+    print ('trip_update graph callback')
     datasets = json.loads(json_data)
     data1 = []
     data2 = []
     for key in datasets.keys():
+        print (key)
         df = pd.read_json(datasets[key], orient='split')
         if person_type != 'All':
             df =df[df['pptyp'] == person_type] 
@@ -212,7 +135,7 @@ def update_graph(json_data, person_type, dpurp, share_type, aux):
 
         # trip distance histogram
         df_deptm_share= df[['deptm_hr','trexpfac']].groupby('deptm_hr').sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
-        print (df_deptm_share)
+        #print (df_deptm_share)
         #df_deptm_share= df[['deptm_hr','trexpfac']].groupby('deptm_hr').sum()[['trexpfac']]
         df_deptm_share.reset_index(inplace=True)
        
@@ -243,26 +166,5 @@ def update_graph(json_data, person_type, dpurp, share_type, aux):
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 
-    #df1 = pd.read_json(json_df1, orient='split')
-    #df1= df1[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]/df1[['trexpfac']].sum() * 100
-    #df1.reset_index(inplace=True)
-    #df1.replace({'mode':mode_dict}, inplace=True)
-
-    #df2 = pd.read_json(json_df2, orient='split')
-    #df2= df2[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]/df2[['trexpfac']].sum() * 100
-    #df2.reset_index(inplace=True)
-    #df2.replace({'mode':mode_dict}, inplace=True)
-   
-    #trace1 = go.Bar(
-    #        x=df1['mode'],
-    #        y=df1['trexpfac']
-    #        )
-
-    #trace2 = go.Bar(
-    #        x=df2['mode'],
-    #        y=df2['trexpfac']
-    #        )
     
-    #data = [trace1, trace2]
-            
     
