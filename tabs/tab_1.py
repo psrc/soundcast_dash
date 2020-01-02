@@ -12,7 +12,9 @@ available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.p
 
 tab_1_layout =  dbc.Card(
     [
-        html.H1("Select Scenarios to Visualize"),
+        dbc.CardHeader(html.H1("Select Scenarios")),
+        dbc.CardBody(
+            [
         dbc.FormGroup(
             [
                 dbc.Label("Scenario 1"),
@@ -37,7 +39,10 @@ tab_1_layout =  dbc.Card(
                 ),
             ]
         ),
+        ]
+            )
+
     ],
-    body=True,
-    className = 'bg-light',
+    #className = 'bg-light',
+    className = 'aside-card'
 )

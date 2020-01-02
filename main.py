@@ -53,14 +53,15 @@ main_body = html.Div(
         dbc.Row(
             children=[
                 dbc.Col(
-                    [dbc.Row(
-                        dbc.Col(scenario_aside)
+                    [
+                     dbc.Row(
+                        dbc.Col(scenario_aside),
                         ),
                      dbc.Row(
                          dbc.Col(filter_aside)
                          )
                      ]
-                , width=3, style={'position':'sticky', 'top':'0'}
+                    , width=3
                 ), # sidebar
                 dbc.Col([tabs, content], width=9) # body of visuals
             ] #end row

@@ -40,7 +40,7 @@ tab_3_layout = [
 dbc.Card(
     dbc.CardBody(
         [
-            html.H1("Tour Mode Choice"),
+            html.H2("Tour Mode Choice"),
             html.Br(),
             dbc.RadioItems(
                 id='tour-mode-share-type',
@@ -62,16 +62,13 @@ dbc.Card(
      
 ),
 
-#html.Br(),
-#html.Br(),
-
 dbc.Card(
     dbc.CardBody(
         [
             #dbc.CardFooter("Trip Mode Choice"),
             #dcc.Graph(id='mode-choice-graph'),
             #html.Br(),
-            dbc.CardFooter('Tour Departure Hour:'),
+            html.H2('Tour Departure Hour:'),
             dcc.Graph(id='tour-deptm-graph'),
 
             #html.Div(id='dummy_div'),
@@ -79,14 +76,6 @@ dbc.Card(
     ),
     style= {"margin-top": "20px"},
 ),
-html.Br(),
-html.Br(),
-html.Br(),
-html.Br(),
-html.Br(),
-html.Br(),
-html.Br(),
-html.Br(),
 ]
 
 # load drop downs
@@ -161,6 +150,8 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
             xaxis={'title': 'mode'},
             yaxis={'title': share_type},
             hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
             )
 
     layout2 = go.Layout(
@@ -168,6 +159,8 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
             xaxis={'title': 'departure hour'},
             yaxis={'title': 'share'},
             hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 
