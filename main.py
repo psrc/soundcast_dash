@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 from tabs import tab_1
 from tabs import tab_2
 from tabs import tab_3
+from tabs import tab_4
 from app import app
 import pandas as pd
 import os
@@ -43,7 +44,8 @@ content = html.Div(id='tabs-content-example')
 tabs = dbc.Tabs(
     children=[
         dbc.Tab(label="Trips", tab_id="tab-2-example"),
-        dbc.Tab(label="Tours", tab_id="tab-3-example")
+        dbc.Tab(label="Tours", tab_id="tab-3-example"),
+        dbc.Tab(label="HH & Persons", tab_id="tab-4-example")
     ],
     id="tabs-example"
 )
@@ -73,7 +75,9 @@ main_body = html.Div(
 
 hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
-    html.Div(id='tours', style={'display': 'none'})
+    html.Div(id='tours', style={'display': 'none'}),
+    html.Div(id='persons', style={'display': 'none'}),
+    html.Div(id='households', style={'display': 'none'})
 ])
 
 
@@ -86,6 +90,8 @@ def render_content_filter(tab):
         return tab_2.tab_2_filter
     elif tab == 'tab-3-example':
         return tab_3.tab_3_filter
+    elif tab == 'tab-4-example':
+        return None
 
 
 @app.callback(Output('tabs-content-example', 'children'),
@@ -95,19 +101,31 @@ def render_content(tab):
         return tab_2.tab_2_layout
     elif tab == 'tab-3-example':
         return tab_3.tab_3_layout
+    elif tab == 'tab-4-example':
+        return tab_4.tab_4_layout
 
 # Tab 1 callback
 @app.callback(
         [Output('trips', 'children'),
-         Output('tours', 'children')],
+         Output('tours', 'children'),
+         Output('persons', 'children'),
+         Output('households', 'children')],
          [Input('scenario-1-dropdown', 'value'),
           Input('scenario-2-dropdown', 'value')])
 
 def page_1_dropdown(val1, val2):
-    trips1 = pd.read_csv(os.path.join('data', val1, 'trips.csv'))
-    trips2 = pd.read_csv(os.path.join('data', val2, 'trips.csv'))
-    tours1 = pd.read_csv(os.path.join('data', val1, 'tours.csv'))
-    tours2 = pd.read_csv(os.path.join('data', val2, 'tours.csv'))
+    #trips1 = pd.read_csv(os.path.join('data', val1, 'trips.csv'))
+    #trips2 = pd.read_csv(os.path.join('data', val2, 'trips.csv'))
+    #tours1 = pd.read_csv(os.path.join('data', val1, 'tours.csv'))
+    #tours2 = pd.read_csv(os.path.join('data', val2, 'tours.csv'))
+    trips1 = pd.read_csv(os.path.join('data', val1, 'trip_purpose_mode.csv'))
+    trips2 = pd.read_csv(os.path.join('data', val2, 'trip_purpose_mode.csv'))
+    tours1 = pd.read_csv(os.path.join('data', val1, 'tour_purpose_mode.csv'))
+    tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
+    pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
+    pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
+    hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
+    hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
     #print df2.trexpfac.sum()
     trips = {
         val1: trips1.to_json(orient='split'), 
@@ -117,8 +135,16 @@ def page_1_dropdown(val1, val2):
         val1: tours1.to_json(orient='split'), 
         val2: tours2.to_json(orient='split')
         }
+    persons = {
+        val1: pers1.to_json(orient='split'), 
+        val2: pers2.to_json(orient='split')
+        }
+    households = {
+         val1: hhs1.to_json(orient='split'), 
+         val2: hhs2.to_json(orient='split')
+        }
     #print datasets.keys()
-    return json.dumps(trips), json.dumps(tours)
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households)
 
 ## Tab 1 callback
 #@app.callback(dash.dependencies.Output('intermediate-value2', 'children'),
