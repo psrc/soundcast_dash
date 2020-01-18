@@ -40,19 +40,15 @@ def create_totals_table(pers_json, hh_json):
     dtypelist = ['Total Persons', 'Total Households']
     for adict, dtype in zip(dictlist, dtypelist):
         keys = list(adict)
-        print(keys)
         y = 'psexpfac' if adict == pers_tbl else 'hhexpfac' # if more than 2 data dicts?...
         sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[y].sum(), keys)
-        print(list(adict))
         d = dict(zip(keys, sumlist))
         alldict[dtype] = d
-        print(alldict)
 
     df = pd.DataFrame.from_dict(alldict, orient = 'index').reset_index().rename(columns = {'index': ' '})
 
     # format numbers with separator
     for i in range(1, len(df.columns)):
-        print(i)
         df.iloc[:, i] = df.iloc[:, i].apply(format_number)
    
     t = html.Div([dash_table.DataTable(id='table-totals',
