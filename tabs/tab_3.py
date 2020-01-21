@@ -132,13 +132,13 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
         data1.append(trace1)
 
         # trip distance histogram
-        df_deptm_share= df[['tardest_hr','toexpfac']].groupby('tardest_hr').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+        df_deptm_share= df[['tlvorg_hr','toexpfac']].groupby('tlvorg_hr').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         #print (df_deptm_share)
         #df_deptm_share= df[['deptm_hr','trexpfac']].groupby('deptm_hr').sum()[['trexpfac']]
         df_deptm_share.reset_index(inplace=True)
        
         trace2 = go.Bar(
-            x=df_deptm_share['tardest_hr'],
+            x=df_deptm_share['tlvorg_hr'],
             y=df_deptm_share['toexpfac'].astype(int),
             name= key
 )
