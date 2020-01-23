@@ -114,10 +114,6 @@ def render_content(tab):
           Input('scenario-2-dropdown', 'value')])
 
 def page_1_dropdown(val1, val2):
-    #trips1 = pd.read_csv(os.path.join('data', val1, 'trips.csv'))
-    #trips2 = pd.read_csv(os.path.join('data', val2, 'trips.csv'))
-    #tours1 = pd.read_csv(os.path.join('data', val1, 'tours.csv'))
-    #tours2 = pd.read_csv(os.path.join('data', val2, 'tours.csv'))
     trips1 = pd.read_csv(os.path.join('data', val1, 'trip_purpose_mode.csv'))
     trips2 = pd.read_csv(os.path.join('data', val2, 'trip_purpose_mode.csv'))
     tours1 = pd.read_csv(os.path.join('data', val1, 'tour_purpose_mode.csv'))
