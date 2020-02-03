@@ -7,7 +7,7 @@ import os
 from app import app
 import dash_bootstrap_components as dbc
 
-available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name))]
+available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name)) and name !='data']
 
 
 tab_1_layout =  dbc.Card(

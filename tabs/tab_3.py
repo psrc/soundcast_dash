@@ -53,7 +53,6 @@ dbc.Card(
             #dbc.CardFooter('Trip Departure Hour:'),
             #dcc.Graph(id='trip-deptm-graph'),
 
-            html.Div(id='dummy_div2'),
         ],
 
     ),
@@ -103,10 +102,9 @@ def tour_load_drop_downs(json_data, aux):
                [Input('tours', 'children'),
                 Input('tour-person-type-dropdown', 'value'),
                 Input('tour-dpurp-dropdown', 'value'),
-                Input('tour-mode-share-type', 'value'),
-                Input('dummy_div2', 'children')])
+                Input('tour-mode-share-type', 'value')])
 
-def tour_update_graph(json_data, person_type, dpurp, share_type, aux):
+def tour_update_graph(json_data, person_type, dpurp, share_type):
     print ('tour update graph callback')
     datasets = json.loads(json_data)
     data1 = []

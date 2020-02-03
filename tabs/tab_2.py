@@ -104,10 +104,9 @@ def load_drop_downs(json_data, aux):
                [Input('trips', 'children'),
                 Input('person-type-dropdown', 'value'),
                 Input('dpurp-dropdown', 'value'),
-                Input('mode-share-type', 'value'),
-                Input('dummy_div', 'children')])
+                Input('mode-share-type', 'value')])
 
-def update_graph(json_data, person_type, dpurp, share_type, aux):
+def update_graph(json_data, person_type, dpurp, share_type):
     print ('trip_update graph callback')
     datasets = json.loads(json_data)
     data1 = []

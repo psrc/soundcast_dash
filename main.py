@@ -7,14 +7,15 @@ from tabs import tab_1
 from tabs import tab_2
 from tabs import tab_3
 from tabs import tab_4
+from tabs import taz_map
 from app import app
 import pandas as pd
 import os
 import json
+import plotly.graph_objs as go
 
 #app = dash.Dash()
 
-#app.config['suppress_callback_exceptions'] = True
 
 
 mode_dict = {1 : 'walk', 2 : 'bike', 3 : 'sov', 4 : 'hov2', 5 : 'hov3', 6 : 'w_transit', 7 : 'd_transit', 8 : 'school_bus', 9 : 'other', 0 : 'other'}
@@ -45,7 +46,8 @@ tabs = dbc.Tabs(
     children=[
         dbc.Tab(label="Trips", tab_id="tab-2-example"),
         dbc.Tab(label="Tours", tab_id="tab-3-example"),
-        dbc.Tab(label="HH & Persons", tab_id="tab-4-example")
+        dbc.Tab(label="HH & Persons", tab_id="tab-4-example"),
+        dbc.Tab(label="TAZ Map", tab_id="taz-map")
     ],
     id="tabs-example"
 )
@@ -77,21 +79,12 @@ hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
-    html.Div(id='households', style={'display': 'none'})
+    html.Div(id='households', style={'display': 'none'}),
+    html.Div(id='dtaz_trips', style={'display': 'none'})
 ])
 
 
 app.layout = html.Div([navbar, main_body, hidden_divs])
-
-@app.callback(Output('tabs-content-filter', 'children'),
-              [Input('tabs-example', 'active_tab')])
-def render_content_filter(tab):
-    if tab == 'tab-2-example':
-        return tab_2.tab_2_filter
-    elif tab == 'tab-3-example':
-        return tab_3.tab_3_filter
-    elif tab == 'tab-4-example':
-        return None
 
 
 @app.callback(Output('tabs-content-example', 'children'),
@@ -103,13 +96,28 @@ def render_content(tab):
         return tab_3.tab_3_layout
     elif tab == 'tab-4-example':
         return tab_4.tab_4_layout
+    elif tab == 'taz-map':
+        return taz_map.taz_map_layout
+
+@app.callback(Output('tabs-content-filter', 'children'),
+              [Input('tabs-example', 'active_tab')])
+def render_content_filter(tab):
+    if tab == 'tab-2-example':
+        return tab_2.tab_2_filter
+    elif tab == 'tab-3-example':
+        return tab_3.tab_3_filter
+    elif tab == 'tab-4-example':
+        return None
+    elif tab == 'taz-map':
+        return taz_map.taz_map_filter
 
 # Tab 1 callback
 @app.callback(
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
-         Output('households', 'children')],
+         Output('households', 'children'),
+         Output('dtaz_trips', 'children')],
          [Input('scenario-1-dropdown', 'value'),
           Input('scenario-2-dropdown', 'value')])
 
@@ -122,6 +130,8 @@ def page_1_dropdown(val1, val2):
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
     hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
     hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
+    dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
+    dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
     #print df2.trexpfac.sum()
     trips = {
         val1: trips1.to_json(orient='split'), 
@@ -139,8 +149,13 @@ def page_1_dropdown(val1, val2):
          val1: hhs1.to_json(orient='split'), 
          val2: hhs2.to_json(orient='split')
         }
+    dtaz_trips = {
+         val1: dtaz_trips1.to_json(orient='split'), 
+         val2: dtaz_trips2.to_json(orient='split')
+        }
+
     #print datasets.keys()
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households)
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(dtaz_trips)
 
 ## Tab 1 callback
 #@app.callback(dash.dependencies.Output('intermediate-value2', 'children'),
@@ -158,4 +173,4 @@ def page_1_dropdown(val1, val2):
 
 if __name__ == '__main__':
     #app.run_server(debug='True',port=8050,host='0.0.0.0')
-    app.run_server(debug='True')
+    app.run_server(debug=True, port=8051)

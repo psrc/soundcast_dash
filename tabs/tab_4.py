@@ -90,7 +90,7 @@ def update_household_size_graph(hh_json, aux):
         df = pd.read_json(hh_tbl[key], orient='split')
         df = df[['hhsize', 'hhexpfac']].groupby('hhsize').sum()[['hhexpfac']]
         df = df.reset_index()
-        print(df)
+        #print(df)
 
         trace = go.Bar(
             x=df['hhsize'].copy(),
