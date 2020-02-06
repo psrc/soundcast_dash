@@ -80,7 +80,9 @@ hidden_divs = dbc.Container([
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
     html.Div(id='households', style={'display': 'none'}),
-    html.Div(id='dtaz_trips', style={'display': 'none'})
+    html.Div(id='dtaz_trips', style={'display': 'none'}),
+    html.Div(id='auto_own', style={'display': 'none'}),
+    html.Div(id='workers', style={'display': 'none'})
 ])
 
 
@@ -117,7 +119,9 @@ def render_content_filter(tab):
          Output('tours', 'children'),
          Output('persons', 'children'),
          Output('households', 'children'),
-         Output('dtaz_trips', 'children')],
+         Output('dtaz_trips', 'children'),
+         Output('auto_own', 'children'),
+         Output('workers', 'children')],
          [Input('scenario-1-dropdown', 'value'),
           Input('scenario-2-dropdown', 'value')])
 
@@ -132,6 +136,10 @@ def page_1_dropdown(val1, val2):
     hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
     dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
     dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
+    auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
+    auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
+    wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
+    wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
     #print df2.trexpfac.sum()
     trips = {
         val1: trips1.to_json(orient='split'), 
@@ -153,9 +161,17 @@ def page_1_dropdown(val1, val2):
          val1: dtaz_trips1.to_json(orient='split'), 
          val2: dtaz_trips2.to_json(orient='split')
         }
+    auto_own = {
+         val1: auto_own1.to_json(orient='split'), 
+         val2: auto_own2.to_json(orient='split')
+        }
+    workers = {
+        val1: wrkrs1.to_json(orient='split'), 
+        val2: wrkrs2.to_json(orient='split')
+        }
 
     #print datasets.keys()
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(dtaz_trips)
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(dtaz_trips), json.dumps(auto_own), json.dumps(workers)
 
 ## Tab 1 callback
 #@app.callback(dash.dependencies.Output('intermediate-value2', 'children'),
@@ -171,6 +187,5 @@ def page_1_dropdown(val1, val2):
 #    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
 #})
 
-if __name__ == '__main__':
-    #app.run_server(debug='True',port=8050,host='0.0.0.0')
-    app.run_server(debug=True, port=8051)
+if __name__ == '__main__':    app.run_server(debug=True,port=8050,host='0.0.0.0')
+    #app.run_server(debug=True, port=8051)

@@ -146,7 +146,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
     layout1 = go.Layout(
             barmode = 'group',
             xaxis={'title': 'mode'},
-            yaxis={'title': share_type},
+            yaxis={'title': share_type, 'zeroline':False},
             hovermode='closest',
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
@@ -155,7 +155,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
     layout2 = go.Layout(
             barmode = 'group',
             xaxis={'title': 'departure hour'},
-            yaxis={'title': 'share'},
+            yaxis={'title': 'share', 'zeroline':False},
             hovermode='closest',
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')

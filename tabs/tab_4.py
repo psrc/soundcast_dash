@@ -11,7 +11,7 @@ from app import app
 import json
 
 def format_number(x):
-    return "{:,.2f}".format(x)
+    return "{:,.0f}".format(x)
 
 tab_4_layout = [
     dbc.Card(
@@ -20,43 +20,98 @@ tab_4_layout = [
                 html.H2("Totals"),
                 html.Br(),
                 html.Div(id='table-totals-container'),
-                #html.Div(id='table-workers-by-hhcounty')
-                #html.Div(id='dummy_div3')
                 ]
             ), style= {"margin-top": "20px"}
         ),
-    dbc.Card(
-        dbc.CardBody(
-            [
-                html.H2("Household Size"),
-                dcc.Graph(id='household-size-graph'),
+    dbc.Row(children=[
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Household Size"),
+                        dcc.Graph(id='household-size-graph'),
                 
-                ]
-            ), style= {"margin-top": "20px"}
-        ),
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+            width=7
+            ), # end Col
+        dbc.Col(
+              dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Auto Ownership"),
+                        dcc.Graph(id='auto-own-graph'),
+                
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+            width=5
+            ) # end Col
+        ]
+        ), # end Row
+    
+    dbc.Row(children=[
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Workers"),
+                        html.Br(),
+                        html.Div(id='table-wrkr-container'),
+                
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+            width=4
+            ), # end col
+        dbc.Col(
+              dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Multicategory Axis bar chart"),
+                        html.Br(),
+                        dcc.Graph("wrkr-graph")
+                
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+              width=8
+            ) # end col
+
+        ]),
+    
     html.Div(id='dummy_div3')
     ]
 
 @app.callback(
      Output('table-totals-container', 'children'),
      [Input('persons', 'children'),
-      Input('households', 'children')]
+      Input('households', 'children'),
+      Input('workers', 'children')]
      )
-def create_totals_table(pers_json, hh_json):
+def create_totals_table(pers_json, hh_json, wrkrs_json):
     pers_tbl = json.loads(pers_json)
     hh_tbl = json.loads(hh_json)
+    wrkrs_tbl = json.loads(wrkrs_json)
 
     # calculate totals and collate into master dictionary
     alldict = {}
     dictlist = [pers_tbl, hh_tbl]
     dtypelist = ['Total Persons', 'Total Households']
-    for adict, dtype in zip(dictlist, dtypelist):
+    expfaclist = ['psexpfac', 'hhexpfac']
+    for adict, dtype, expfac in zip(dictlist, dtypelist, expfaclist):
         keys = list(adict)
-        y = 'psexpfac' if adict == pers_tbl else 'hhexpfac' # if more than 2 data dicts?...
-        sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[y].sum(), keys)
+        sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[expfac].sum(), keys)
         d = dict(zip(keys, sumlist))
         alldict[dtype] = d
+    
+    wrkr_keys = list(wrkrs_tbl)
+    wrkr_dfs = map(lambda x: pd.read_json(wrkrs_tbl[x], orient = 'split'), wrkr_keys)
+    wrkr_sumlist = [wrkr_df[wrkr_df['pwtaz'] >= 0]['psexpfac'].sum() for wrkr_df in wrkr_dfs]
 
+    wd = dict(zip(wrkr_keys, wrkr_sumlist))  
+    alldict.update({'Total Workers': wd})
     df = pd.DataFrame.from_dict(alldict, orient = 'index').reset_index().rename(columns = {'index': ' '})
 
     # format numbers with separator
@@ -82,7 +137,6 @@ def create_totals_table(pers_json, hh_json):
      Input('dummy_div3', 'children')]
     )
 def update_household_size_graph(hh_json, aux):
-    print('Tab 4')
     hh_tbl = json.loads(hh_json)
     
     datalist = []
@@ -90,7 +144,6 @@ def update_household_size_graph(hh_json, aux):
         df = pd.read_json(hh_tbl[key], orient='split')
         df = df[['hhsize', 'hhexpfac']].groupby('hhsize').sum()[['hhexpfac']]
         df = df.reset_index()
-        #print(df)
 
         trace = go.Bar(
             x=df['hhsize'].copy(),
@@ -101,12 +154,99 @@ def update_household_size_graph(hh_json, aux):
 
     layout = go.Layout(
         barmode = 'group',
-        xaxis={'title': 'Household Size'},
-        yaxis={'title': 'Households'},
+        xaxis={'title': 'Household Size', 'type':'category'},
+        yaxis={'title': 'Households', 'zeroline':False},
         hovermode='closest',
         autosize=True,
         font=dict(family='Segoe UI', color='#7f7f7f')
         )
     return {'data': datalist, 'layout': layout}
+
+@app.callback(
+    Output('auto-own-graph', 'figure'),
+    [Input('auto_own', 'children'),
+     Input('dummy_div3', 'children')]
+    )
+def create_auto_own_graph(auto_own_json, aux):
+    auto_own_tbl = json.loads(auto_own_json)
+    
+    datalist = []
+    for key in auto_own_tbl.keys():
+        df = pd.read_json(auto_own_tbl[key], orient='split')
+        df = df[['hhvehs', 'hhexpfac']].groupby('hhvehs').sum()[['hhexpfac']]
+        df = df.reset_index()
+
+        trace = go.Bar(
+            x=df['hhvehs'].copy(),
+            y=df['hhexpfac'].copy(),
+            name=key
+            )
+        datalist.append(trace)
+
+    layout = go.Layout(
+        barmode = 'group',
+        xaxis={'title': 'Number of Vehicles', 'type':'category'},
+        yaxis={'title': 'Households', 'zeroline':False},
+        hovermode='closest',
+        autosize=True,
+        font=dict(family='Segoe UI', color='#7f7f7f')
+        )
+    return {'data': datalist, 'layout': layout}
+
+@app.callback(
+    Output('table-wrkr-container', 'children'),
+    [Input('workers', 'children'),
+     Input('dummy_div3', 'children')]
+    )
+def create_workers_table(workers_json, aux):
+    workers_tbl = json.loads(workers_json)
+    taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+
+    datalist = []
+    for key in workers_tbl.keys():
+        df = pd.read_json(workers_tbl[key], orient='split')
+    
+        df = df.merge(taz_geog, left_on='hhtaz', right_on='taz')
+        df.rename(columns={'geog_name':'hh_county'}, inplace=True)
+
+        df = df.merge(taz_geog, left_on='pwtaz', right_on='taz')
+        df.rename(columns={'geog_name':'work_county'}, inplace=True)
+
+        df.drop(['taz_x', 'taz_y'], axis=1, inplace=True)
+        df = df.groupby(['hh_county','work_county']).sum()[['psexpfac']]
+
+        df.rename(columns = {'psexpfac': key}, inplace=True)
+        df = df.reset_index()
+    
+        datalist.append(df)
+    
+    df_scenarios = pd.merge(datalist[0], datalist[1], on = ['hh_county','work_county'])
+    df_scenarios.rename(columns = {'hh_county': 'Household County', 'work_county': 'Work County'}, inplace=True)
+    # format numbers with separator
+    for i in range(2, len(df_scenarios.columns)):
+        df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number)
+
+    t = html.Div(
+        [dash_table.DataTable(id='table-workers',
+                              columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+                              data=df_scenarios.to_dict('rows'),
+                              style_cell_conditional = [
+                                  {
+                                      'if': {'column_id': i},
+                                      'textAlign': 'left'
+                                      } for i in ['Household County', 'Work County']
+                                  ],
+                              style_cell = {
+                                  'font-family':'Segoe UI',
+                                  'font-size': 11,
+                                  'text-align': 'center'}
+                              )
+            ]
+        )
+    print(t)
+    return t
+
+  
+
 
         
