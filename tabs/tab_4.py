@@ -63,21 +63,21 @@ tab_4_layout = [
                         ]
                     ), style= {"margin-top": "20px"}
                 ),
-            width=4
+            width=5
             ), # end col
-        dbc.Col(
-              dbc.Card(
-                dbc.CardBody(
-                    [
-                        html.H2("Multicategory Axis bar chart"),
-                        html.Br(),
-                        dcc.Graph("wrkr-graph")
+        #dbc.Col(
+        #      dbc.Card(
+        #        dbc.CardBody(
+        #            [
+        #                html.H2("Multicategory Axis bar chart"),
+        #                html.Br(),
+        #                dcc.Graph("wrkr-graph")
                 
-                        ]
-                    ), style= {"margin-top": "20px"}
-                ),
-              width=8
-            ) # end col
+        #                ]
+        #            ), style= {"margin-top": "20px"}
+        #        ),
+        #      width=8
+        #    ) # end col
 
         ]),
     
@@ -194,7 +194,8 @@ def create_auto_own_graph(auto_own_json, aux):
     return {'data': datalist, 'layout': layout}
 
 @app.callback(
-    Output('table-wrkr-container', 'children'),
+    [Output('table-wrkr-container', 'children'),
+     Output('wrkr-graph', 'figure')],
     [Input('workers', 'children'),
      Input('dummy_div3', 'children')]
     )
@@ -243,8 +244,29 @@ def create_workers_table(workers_json, aux):
                               )
             ]
         )
-    print(t)
-    return t
+
+    graph_datalist = []
+    for akey, adf in zip(workers_tbl.keys(), datalist):
+        print(adf)
+        print(akey)
+        trace = go.Bar(
+            x=[adf['hh_county'].copy(), adf['work_county'].copy()],
+            y=adf[akey].copy(),
+            name=akey
+            )
+        print(trace)
+        graph_datalist.append(trace)
+
+    layout = go.Layout(
+        barmode = 'group',
+        xaxis={'title': 'Test', 'type':'category'},
+        yaxis={'title': 'Test', 'zeroline':False},
+        hovermode='closest',
+        autosize=True,
+        font=dict(family='Segoe UI', color='#7f7f7f')
+        )    
+
+    return t, {'data': graph_datalist, 'layout': layout}
 
   
 
