@@ -245,28 +245,28 @@ def create_workers_table(workers_json, aux):
             ]
         )
 
-    graph_datalist = []
-    for akey, adf in zip(workers_tbl.keys(), datalist):
-        print(adf)
-        print(akey)
-        trace = go.Bar(
-            x=[adf['hh_county'].copy(), adf['work_county'].copy()],
-            y=adf[akey].copy(),
-            name=akey
-            )
-        print(trace)
-        graph_datalist.append(trace)
+    #graph_datalist = []
+    #for akey, adf in zip(workers_tbl.keys(), datalist):
+    #    print(adf)
+    #    print(akey)
+    #    trace = go.Bar(
+    #        x=[adf['hh_county'].copy(), adf['work_county'].copy()],
+    #        y=adf[akey].copy(),
+    #        name=akey
+    #        )
+    #    print(trace)
+    #    graph_datalist.append(trace)
 
-    layout = go.Layout(
-        barmode = 'group',
-        xaxis={'title': 'Test', 'type':'category'},
-        yaxis={'title': 'Test', 'zeroline':False},
-        hovermode='closest',
-        autosize=True,
-        font=dict(family='Segoe UI', color='#7f7f7f')
-        )    
+    #layout = go.Layout(
+    #    barmode = 'group',
+    #    xaxis={'title': 'Test', 'type':'category'},
+    #    yaxis={'title': 'Test', 'zeroline':False},
+    #    hovermode='closest',
+    #    autosize=True,
+    #    font=dict(family='Segoe UI', color='#7f7f7f')
+    #    )    
 
-    return t, {'data': graph_datalist, 'layout': layout}
+    return t#, {'data': graph_datalist, 'layout': layout}
 
   
 

@@ -3,11 +3,12 @@ from dash.dependencies import Input, Output
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
-from tabs import tab_1
-from tabs import tab_2
-from tabs import tab_3
-from tabs import tab_4
-from tabs import taz_map
+from tabs import tab_1, tab_2, tab_3, tab_4, tab_day_pattern, taz_map
+#from tabs import tab_2
+#from tabs import tab_3
+#from tabs import tab_4
+#from tabs import tab_day_pattern
+#from tabs import taz_map
 from app import app
 import pandas as pd
 import os
@@ -15,8 +16,6 @@ import json
 import plotly.graph_objs as go
 
 #app = dash.Dash()
-
-
 
 mode_dict = {1 : 'walk', 2 : 'bike', 3 : 'sov', 4 : 'hov2', 5 : 'hov3', 6 : 'w_transit', 7 : 'd_transit', 8 : 'school_bus', 9 : 'other', 0 : 'other'}
 
@@ -47,6 +46,7 @@ tabs = dbc.Tabs(
         dbc.Tab(label="Trips", tab_id="tab-2-example"),
         dbc.Tab(label="Tours", tab_id="tab-3-example"),
         dbc.Tab(label="HH & Persons", tab_id="tab-4-example"),
+        dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
         dbc.Tab(label="TAZ Map", tab_id="taz-map")
     ],
     id="tabs-example"
@@ -98,6 +98,8 @@ def render_content(tab):
         return tab_3.tab_3_layout
     elif tab == 'tab-4-example':
         return tab_4.tab_4_layout
+    elif tab == 'tab-day-pattern':
+        return tab_day_pattern.tab_day_pattern_layout
     elif tab == 'taz-map':
         return taz_map.taz_map_layout
 
@@ -108,10 +110,12 @@ def render_content_filter(tab):
         return tab_2.tab_2_filter
     elif tab == 'tab-3-example':
         return tab_3.tab_3_filter
-    elif tab == 'tab-4-example':
-        return None
+    elif tab == 'tab-day-pattern':
+        return tab_day_pattern.tab_day_pattern_filter
     elif tab == 'taz-map':
         return taz_map.taz_map_filter
+    else:
+        return None
 
 # Tab 1 callback
 @app.callback(
@@ -187,5 +191,4 @@ def page_1_dropdown(val1, val2):
 #    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
 #})
 
-if __name__ == '__main__':    app.run_server(debug=True,port=8050,host='0.0.0.0')
-    #app.run_server(debug=True, port=8051)
+if __name__ == '__main__': app.run_server(debug=True,port=8050,host='0.0.0.0') #app.run_server(debug=True, port=8051)
