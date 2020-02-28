@@ -194,8 +194,8 @@ def create_auto_own_graph(auto_own_json, aux):
     return {'data': datalist, 'layout': layout}
 
 @app.callback(
-    [Output('table-wrkr-container', 'children'),
-     Output('wrkr-graph', 'figure')],
+    Output('table-wrkr-container', 'children'),
+     #Output('wrkr-graph', 'figure')   
     [Input('workers', 'children'),
      Input('dummy_div3', 'children')]
     )
