@@ -11,8 +11,10 @@ from app import app
 import json
 import functools
 
-def format_number(x):
-    return "{:,.2f}".format(x)
+def format_number(x, decimal_places):
+    formula = "{:,." + str(decimal_places) + "f}"
+    return formula.format(x)
+    #return "{:,.2f}".format(x)
 
 tab_day_pattern_filter = [dbc.Card(
     [
@@ -122,31 +124,78 @@ def dpurp_dropdown(json_data, aux):
 def update_tours_by_pptype_purpose_header(dpurp, aux):
     return dpurp + " Tours Per Person by Person Type"
 
-# dpurp tours per person by person type, render as DashTable + graph
+# all content, render as DashTables + graph
 @app.callback(
     [Output('dpatt-table-perc-tours-dpurp-gen-container', 'children'),
      Output('dpatt-table-tours-dpurp-gen-container', 'children'), 
      Output('dpatt-table-tours-purpose-container', 'children'), 
      Output('dpatt-graph-tours-purpose', 'figure')],
-    [Input('tours', 'children'),
+    [Input('trips', 'children'),
+     Input('tours', 'children'), 
      Input('persons', 'children'),
      Input('dpatt-dpurp-dropdown', 'value'),
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')]
     )
-def create_table_tours_by_ptype_dpurp(tours_json, pers_json, dpurp, aux, aux1):
-    print('compile tours per person data')
+def update_visuals(trips_json, tours_json, pers_json, dpurp, aux, aux1):
+    
+    def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
+        df = table.copy()
+        group_cols_list.append(key)
+        df['day_pattern_per_person'] = df[weight_name]/df['psexpfac'] 
+        df = df.rename(columns = {'day_pattern_per_person': key})
+        df = df[group_cols_list]
+        return df
+
+    def calc_delta(table, keyslist, old_colname, new_colname, decimal_places, percent_delta = True):
+        format_number_two_dp = functools.partial(format_number, decimal_places = decimal_places)
+        table['Difference'] = table[keyslist[0]] - table[keyslist[1]]
+        if percent_delta:
+            table['Percent Difference'] = (table['Difference']/table[keyslist[1]]) * 100
+        # format numbers with separator
+        for i in range(1, len(table.columns)):
+            table.iloc[:, i] = table.iloc[:, i].apply(format_number_two_dp)
+        table = table.rename(columns = {old_colname: new_colname}) 
+        return table
+
+    def create_dash_table(id_name, table, index_list, fontsize):
+        t = html.Div(
+            [dash_table.DataTable(id=id_name,
+                                    columns=[{"name": i, "id": i} for i in table.columns],
+                                    data=table.to_dict('rows'),
+                                    style_cell_conditional = [
+                                            {
+                                                'if': {'column_id': i},
+                                                'textAlign': 'left'
+                                                } for i in index_list
+                                            ],
+                                    style_cell = {
+                                        'font-family':'Segoe UI',
+                                        'font-size': fontsize,
+                                        'text-align': 'center'}
+                                    )
+            ]
+            )
+        return t
+
+    print('compiling all essential data')
+    # load all data
+    trips = json.loads(trips_json)
     tours = json.loads(tours_json)
     pers = json.loads(pers_json)
+
+    # if dataset selection == tours'toexpfac', else 'trexpfac'
+
     datalist = [] # tours per person by person type and purpose
-    datalist_all_dpurp = [] # tours per person by purpose
+    datalist_all_dpurp = [] # tours per person by purpose 
     datalist_dpurp_gen = [] # tours by purpose
+    
     keys = tours.keys()
     keyslist = list(keys)
 
     for key in keys: 
         df = pd.read_json(tours[key], orient='split')
-        # store in list for percent of tours by purpose
+
         df_dpurp_gen = df.groupby('pdpurp').sum()[['toexpfac']].reset_index()
         df_dpurp_gen = df_dpurp_gen.rename(columns = {'toexpfac': key})
         datalist_dpurp_gen.append(df_dpurp_gen[['pdpurp', key]])
@@ -156,112 +205,36 @@ def create_table_tours_by_ptype_dpurp(tours_json, pers_json, dpurp, aux, aux1):
         df = df.groupby(['pptyp', 'pdpurp']).sum()[['toexpfac']].reset_index().merge(df_pers, on = 'pptyp')
 
         df_dpurp = df.groupby('pdpurp').sum()[['toexpfac', 'psexpfac']].reset_index()
-        print(df_dpurp.head())
-        df_dpurp['tours_per_person'] = df_dpurp['toexpfac']/df_dpurp['psexpfac']
-        df_dpurp = df_dpurp.rename(columns = {'tours_per_person': key})
-        datalist_all_dpurp.append(df_dpurp[['pdpurp', key]])
+        datalist_all_dpurp.append(calc_dpatt_per_person(df_dpurp, ['pdpurp'], 'toexpfac', key))
 
         df_ptype = df[df['pdpurp'] == dpurp]
-        df_ptype['tours_per_person'] = df_ptype['toexpfac']/df_ptype['psexpfac']
-        df_ptype = df_ptype.rename(columns = {'tours_per_person': key})
-        datalist.append(df_ptype[['pptyp', 'pdpurp', key]]) 
+        datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', 'pdpurp'], 'toexpfac', key)) 
     
     newdf_dpurp_gen = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on='pdpurp'), datalist_dpurp_gen)
     newdf_dpurp = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on='pdpurp'), datalist_all_dpurp)
     newdf = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on=['pptyp', 'pdpurp']), datalist)
-    print('finished compilation')
+    print('finished data compilation')
 
     # create percent of tours by purpose
     print('newdf_dpurp_gen difference')
     tp_tbl = newdf_dpurp_gen.copy()
     for key in keyslist:
         tp_tbl[key] = (tp_tbl[key]/tp_tbl[key].sum()) * 100
-    tp_tbl['Difference'] = tp_tbl[keyslist[0]] - tp_tbl[keyslist[1]]
-    
-    # format numbers with separator
-    for i in range(1, len(tp_tbl.columns)):
-        tp_tbl.iloc[:, i] = tp_tbl.iloc[:, i].apply(format_number)
-    
-    tp_tbl = tp_tbl.rename(columns = {'pdpurp': 'Destination Purpose'})
-    
-    tp = html.Div(
-    [dash_table.DataTable(id='dpatt-table-perc-tours-dpurp-gen',
-                          columns=[{"name": i, "id": i} for i in tp_tbl.columns],
-                          data=tp_tbl.to_dict('rows'),
-                          style_cell_conditional = [
-                                  {
-                                      'if': {'column_id': i},
-                                      'textAlign': 'left'
-                                      } for i in ['Destination Purpose']
-                                  ],
-                          style_cell = {
-                              'font-family':'Segoe UI',
-                              'font-size': '.7vw',
-                              'text-align': 'center'}
-                          )
-    ])
+    tp_tbl = calc_delta(tp_tbl, keyslist, 'pdpurp', 'Destination Purpose', 2, percent_delta = False)
+    tp = create_dash_table('dpatt-table-perc-tours-dpurp-gen', tp_tbl, ['Destination Purpose'], '.7vw')
 
     # create dash tables for tours per person and purpose
     print('newdf_dpurp difference')
     tppp_tbl = newdf_dpurp.copy()
-    tppp_tbl['Difference'] = tppp_tbl[keyslist[0]] - tppp_tbl[keyslist[1]]
-    tppp_tbl['Percent Difference'] = (tppp_tbl['Difference']/tppp_tbl[keyslist[1]]) * 100
-    #add row total
-    # format numbers with separator
-    for i in range(1, len(tppp_tbl.columns)):
-        tppp_tbl.iloc[:, i] = tppp_tbl.iloc[:, i].apply(format_number)
-    
-    tppp_tbl = tppp_tbl.rename(columns = {'pdpurp': 'Destination Purpose'})
-
-    tppp = html.Div(
-    [dash_table.DataTable(id='dpatt-table-tours-dpurp-gen',
-                          columns=[{"name": i, "id": i} for i in tppp_tbl.columns],
-                          data=tppp_tbl.to_dict('rows'),
-                          style_cell_conditional = [
-                                  {
-                                      'if': {'column_id': i},
-                                      'textAlign': 'left'
-                                      } for i in ['Destination Purpose']
-                                  ],
-                          style_cell = {
-                              'font-family':'Segoe UI',
-                              'font-size': '.7vw',
-                              'text-align': 'center'}
-                          )
-    ])
+    tppp_tbl = calc_delta(tppp_tbl, keyslist, 'pdpurp', 'Destination Purpose', 2)
+    tppp = create_dash_table('dpatt-table-tours-dpurp-gen', tppp_tbl, ['Destination Purpose'], '.7vw')
 
     # create dash table for tours per person by person type and purpose
-    # add diff & %diff cols
+    print('newdf difference')
     datatbl = newdf.copy()
-    datatbl['Difference'] = datatbl[keyslist[0]] - datatbl[keyslist[1]]
-    datatbl['Percent Difference'] = (datatbl['Difference']/datatbl[keyslist[1]]) * 100
-
-    # format numbers with separator
-    for i in range(2, len(datatbl.columns)):
-        datatbl.iloc[:, i] = datatbl.iloc[:, i].apply(format_number)
-    
     datatbl= datatbl.drop('pdpurp', axis=1)
-    datatbl = datatbl.rename(columns = {'pptyp': 'Person Type'}) #, 'pdpurp': 'Destination Purpose'
-    print('creating table tours per person')
-    t = html.Div(
-    [dash_table.DataTable(id='dpatt-table-tours-purposes',
-                          columns=[{"name": i, "id": i} for i in datatbl.columns],
-                          data=datatbl.to_dict('rows'),
-                          #style_table={'overflowX': 'scroll'},
-                          style_cell_conditional = [
-                                  {
-                                      'if': {'column_id': i},
-                                      'textAlign': 'left'
-                                      } for i in ['Person Type']
-                                  ],
-                          style_cell = {
-                              'font-family':'Segoe UI',
-                              'font-size': '.6vw',
-                              'text-align': 'center',
-                              'overflow': 'hidden',
-                              'textOverflow': 'ellipsis'}
-                          )
-      ])
+    datatbl = calc_delta(datatbl, keyslist, 'pptyp', 'Person Type', 2)
+    t = create_dash_table('dpatt-table-tours-purposes', datatbl, ['Person Type'], '.6vw')
     
     # create graph
     print('creating graph tours per person')
@@ -274,7 +247,6 @@ def create_table_tours_by_ptype_dpurp(tours_json, pers_json, dpurp, aux, aux1):
             name=key
             )
         graph_datalist.append(trace)
-    #print(graph_datalist)
     
     layout = go.Layout(
         barmode = 'group',
@@ -284,7 +256,6 @@ def create_table_tours_by_ptype_dpurp(tours_json, pers_json, dpurp, aux, aux1):
         autosize=True,
         font=dict(family='Segoe UI', color='#7f7f7f')
         )
-    #print(layout)
     
     return tp, tppp, t, {'data': graph_datalist, 'layout': layout}
 
