@@ -14,27 +14,43 @@ import functools
 def format_number(x, decimal_places):
     formula = "{:,." + str(decimal_places) + "f}"
     return formula.format(x)
-    #return "{:,.2f}".format(x)
 
-tab_day_pattern_filter = [dbc.Card(
-    [
-    dbc.CardHeader(html.H1('Tours by Person Type Selection')), 
-    dbc.CardBody(
+tab_day_pattern_filter = [
+    dbc.Card(
         [
-            dbc.Label('Destination Purpose:'),
-            dcc.Dropdown(
-                value='Escort',
-                id='dpatt-dpurp-dropdown'
+        dbc.CardHeader(html.H1('Dataset')), 
+        dbc.CardBody(
+            [
+                dbc.Label('Day Pattern Type:'),
+                dbc.RadioItems(
+                    id='dpatt-dataset-type',
+                    options=[{'label': i, 'value': i} for i in ['Tours', 'Trips']],
+                    value='Tours'
                 ),
-            html.Br(),
-            #html.Div(id='df', style={'display': 'none'}),
-            html.Div(id='dummy_div4'),
-        ],
-        className = 'bg-light',
+                html.Br(),
+                html.Div(id='dummy-dataset-type'),
+            ],
+            className = 'bg-light',
+        ), # end of CardBody
+
+        dbc.CardHeader(html.H1('Day Pattern by Person Type')), 
+        dbc.CardBody(
+            [
+                dbc.Label('Destination Purpose:'),
+                dcc.Dropdown(
+                    value='Escort',
+                    id='dpatt-dpurp-dropdown'
+                    ),
+                html.Br(),
+                html.Div(id='dummy_div4'),
+            ],
+            className = 'bg-light',
       
-        )],
-    className='aside-card'
-)   ]
+        ) # end of CardBody
+        ], # end of Card
+        className='aside-card'
+    ), # end of Card
+]
 
 tab_day_pattern_layout = [
      dbc.Row(children=[
@@ -42,7 +58,7 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2("Percent of Tours by Purpose"),
+                        html.H2(id='dpatt-perc-dpurp-gen-header'), #"Percent of X by Purpose"
                         html.Br(),
                         html.Div(id='dpatt-table-perc-tours-dpurp-gen-container'),
                 
@@ -55,7 +71,7 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2("Tours per Person by Purpose"),
+                        html.H2(id='dpatt-dpurp-gen-header'), #"X per Person by Purpose"
                         html.Br(),
                         html.Div(id='dpatt-table-tours-dpurp-gen-container'),
                 
@@ -102,27 +118,37 @@ tab_day_pattern_layout = [
 # load drop downs
 @app.callback(
     Output('dpatt-dpurp-dropdown', 'options'),
-    [Input('tours', 'children'),
+    [Input('dpatt-dataset-type', 'value'),
+     Input('tours', 'children'),
+     Input('trips', 'children'),
      Input('dummy_div4', 'children')])
-def dpurp_dropdown(json_data, aux):
-    print ('Day Pattern: tour filter callback')
+def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
     dpurp = []
-
-    datasets = json.loads(json_data)
-    key = list(datasets)[0]
-    print(key)
-    df = pd.read_json(datasets[key], orient='split')
-    dpurp.extend([x for x in df.pdpurp.unique()])
-    print(dpurp)
+    if dataset_type == 'Tours':
+        dataset = json.loads(tours_json)
+        dataset_dpurp_col = 'pdpurp'
+    else:
+        dataset = json.loads(trips_json)
+        dataset_dpurp_col = 'dpurp'
+    key = list(dataset)[0]
+    df = pd.read_json(dataset[key], orient='split')
+    dpurp.extend([x for x in df[dataset_dpurp_col].unique()])
     return [{'label': i, 'value': i} for i in dpurp]
 
 # dynamic label based on dpurp selection
 @app.callback(
-    Output('dpatt-tours-pptyp-purpose-header', 'children'),
-    [Input('dpatt-dpurp-dropdown', 'value'),
-     Input('dummy_div4', 'children')])
-def update_tours_by_pptype_purpose_header(dpurp, aux):
-    return dpurp + " Tours Per Person by Person Type"
+    [Output('dpatt-tours-pptyp-purpose-header', 'children'),
+     Output('dpatt-perc-dpurp-gen-header', 'children'),
+     Output('dpatt-dpurp-gen-header', 'children')],
+    [Input('dpatt-dataset-type', 'value'),
+     Input('dpatt-dpurp-dropdown', 'value'),
+     Input('dummy_div4', 'children'),
+     Input('dummy_div5', 'children')])
+def update_tours_by_pptype_purpose_header(dataset_type, dpurp, aux, aux1):
+    header_pptyp_dpurp = dpurp + ' ' + dataset_type + ' per Person by Person Type'
+    header_perc_dpurp_gen = 'Percent of' + ' ' + dataset_type + ' by Purpose'
+    header_dpurp_gen = dataset_type + ' per Person by Purpose'
+    return header_pptyp_dpurp, header_perc_dpurp_gen, header_dpurp_gen
 
 # all content, render as DashTables + graph
 @app.callback(
@@ -130,15 +156,15 @@ def update_tours_by_pptype_purpose_header(dpurp, aux):
      Output('dpatt-table-tours-dpurp-gen-container', 'children'), 
      Output('dpatt-table-tours-purpose-container', 'children'), 
      Output('dpatt-graph-tours-purpose', 'figure')],
-    [Input('trips', 'children'),
+    [Input('dpatt-dataset-type', 'value'),
+     Input('trips', 'children'),
      Input('tours', 'children'), 
      Input('persons', 'children'),
      Input('dpatt-dpurp-dropdown', 'value'),
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')]
     )
-def update_visuals(trips_json, tours_json, pers_json, dpurp, aux, aux1):
-    
+def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, aux1):
     def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
         df = table.copy()
         group_cols_list.append(key)
@@ -178,69 +204,70 @@ def update_visuals(trips_json, tours_json, pers_json, dpurp, aux, aux1):
             )
         return t
 
-    print('compiling all essential data')
     # load all data
     trips = json.loads(trips_json)
     tours = json.loads(tours_json)
     pers = json.loads(pers_json)
 
-    # if dataset selection == tours'toexpfac', else 'trexpfac'
+    if dataset_type == 'Tours':
+        dataset = tours
+        dataset_weight_col = 'toexpfac'
+        dataset_dpurp_col = 'pdpurp'
+    else:
+        dataset = trips
+        dataset_weight_col = 'trexpfac'
+        dataset_dpurp_col = 'dpurp'
 
-    datalist = [] # tours per person by person type and purpose
-    datalist_all_dpurp = [] # tours per person by purpose 
-    datalist_dpurp_gen = [] # tours by purpose
+    datalist = [] # X per person by person type and purpose
+    datalist_all_dpurp = [] # X per person by purpose 
+    datalist_dpurp_gen = [] # X by purpose
     
-    keys = tours.keys()
+    keys = dataset.keys()
     keyslist = list(keys)
 
     for key in keys: 
-        df = pd.read_json(tours[key], orient='split')
+        df = pd.read_json(dataset[key], orient='split')
 
-        df_dpurp_gen = df.groupby('pdpurp').sum()[['toexpfac']].reset_index()
-        df_dpurp_gen = df_dpurp_gen.rename(columns = {'toexpfac': key})
-        datalist_dpurp_gen.append(df_dpurp_gen[['pdpurp', key]])
+        df_dpurp_gen = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col]].reset_index()
+        df_dpurp_gen = df_dpurp_gen.rename(columns = {dataset_weight_col: key})
+        datalist_dpurp_gen.append(df_dpurp_gen[[dataset_dpurp_col, key]])
 
         df_pers = pd.read_json(pers[key], orient='split')
         df_pers = df_pers.groupby(['pptyp']).sum()[['psexpfac']]
-        df = df.groupby(['pptyp', 'pdpurp']).sum()[['toexpfac']].reset_index().merge(df_pers, on = 'pptyp')
+        df = df.groupby(['pptyp', dataset_dpurp_col]).sum()[[dataset_weight_col]].reset_index().merge(df_pers, on = 'pptyp')
 
-        df_dpurp = df.groupby('pdpurp').sum()[['toexpfac', 'psexpfac']].reset_index()
-        datalist_all_dpurp.append(calc_dpatt_per_person(df_dpurp, ['pdpurp'], 'toexpfac', key))
+        df_dpurp = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col, 'psexpfac']].reset_index()
+        datalist_all_dpurp.append(calc_dpatt_per_person(df_dpurp, [dataset_dpurp_col], dataset_weight_col, key))
 
-        df_ptype = df[df['pdpurp'] == dpurp]
-        datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', 'pdpurp'], 'toexpfac', key)) 
+        df_ptype = df[df[dataset_dpurp_col] == dpurp]
+        datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', dataset_dpurp_col], dataset_weight_col, key))  
     
-    newdf_dpurp_gen = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on='pdpurp'), datalist_dpurp_gen)
-    newdf_dpurp = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on='pdpurp'), datalist_all_dpurp)
-    newdf = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on=['pptyp', 'pdpurp']), datalist)
-    print('finished data compilation')
-
+    newdf_dpurp_gen = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on=dataset_dpurp_col), datalist_dpurp_gen)
+    newdf_dpurp = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on=dataset_dpurp_col), datalist_all_dpurp)
+    newdf = functools.reduce(lambda df1, df2: pd.merge(df1,df2,on=['pptyp', dataset_dpurp_col]), datalist)
+  
     # create percent of tours by purpose
-    print('newdf_dpurp_gen difference')
     tp_tbl = newdf_dpurp_gen.copy()
     for key in keyslist:
         tp_tbl[key] = (tp_tbl[key]/tp_tbl[key].sum()) * 100
-    tp_tbl = calc_delta(tp_tbl, keyslist, 'pdpurp', 'Destination Purpose', 2, percent_delta = False)
+    tp_tbl = calc_delta(tp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2, percent_delta = False)
     tp = create_dash_table('dpatt-table-perc-tours-dpurp-gen', tp_tbl, ['Destination Purpose'], '.7vw')
 
     # create dash tables for tours per person and purpose
-    print('newdf_dpurp difference')
     tppp_tbl = newdf_dpurp.copy()
-    tppp_tbl = calc_delta(tppp_tbl, keyslist, 'pdpurp', 'Destination Purpose', 2)
+    tppp_tbl = calc_delta(tppp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2)
     tppp = create_dash_table('dpatt-table-tours-dpurp-gen', tppp_tbl, ['Destination Purpose'], '.7vw')
 
     # create dash table for tours per person by person type and purpose
-    print('newdf difference')
     datatbl = newdf.copy()
-    datatbl= datatbl.drop('pdpurp', axis=1)
+    datatbl= datatbl.drop(dataset_dpurp_col, axis=1)
     datatbl = calc_delta(datatbl, keyslist, 'pptyp', 'Person Type', 2)
     t = create_dash_table('dpatt-table-tours-purposes', datatbl, ['Person Type'], '.6vw')
     
     # create graph
-    print('creating graph tours per person')
     
     graph_datalist = []
-    for key in tours.keys():
+    for key in dataset.keys():
         trace = go.Bar(
             x=newdf['pptyp'].copy(),
             y=newdf[key].copy(),
@@ -251,7 +278,7 @@ def update_visuals(trips_json, tours_json, pers_json, dpurp, aux, aux1):
     layout = go.Layout(
         barmode = 'group',
         xaxis={'type':'category', 'automargin':True},
-        yaxis={'title': dpurp + ' Tours per Person', 'zeroline':False},
+        yaxis={'title': dpurp + ' ' + dataset_type + ' per Person', 'zeroline':False},
         hovermode='closest',
         autosize=True,
         font=dict(family='Segoe UI', color='#7f7f7f')
