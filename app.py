@@ -11,7 +11,7 @@ import json
 import plotly.graph_objs as go
 import functools
 
-external_stylesheets = [dbc.themes.MATERIA]#[dbc.themes.BOOTSTRAP]
+external_stylesheets = [dbc.themes.BOOTSTRAP]#[dbc.themes.MATERIA]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config.suppress_callback_exceptions = True
 
@@ -22,6 +22,7 @@ def format_number(x, decimal_places):
 available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name)) and name !='data']
 mode_dict = {1 : 'walk', 2 : 'bike', 3 : 'sov', 4 : 'hov2', 5 : 'hov3', 6 : 'w_transit', 7 : 'd_transit', 8 : 'school_bus', 9 : 'other', 0 : 'other'}
 
+# Layout ------------------------------------------------------------------
 # Scenario Selection Layout
 scenario_select_layout =  dbc.Card(
     [
@@ -79,7 +80,7 @@ tab_trips_mc_filter =  [dbc.Card(
                                         html.Br(),
                                         html.Div(id='dummy_div'),
                                     ],
-                                    className = 'bg-light',
+                                    #className = 'bg-light',
       
                                     ) # end dbc.CardBody
                                 ],
@@ -115,6 +116,61 @@ tab_trips_mc_layout = [
     )
 ]
 
+# Tours mode choice Layout
+tab_tours_mc_filter =  [dbc.Card(
+    [
+    dbc.CardHeader(html.H1('Filters')), 
+    dbc.CardBody(
+        [
+            
+            dbc.Label('Person Type:'),
+            dcc.Dropdown(
+                value='All',
+                id='tour-person-type-dropdown'
+            ),
+            html.Br(),
+            dbc.Label('Destination Purpose:'),
+            dcc.Dropdown(
+                value='All',
+                id='tour-dpurp-dropdown'
+                ),
+            html.Br(),
+            #html.Div(id='df', style={'display': 'none'}),
+            html.Div(id='dummy_div2'),
+        ],
+        #className = 'bg-light', 
+        )],
+    className='aside-card'
+)   ]
+
+tab_tours_mc_layout = [
+dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2("Tour Mode Choice"),
+            html.Br(),
+            dbc.RadioItems(
+                id='tour-mode-share-type',
+                options=[{'label': i, 'value': i} for i in ['Mode Share', 'Tours by Mode']],
+                value='Mode Share',
+                inline=True
+            ),
+            dcc.Graph(id='tour-mode-choice-graph'),
+        ],
+    ),
+    style= {"margin-top": "20px"},   
+),
+dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2('Tour Departure Hour:'),
+            dcc.Graph(id='tour-deptm-graph'),
+        ]
+    ),
+    style= {"margin-top": "20px"},
+),
+]
+
 # Tab Day Pattern Layout
 tab_day_pattern_filter = [
     dbc.Card(
@@ -131,10 +187,8 @@ tab_day_pattern_filter = [
                 html.Br(),
                 html.Div(id='dummy-dataset-type'),
             ],
-            className = 'bg-light',
         ), # end of CardBody
-
-        dbc.CardHeader(html.H1('Day Pattern by Person Type')), 
+        dbc.CardHeader(html.H1('Day Pattern by Person Type'), className='additional-header'), 
         dbc.CardBody(
             [
                 dbc.Label('Destination Purpose:'),
@@ -144,9 +198,7 @@ tab_day_pattern_filter = [
                     ),
                 html.Br(),
                 html.Div(id='dummy_div4'),
-            ],
-            className = 'bg-light',
-      
+            ],  
         ) # end of CardBody
         ], # end of Card
         className='aside-card'
@@ -216,6 +268,59 @@ tab_day_pattern_layout = [
     html.Div(id='dummy_div5'),
     ]
 
+# Tab Households and Persons Layout
+tab_hh_pers_layout = [
+    dbc.Card(
+        dbc.CardBody(
+            [
+                html.H2("Totals"),
+                html.Br(),
+                html.Div(id='table-totals-container'),
+                ]
+            ), style= {"margin-top": "20px"}
+        ),
+    dbc.Row(children=[
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Household Size"),
+                        dcc.Graph(id='household-size-graph'),       
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+            width=7
+            ), # end Col
+        dbc.Col(
+              dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Auto Ownership"),
+                        dcc.Graph(id='auto-own-graph'),           
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+            width=5
+            ) # end Col
+        ]
+        ), # end Row
+    dbc.Row(children=[
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2("Workers"),
+                        html.Br(),
+                        html.Div(id='table-wrkr-container'),            
+                        ]
+                    ), style= {"margin-top": "20px"}
+                ),
+            width=5
+            ), # end col
+        ]),
+    html.Div(id='dummy_div3')
+    ]
+
 # Main Layout
 navbar = dbc.NavbarSimple(
      children=[
@@ -233,7 +338,6 @@ navbar = dbc.NavbarSimple(
     fluid = True,
     brand="Soundcast Validation Dashboard",
     brand_href="#"
-
 )
 
 scenario_aside = scenario_select_layout
@@ -243,9 +347,9 @@ content = html.Div(id='tabs-content')
 tabs = dbc.Tabs(
     children=[
         dbc.Tab(label="Trips", tab_id="tab-trips-mc"),
-        #dbc.Tab(label="Tours", tab_id="tab-3-example"),
-        #dbc.Tab(label="HH & Persons", tab_id="tab-4-example"),
+        dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
+        dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
         #dbc.Tab(label="TAZ Map", tab_id="taz-map")
     ],
     id="tabs-list"
@@ -278,10 +382,10 @@ hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
-    #html.Div(id='households', style={'display': 'none'}),
+    html.Div(id='households', style={'display': 'none'}),
     #html.Div(id='dtaz_trips', style={'display': 'none'}),
-    #html.Div(id='auto_own', style={'display': 'none'}),
-    #html.Div(id='workers', style={'display': 'none'},)
+    html.Div(id='auto_own', style={'display': 'none'}),
+    html.Div(id='workers', style={'display': 'none'},)
 ])
 
 app.layout = html.Div([navbar, main_body, hidden_divs])
@@ -294,6 +398,8 @@ app.layout = html.Div([navbar, main_body, hidden_divs])
 def render_content_filter(tab):
     if tab == 'tab-trips-mc':
         return tab_trips_mc_filter
+    elif tab == 'tab-tours-mc':
+        return tab_tours_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
 
@@ -302,18 +408,22 @@ def render_content_filter(tab):
 def render_content(tab):
     if tab == 'tab-trips-mc':
         return tab_trips_mc_layout
+    elif tab == 'tab-tours-mc':
+        return tab_tours_mc_layout
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_layout
+    elif tab == 'tab-hh-pers':
+        return tab_hh_pers_layout
 
-# Scenario Selection callback
+# Scenario Selection callback ---------------------------------------------------
 @app.callback(
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
-         #Output('households', 'children'),
+         Output('households', 'children'),
          #Output('dtaz_trips', 'children'),
-         #Output('auto_own', 'children'),
-         #Output('workers', 'children')
+         Output('auto_own', 'children'),
+         Output('workers', 'children')
          ],
          [Input('scenario-1-dropdown', 'value'),
           Input('scenario-2-dropdown', 'value')])
@@ -324,14 +434,14 @@ def page_1_dropdown(val1, val2):
     tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
     pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
-    #hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
-    #hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
+    hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
+    hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
     #dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
     #dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
-    #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
-    #auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
-    #wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
-    #wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
+    auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
+    auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
+    wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
+    wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
     #print df2.trexpfac.sum()
     trips = {
         val1: trips1.to_json(orient='split'), 
@@ -345,25 +455,25 @@ def page_1_dropdown(val1, val2):
         val1: pers1.to_json(orient='split'), 
         val2: pers2.to_json(orient='split')
         }
-    #households = {
-    #     val1: hhs1.to_json(orient='split'), 
-    #     val2: hhs2.to_json(orient='split')
-    #    }
+    households = {
+         val1: hhs1.to_json(orient='split'), 
+         val2: hhs2.to_json(orient='split')
+        }
     #dtaz_trips = {
     #     val1: dtaz_trips1.to_json(orient='split'), 
     #     val2: dtaz_trips2.to_json(orient='split')
     #    }
-    #auto_own = {
-    #     val1: auto_own1.to_json(orient='split'), 
-    #     val2: auto_own2.to_json(orient='split')
-    #    }
-    #workers = {
-    #    val1: wrkrs1.to_json(orient='split'), 
-    #    val2: wrkrs2.to_json(orient='split')
-    #    }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons)#, json.dumps(households), json.dumps(dtaz_trips), json.dumps(auto_own), json.dumps(workers)
+    auto_own = {
+         val1: auto_own1.to_json(orient='split'), 
+         val2: auto_own2.to_json(orient='split')
+        }
+    workers = {
+        val1: wrkrs1.to_json(orient='split'), 
+        val2: wrkrs2.to_json(orient='split')
+        }
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(auto_own), json.dumps(workers) #json.dumps(dtaz_trips),
 
-# load trip mode choice tab drop downs
+# Trips Mode Choice tab ------------------------------------------------------------------
 @app.callback(
     [Output('person-type-dropdown', 'options'),
      Output('dpurp-dropdown', 'options')],
@@ -426,6 +536,89 @@ def update_graph(json_data, person_type, dpurp, share_type):
             y=df_deptm_share['trexpfac'].astype(int),
             name= key)
 
+        data2.append(trace2)
+
+    layout1 = go.Layout(
+            barmode = 'group',
+            xaxis={'title': 'mode'},
+            yaxis={'title': share_type, 'zeroline':False},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+
+    layout2 = go.Layout(
+            barmode = 'group',
+            xaxis={'title': 'departure hour'},
+            yaxis={'title': 'share', 'zeroline':False},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+
+# Tours Mode Choice tab ------------------------------------------------------------------
+# load drop downs
+@app.callback(
+    [Output('tour-person-type-dropdown', 'options'),
+              Output('tour-dpurp-dropdown', 'options')],
+               [Input('tours', 'children'),
+                Input('dummy_div2', 'children')])
+
+def tour_load_drop_downs(json_data, aux):
+    print ('tour filter callback')
+    person_types = ['All']
+    dpurp = ['All']
+
+    datasets = json.loads(json_data)
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
+    person_types.extend([x for x in df.pptyp.unique()])
+    dpurp.extend([x for x in df.pdpurp.unique()])
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
+
+
+@app.callback([Output('tour-mode-choice-graph', 'figure'),
+               Output('tour-deptm-graph', 'figure')],
+               [Input('tours', 'children'),
+                Input('tour-person-type-dropdown', 'value'),
+                Input('tour-dpurp-dropdown', 'value'),
+                Input('tour-mode-share-type', 'value')])
+
+def tour_update_graph(json_data, person_type, dpurp, share_type):
+    print ('tour update graph callback')
+    datasets = json.loads(json_data)
+    data1 = []
+    data2 = []
+    for key in datasets.keys():
+        df = pd.read_json(datasets[key], orient='split')
+        if person_type != 'All':
+            df =df[df['pptyp'] == person_type] 
+        if dpurp != 'All':
+            df =df[df['pdpurp'] == dpurp]
+        if share_type == 'Mode Share':
+            df_mode_share= df[['tmodetp','toexpfac']].groupby('tmodetp').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+        else:
+            df_mode_share= df[['tmodetp','toexpfac']].groupby('tmodetp').sum()[['toexpfac']]
+        df_mode_share.reset_index(inplace=True)
+
+        # mode choice graph
+        trace1 = go.Bar(
+            x=df_mode_share['tmodetp'].copy(),
+            y=df_mode_share['toexpfac'].copy(),
+            name=key
+            )
+        data1.append(trace1)
+
+        # trip distance histogram
+        df_deptm_share= df[['tlvorg_hr','toexpfac']].groupby('tlvorg_hr').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+        df_deptm_share.reset_index(inplace=True)
+       
+        trace2 = go.Bar(
+            x=df_deptm_share['tlvorg_hr'],
+            y=df_deptm_share['toexpfac'].astype(int),
+            name= key
+)
         data2.append(trace2)
 
     layout1 = go.Layout(
@@ -619,6 +812,145 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, 
     
     return tp, tppp, t, {'data': graph_datalist, 'layout': layout}
 
-#server = app.server
+# Households and Persons tab ------------------------------------------------------------------
+
+@app.callback(
+    [Output('table-totals-container', 'children'),
+     Output('household-size-graph', 'figure'),
+     Output('auto-own-graph', 'figure'),
+     Output('table-wrkr-container', 'children')],
+     [Input('persons', 'children'),
+      Input('households', 'children'),
+      Input('workers', 'children'),
+      Input('auto_own', 'children'),
+      Input('dummy_div3', 'children')]
+    )
+def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
+    def create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl):
+        # calculate totals and collate into master dictionary
+        alldict = {}
+        dictlist = [pers_tbl, hh_tbl]
+        dtypelist = ['Total Persons', 'Total Households']
+        expfaclist = ['psexpfac', 'hhexpfac']
+        for adict, dtype, expfac in zip(dictlist, dtypelist, expfaclist):
+            keys = list(adict)
+            sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[expfac].sum(), keys)
+            d = dict(zip(keys, sumlist))
+            alldict[dtype] = d
+    
+        wrkr_keys = list(wrkrs_tbl)
+        wrkr_dfs = map(lambda x: pd.read_json(wrkrs_tbl[x], orient = 'split'), wrkr_keys)
+        wrkr_sumlist = [wrkr_df[wrkr_df['pwtaz'] >= 0]['psexpfac'].sum() for wrkr_df in wrkr_dfs]
+
+        wd = dict(zip(wrkr_keys, wrkr_sumlist))  
+        alldict.update({'Total Workers': wd})
+        df = pd.DataFrame.from_dict(alldict, orient = 'index').reset_index().rename(columns = {'index': ' '})
+
+        # format numbers with separator
+        format_number_dp = functools.partial(format_number, decimal_places = 0)
+        for i in range(1, len(df.columns)):
+            df.iloc[:, i] = df.iloc[:, i].apply(format_number_dp)
+   
+        t = html.Div(
+            [dash_table.DataTable(id='table-totals',
+                                  columns=[{"name": i, "id": i} for i in df.columns],
+                                  data=df.to_dict('rows'),
+                                  style_cell = {
+                                      'font-family':'Segoe UI',
+                                      'font-size': 14,
+                                      'text-align': 'center'}
+                                  )
+             ]
+            )
+        return t
+
+    def create_simple_bar_graph(table, xcol, weightcol, xaxis_title, yaxis_title):
+        datalist = []
+        for key in table.keys():
+            df = pd.read_json(table[key], orient='split')
+            df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
+            df = df.reset_index()
+
+            trace = go.Bar(
+                x=df[xcol].copy(),
+                y=df[weightcol].copy(),
+                name=key
+                )
+            datalist.append(trace)
+
+        layout = go.Layout(
+            barmode = 'group',
+            xaxis={'title': xaxis_title, 'type':'category'},
+            yaxis={'title': yaxis_title, 'zeroline':False},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+        return {'data': datalist, 'layout': layout}
+    
+    def create_workers_table(wrkrs_tbl):
+        taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+
+        datalist = []
+        for key in wrkrs_tbl.keys():
+            df = pd.read_json(wrkrs_tbl[key], orient='split')
+    
+            df = df.merge(taz_geog, left_on='hhtaz', right_on='taz')
+            df.rename(columns={'geog_name':'hh_county'}, inplace=True)
+
+            df = df.merge(taz_geog, left_on='pwtaz', right_on='taz')
+            df.rename(columns={'geog_name':'work_county'}, inplace=True)
+
+            df.drop(['taz_x', 'taz_y'], axis=1, inplace=True)
+            df = df.groupby(['hh_county','work_county']).sum()[['psexpfac']]
+
+            df.rename(columns = {'psexpfac': key}, inplace=True)
+            df = df.reset_index()
+    
+            datalist.append(df)
+    
+        df_scenarios = pd.merge(datalist[0], datalist[1], on = ['hh_county','work_county'])
+        df_scenarios.rename(columns = {'hh_county': 'Household County', 'work_county': 'Work County'}, inplace=True)
+        # format numbers with separator
+        format_number_dp = functools.partial(format_number, decimal_places = 0)
+        for i in range(2, len(df_scenarios.columns)):
+            df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
+
+        t = html.Div(
+            [dash_table.DataTable(id='table-workers',
+                                  columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+                                  data=df_scenarios.to_dict('rows'),
+                                  style_cell_conditional = [
+                                      {
+                                          'if': {'column_id': i},
+                                          'textAlign': 'left'
+                                          } for i in ['Household County', 'Work County']
+                                      ],
+                                  style_cell = {
+                                      'font-family':'Segoe UI',
+                                      'font-size': 11,
+                                      'text-align': 'center'}
+                                  )
+                ]
+            )
+
+        return t
+
+    pers_tbl = json.loads(pers_json)
+    hh_tbl = json.loads(hh_json)
+    wrkrs_tbl = json.loads(wrkrs_json)
+    auto_tbl = json.loads(auto_json)
+
+    totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
+    hh_graph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
+    auto_graph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
+    wrkr_table = create_workers_table(wrkrs_tbl)
+    
+    return totals_table, hh_graph, auto_graph, wrkr_table
+
+
+
+# Run app ------------------------------------------------------------------------
+
 app.run_server()
 #if __name__ == '__main__': app.run_server(debug=False,port=8050,host='0.0.0.0')

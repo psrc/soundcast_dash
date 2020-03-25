@@ -1,14 +1,22 @@
 h1 {
   font-size: 1.2vw;
+  margin-top: 0.5vw;
 }
+
 h2 {
   font-size: 1.1vw;
   padding-bottom: .5vw;
   border-bottom: #bababa solid 1px;
 }
+
 .main-body-container {
   margin: 2rem 3rem;
 }
+
 .aside-card {
   margin-top: 1rem;
+}
+
+.additional-header {
+    border-top: #e0e0e0 solid 1px;
 }
