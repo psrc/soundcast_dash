@@ -5,6 +5,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 import dash_table
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 import os
 import json
@@ -21,6 +22,8 @@ def format_number(x, decimal_places):
 
 available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name)) and name !='data']
 mode_dict = {1 : 'walk', 2 : 'bike', 3 : 'sov', 4 : 'hov2', 5 : 'hov3', 6 : 'w_transit', 7 : 'd_transit', 8 : 'school_bus', 9 : 'other', 0 : 'other'}
+taz_gdf = gpd.read_file('data/data/taz2010nowater.shp')
+taz_gdf['id'] = taz_gdf.index 
 
 # Layout ------------------------------------------------------------------
 # Scenario Selection Layout
@@ -321,6 +324,61 @@ tab_hh_pers_layout = [
     html.Div(id='dummy_div3')
     ]
 
+# Taz Map Layout
+taz_map_filter =  [dbc.Card(
+    [
+    dbc.CardHeader(html.H1('Filters')), 
+    dbc.CardBody(
+        [
+            dbc.Label('Destination Purpose:'),
+            dcc.Dropdown(
+                value='All',
+                id='dpurp-dropdown2'
+                ),
+            html.Br(),
+            html.Div(id='df', style={'display': 'none'}),
+            html.Div(id='dummy_div_map'),
+        ],
+        #className = 'bg-light',
+      
+        )],
+    className='aside-card'
+)  ] 
+
+taz_map_layout = [
+dbc.Card(
+    dbc.CardBody(
+        [
+            dcc.Graph(id="my-graph"),
+            html.Div(id='dummy_div_map'),
+            #html.Br(),
+            #dbc.CardFooter('Trip Departure Hour:'),
+            #dcc.Graph(id='trip-deptm-graph'),
+        ],
+
+    ),
+    #className='card-deck py-4',
+    style= {"margin-top": "20px"},
+     
+),
+
+dbc.Card(
+    dbc.CardBody(
+        [
+            #dbc.CardFooter("Trip Mode Choice"),
+            #dcc.Graph(id='mode-choice-graph'),
+            #html.Br(),
+            html.H2('Trip Departure Hour:'),
+            dcc.Graph(id='my-graph2'),
+
+            html.Div(id='dummy_div_map'),
+        ]
+    ),
+    style= {"margin-top": "20px"},
+)
+]
+
+
 # Main Layout
 navbar = dbc.NavbarSimple(
      children=[
@@ -350,7 +408,7 @@ tabs = dbc.Tabs(
         dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
-        #dbc.Tab(label="TAZ Map", tab_id="taz-map")
+        dbc.Tab(label="TAZ Map", tab_id="taz-map")
     ],
     id="tabs-list"
 )
@@ -383,7 +441,7 @@ hidden_divs = dbc.Container([
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
     html.Div(id='households', style={'display': 'none'}),
-    #html.Div(id='dtaz_trips', style={'display': 'none'}),
+    html.Div(id='dtaz_trips', style={'display': 'none'}),
     html.Div(id='auto_own', style={'display': 'none'}),
     html.Div(id='workers', style={'display': 'none'},)
 ])
@@ -402,6 +460,11 @@ def render_content_filter(tab):
         return tab_tours_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
+    elif tab == 'taz-map':
+        return taz_map_filter
+    else:
+        return None
+
 
 @app.callback(Output('tabs-content', 'children'),
               [Input('tabs-list', 'active_tab')])
@@ -414,6 +477,10 @@ def render_content(tab):
         return tab_day_pattern_layout
     elif tab == 'tab-hh-pers':
         return tab_hh_pers_layout
+    elif tab == 'taz-map':
+        return taz_map_layout
+
+
 
 # Scenario Selection callback ---------------------------------------------------
 @app.callback(
@@ -421,7 +488,7 @@ def render_content(tab):
          Output('tours', 'children'),
          Output('persons', 'children'),
          Output('households', 'children'),
-         #Output('dtaz_trips', 'children'),
+         Output('dtaz_trips', 'children'),
          Output('auto_own', 'children'),
          Output('workers', 'children')
          ],
@@ -436,8 +503,8 @@ def page_1_dropdown(val1, val2):
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
     hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
     hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
-    #dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
-    #dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
+    dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
+    dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
     auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
     auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
     wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
@@ -459,10 +526,10 @@ def page_1_dropdown(val1, val2):
          val1: hhs1.to_json(orient='split'), 
          val2: hhs2.to_json(orient='split')
         }
-    #dtaz_trips = {
-    #     val1: dtaz_trips1.to_json(orient='split'), 
-    #     val2: dtaz_trips2.to_json(orient='split')
-    #    }
+    dtaz_trips = {
+         val1: dtaz_trips1.to_json(orient='split'), 
+         val2: dtaz_trips2.to_json(orient='split')
+        }
     auto_own = {
          val1: auto_own1.to_json(orient='split'), 
          val2: auto_own2.to_json(orient='split')
@@ -471,7 +538,7 @@ def page_1_dropdown(val1, val2):
         val1: wrkrs1.to_json(orient='split'), 
         val2: wrkrs2.to_json(orient='split')
         }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(auto_own), json.dumps(workers) #json.dumps(dtaz_trips),
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(dtaz_trips), json.dumps(auto_own), json.dumps(workers)
 
 # Trips Mode Choice tab ------------------------------------------------------------------
 @app.callback(
@@ -948,9 +1015,125 @@ def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
     
     return totals_table, hh_graph, auto_graph, wrkr_table
 
+# Taz Map tab ------------------------------------------------------------------
+# load drop downs
+@app.callback(Output('dpurp-dropdown2', 'options'),
+               [Input('dtaz_trips', 'children'),
+                Input('dummy_div_map', 'children')]) # change dummy div name
+
+def map_load_drop_downs(json_data, aux):
+    print ('taz load drop downs called')
+    dpurp = ['All']
+
+    datasets = json.loads(json_data)
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
+    dpurp.extend([x for x in df.dpurp.unique()])
+    print (dpurp)
+    return [{'label': i, 'value': i} for i in dpurp]
+
+@app.callback(Output('my-graph', 'figure'),
+               [Input('dtaz_trips', 'children'),
+                Input('dpurp-dropdown2', 'value'),
+                Input('dummy_div_map', 'children')]) # change dummy div name
+
+def map_update_graph(json_data, dpurp, aux):
+    print ('update map')
+    datasets = json.loads(json_data)
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
+    df = pd.DataFrame(df.groupby(['dtaz', 'mode'])['trexpfac'].sum())
+    df.reset_index(inplace = True)
+    df = df.pivot(index='dtaz', columns='mode', values='trexpfac')
+    df.fillna(0, inplace = True)
+    df['sum_trips'] = df.sum(axis=1)
+    df.reset_index(inplace = True)
+    gdf = taz_gdf.copy()
+    print (gdf.columns)
+    #gdf = gdf.head(5)
+    #print (gdf)
+    gdf = gdf.merge(df, left_on = 'TAZ' , right_on = 'dtaz')
+    gdf['geometry'] = gdf['geometry'].to_crs(epsg=4326)
+    geojson_data = json.loads(gdf.to_json())
+    #print (gdf.columns)
+    print (gdf['Transit'])
+    gdf['mode_share'] = (gdf['Transit']/gdf['sum_trips']) * 100
+    trace = go.Choroplethmapbox(geojson = geojson_data, locations=gdf['id'],z=gdf['mode_share'], autocolorscale=False,
+                          colorscale="YlGnBu", zauto = False, zmid=12, zmin=0, zmax=15, marker={'line': {'color': 'rgb(180,180,180)','width': 0.5}},
+                          colorbar={"thickness": 10,"len": 0.3,"x": 0.9,"y": 0.7,
+                                    'title': {"text": 'transit', "side": "bottom"}})
+    #print (trace)
+ 
+    return {"data": [trace],
+            "layout": go.Layout(title='transit', mapbox_style="open-street-map", mapbox_zoom=7.5, mapbox_center = {"lat": 47.609, "lon": -122.291}, height=800, geo={'showframe': False,'showcoastlines': False,})}
+
+
+@app.callback(
+	Output('my-graph2', 'figure'),
+	[Input('my-graph', 'selectedData'),
+    Input('dtaz_trips', 'children'),
+    Input('dummy_div_map', 'children')]) # change dummy div name
+def display_selected_data(selectedData, json_data, aux):
+    
+    datasets = json.loads(json_data)
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
+    
+    data1 = []
+    if selectedData is None:
+        print ('selected data is None')
+        df_mode_share= df[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]
+        df_mode_share.reset_index(inplace=True)
+
+        # mode choice graph
+        
+        trace1 = go.Bar(
+            x=df_mode_share['mode'].copy(),
+            y=df_mode_share['trexpfac'].copy(),
+            name='test'
+            )
+        data1.append(trace1)
+
+        layout1 = go.Layout(
+            barmode = 'group',
+            xaxis={'title': 'mode'},
+            yaxis={'title': 'test'},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+        
+    else:
+        print ('map graph')
+        x = selectedData['points']
+        ids = [y['pointNumber'] for y in x]
+        gdf = taz_gdf.copy()
+        gdf = gdf.merge(df, left_on = 'TAZ' , right_on = 'dtaz')
+        gdf = gdf[gdf['id'].isin(ids)]
+        gdf = gdf[['mode','trexpfac']].groupby('mode').sum()[['trexpfac']]
+        gdf.reset_index(inplace=True)
+        print(len(gdf))
+        print (gdf.columns)
+        trace1 = go.Bar(
+            x=gdf['mode'].copy(),
+            y=gdf['trexpfac'].copy(),
+            name='test'
+            )
+        data1.append(trace1)
+
+        layout1 = go.Layout(
+            barmode = 'group',
+            xaxis={'title': 'mode'},
+            yaxis={'title': 'test'},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+        #print (df)
+    return {'data': data1, 'layout': layout1}
 
 
 # Run app ------------------------------------------------------------------------
 
-app.run_server()
+app.run_server(debug=True)
 #if __name__ == '__main__': app.run_server(debug=False,port=8050,host='0.0.0.0')
