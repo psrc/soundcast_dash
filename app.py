@@ -440,10 +440,10 @@ hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
-    html.Div(id='households', style={'display': 'none'}),
+    #html.Div(id='households', style={'display': 'none'}),
     html.Div(id='dtaz_trips', style={'display': 'none'}),
-    html.Div(id='auto_own', style={'display': 'none'}),
-    html.Div(id='workers', style={'display': 'none'},)
+    #html.Div(id='auto_own', style={'display': 'none'}),
+    #html.Div(id='workers', style={'display': 'none'},)
 ])
 
 app.layout = html.Div([navbar, main_body, hidden_divs])
@@ -487,10 +487,10 @@ def render_content(tab):
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
-         Output('households', 'children'),
+         #Output('households', 'children'),
          Output('dtaz_trips', 'children'),
-         Output('auto_own', 'children'),
-         Output('workers', 'children')
+         #Output('auto_own', 'children'),
+         #Output('workers', 'children')
          ],
          [Input('scenario-1-dropdown', 'value'),
           Input('scenario-2-dropdown', 'value')])
@@ -501,15 +501,14 @@ def page_1_dropdown(val1, val2):
     tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
     pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
-    hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
-    hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
+    #hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
+    #hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
     dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
     dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
-    auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
-    auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
-    wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
-    wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
-    #print df2.trexpfac.sum()
+    #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
+    #auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
+    #wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
+    #wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
     trips = {
         val1: trips1.to_json(orient='split'), 
         val2: trips2.to_json(orient='split')
@@ -522,23 +521,23 @@ def page_1_dropdown(val1, val2):
         val1: pers1.to_json(orient='split'), 
         val2: pers2.to_json(orient='split')
         }
-    households = {
-         val1: hhs1.to_json(orient='split'), 
-         val2: hhs2.to_json(orient='split')
-        }
+    #households = {
+    #     val1: hhs1.to_json(orient='split'), 
+    #     val2: hhs2.to_json(orient='split')
+    #    }
     dtaz_trips = {
          val1: dtaz_trips1.to_json(orient='split'), 
          val2: dtaz_trips2.to_json(orient='split')
         }
-    auto_own = {
-         val1: auto_own1.to_json(orient='split'), 
-         val2: auto_own2.to_json(orient='split')
-        }
-    workers = {
-        val1: wrkrs1.to_json(orient='split'), 
-        val2: wrkrs2.to_json(orient='split')
-        }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(households), json.dumps(dtaz_trips), json.dumps(auto_own), json.dumps(workers)
+    #auto_own = {
+    #     val1: auto_own1.to_json(orient='split'), 
+    #     val2: auto_own2.to_json(orient='split')
+    #    }
+    #workers = {
+    #    val1: wrkrs1.to_json(orient='split'), 
+    #    val2: wrkrs2.to_json(orient='split')
+    #    }
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(dtaz_trips)#, json.dumps(households), json.dumps(auto_own), json.dumps(workers)
 
 # Trips Mode Choice tab ------------------------------------------------------------------
 @app.callback(
@@ -884,33 +883,67 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, 
 @app.callback(
     [Output('table-totals-container', 'children'),
      Output('household-size-graph', 'figure'),
-     Output('auto-own-graph', 'figure'),
-     Output('table-wrkr-container', 'children')],
+     #Output('auto-own-graph', 'figure'),
+     #Output('table-wrkr-container', 'children')
+     ],
      [Input('persons', 'children'),
-      Input('households', 'children'),
-      Input('workers', 'children'),
-      Input('auto_own', 'children'),
+      Input('scenario-1-dropdown', 'value'),
+      Input('scenario-2-dropdown', 'value'),
+      #Input('households', 'children'),
+      #Input('workers', 'children'),
+      #Input('auto_own', 'children'),
       Input('dummy_div3', 'children')]
     )
-def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
+#def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
+def update_visuals(pers_json, scenario1, scenario2, aux):
+    def compile_csv_to_dict(filename, scenario_list):
+        dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
+        dfs_dict = dict(zip(scenario_list, dfs))
+        return(dfs_dict)
+
+    #hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
+    #hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
+    #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
+    #auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
+    #wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
+    #wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
+
     def create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl):
         # calculate totals and collate into master dictionary
         alldict = {}
-        dictlist = [pers_tbl, hh_tbl]
-        dtypelist = ['Total Persons', 'Total Households']
-        expfaclist = ['psexpfac', 'hhexpfac']
-        for adict, dtype, expfac in zip(dictlist, dtypelist, expfaclist):
-            keys = list(adict)
-            sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[expfac].sum(), keys)
-            d = dict(zip(keys, sumlist))
-            alldict[dtype] = d
-    
-        wrkr_keys = list(wrkrs_tbl)
-        wrkr_dfs = map(lambda x: pd.read_json(wrkrs_tbl[x], orient = 'split'), wrkr_keys)
-        wrkr_sumlist = [wrkr_df[wrkr_df['pwtaz'] >= 0]['psexpfac'].sum() for wrkr_df in wrkr_dfs]
 
-        wd = dict(zip(wrkr_keys, wrkr_sumlist))  
-        alldict.update({'Total Workers': wd})
+        # persons
+        keys = pers_tbl.keys()
+        dtype = 'Total Persons'
+        expfac = 'psexpfac'
+        sum = map(lambda x: pd.read_json(pers_tbl[x], orient = 'split')[expfac].sum(), keys)
+        d = dict(zip(keys, sum))
+        alldict[dtype] = d
+
+        # households
+        hh_sum = map(lambda x: hh_tbl[x]['hhexpfac'].sum(), hh_tbl.keys())
+        hh_d = dict(zip(hh_tbl.keys(), hh_sum))
+        alldict['Total Households'] = hh_d
+        
+        # workers
+        wrkrs_sum = map(lambda x: wrkrs_tbl[x][wrkrs_tbl[x]['pwtaz']>= 0]['psexpfac'].sum(), wrkrs_tbl.keys())
+        wrkrs_d = dict(zip(wrkrs_tbl.keys(), wrkrs_sum))
+        alldict['Total Workers'] = wrkrs_d
+        #dictlist = [pers_tbl, hh_tbl]
+        #dtypelist = ['Total Persons', 'Total Households']
+        #expfaclist = ['psexpfac', 'hhexpfac']
+        #for adict, dtype, expfac in zip(dictlist, dtypelist, expfaclist):
+        #    keys = list(adict)
+        #    sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[expfac].sum(), keys)
+        #    d = dict(zip(keys, sumlist))
+        #    alldict[dtype] = d
+    
+        #wrkr_keys = list(wrkrs_tbl)
+        #wrkr_dfs = map(lambda x: pd.read_json(wrkrs_tbl[x], orient = 'split'), wrkr_keys)
+        #wrkr_sumlist = [wrkr_df[wrkr_df['pwtaz'] >= 0]['psexpfac'].sum() for wrkr_df in wrkr_dfs]
+
+        #wd = dict(zip(wrkr_keys, wrkr_sumlist))  
+        #alldict.update({'Total Workers': wd})
         df = pd.DataFrame.from_dict(alldict, orient = 'index').reset_index().rename(columns = {'index': ' '})
 
         # format numbers with separator
@@ -934,7 +967,8 @@ def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
     def create_simple_bar_graph(table, xcol, weightcol, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
-            df = pd.read_json(table[key], orient='split')
+            #df = pd.read_json(table[key], orient='split')
+            df = table[key]
             df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
             df = df.reset_index()
 
@@ -1002,18 +1036,21 @@ def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
             )
 
         return t
-
+    
+    vals = [scenario1, scenario2]
     pers_tbl = json.loads(pers_json)
-    hh_tbl = json.loads(hh_json)
-    wrkrs_tbl = json.loads(wrkrs_json)
-    auto_tbl = json.loads(auto_json)
+    hh_tbl = compile_csv_to_dict('household_size_vehs_workers.csv', vals)
+    wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
+    #auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
+
+    #auto_tbl = json.loads(auto_json)
 
     totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
     hh_graph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
-    auto_graph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
-    wrkr_table = create_workers_table(wrkrs_tbl)
+    #auto_graph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
+    #wrkr_table = create_workers_table(wrkrs_tbl)
     
-    return totals_table, hh_graph, auto_graph, wrkr_table
+    return totals_table, hh_graph#, auto_graph, wrkr_table
 
 # Taz Map tab ------------------------------------------------------------------
 # load drop downs
