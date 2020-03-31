@@ -359,7 +359,7 @@ taz_map_filter =  [dbc.Card(
 taz_map_layout = [
 dbc.Card(
     dbc.CardBody(
-        [
+        [   
             dcc.Graph(id="my-graph"),
             html.Div(id='dummy_div_map'),
             #html.Br(),
@@ -386,7 +386,7 @@ dbc.Card(
         ]
     ),
     style= {"margin-top": "20px"},
-)
+),
 ]
 
 
@@ -501,7 +501,7 @@ def render_content(tab):
          Output('tours', 'children'),
          Output('persons', 'children'),
          #Output('households', 'children'),
-         Output('dtaz_trips', 'children'),
+         #Output('dtaz_trips', 'children'),
          #Output('auto_own', 'children'),
          #Output('workers', 'children')
          ],
@@ -516,8 +516,8 @@ def page_1_dropdown(val1, val2):
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
     #hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
     #hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
-    dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
-    dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
+    #dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
+    #dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
     #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
     #auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
     #wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
@@ -538,10 +538,10 @@ def page_1_dropdown(val1, val2):
     #     val1: hhs1.to_json(orient='split'), 
     #     val2: hhs2.to_json(orient='split')
     #    }
-    dtaz_trips = {
-         val1: dtaz_trips1.to_json(orient='split'), 
-         val2: dtaz_trips2.to_json(orient='split')
-        }
+    #dtaz_trips = {
+    #     val1: dtaz_trips1.to_json(orient='split'), 
+    #     val2: dtaz_trips2.to_json(orient='split')
+    #    }
     #auto_own = {
     #     val1: auto_own1.to_json(orient='split'), 
     #     val2: auto_own2.to_json(orient='split')
@@ -550,7 +550,7 @@ def page_1_dropdown(val1, val2):
     #    val1: wrkrs1.to_json(orient='split'), 
     #    val2: wrkrs2.to_json(orient='split')
     #    }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(dtaz_trips)#, json.dumps(households), json.dumps(auto_own), json.dumps(workers)
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons)#, json.dumps(dtaz_trips)#, json.dumps(households), json.dumps(auto_own), json.dumps(workers)
 
 # Trips Mode Choice tab ------------------------------------------------------------------
 @app.callback(
@@ -1047,6 +1047,21 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
 
 # Taz Map tab ------------------------------------------------------------------
 # load drop downs
+@app.callback(
+    Output('dtaz_trips', 'children'),
+    [Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value')]
+    )
+
+def map_read_data(scenario1, scenario2):
+    dtaz_trips1 = pd.read_csv(os.path.join('data', scenario1, 'trip_dtaz.csv'))
+    dtaz_trips2 = pd.read_csv(os.path.join('data', scenario2, 'trip_dtaz.csv'))
+    dtaz_trips = {
+        scenario1: dtaz_trips1.to_json(orient='split'), 
+        scenario2: dtaz_trips2.to_json(orient='split')
+    }
+    return json.dumps(dtaz_trips)
+
 @app.callback(Output('dpurp-dropdown2', 'options'),
                [Input('dtaz_trips', 'children'),
                 Input('dummy_div_map', 'children')]) # change dummy div name
