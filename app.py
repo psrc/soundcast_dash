@@ -282,7 +282,7 @@ tab_hh_pers_filter = [
                 dbc.RadioItems(
                     id='hhpers-dataset-type',
                     options=[{'label': i, 'value': i} for i in 
-                             ['Household Size', 'Auto Ownership', 'Workers by Home and Work County']],
+                             ['Household Size', 'Auto Ownership', 'Workers by County']],
                     value='Household Size'
                 ),
                 html.Br(),
@@ -309,35 +309,13 @@ tab_hh_pers_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2("Graph Title Placeholder"),
+                        html.H2(id='hhpers-graph-header'),
                         dcc.Graph(id='hhpers-graph-container'),       
                         ]
                     ), style= {"margin-top": "20px"}
                 ),
             width=12
             ), # end Col
-        #dbc.Col(
-        #    dbc.Card(
-        #        dbc.CardBody(
-        #            [
-        #                html.H2("Household Size"),
-        #                dcc.Graph(id='household-size-graph'),       
-        #                ]
-        #            ), style= {"margin-top": "20px"}
-        #        ),
-        #    width=7
-        #    ), # end Col
-        #dbc.Col(
-        #      dbc.Card(
-        #        dbc.CardBody(
-        #            [
-        #                html.H2("Auto Ownership"),
-        #                dcc.Graph(id='auto-own-graph'),           
-        #                ]
-        #            ), style= {"margin-top": "20px"}
-        #        ),
-        #    width=5
-        #    ) # end Col
         ]
         ), # end Row
     #dbc.Row(children=[
@@ -917,6 +895,7 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, 
 
 @app.callback(
     [Output('table-totals-container', 'children'),
+     Output('hhpers-graph-header', 'children'),
      Output('hhpers-graph-container', 'figure')
      #Output('table-wrkr-container', 'children')
      ],
@@ -1057,13 +1036,14 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
 
     if data_type == 'Household Size':
         agraph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
+        agraph_header = 'Household Size'
     elif data_type == 'Auto Ownership':
         agraph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
-    #hh_graph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
-    #auto_graph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
+        agraph_header = 'Auto Ownership'
+
     #wrkr_table = create_workers_table(wrkrs_tbl)
     
-    return totals_table, agraph #, hh_graph, auto_graph#, wrkr_table
+    return totals_table, agraph_header, agraph 
 
 # Taz Map tab ------------------------------------------------------------------
 # load drop downs
@@ -1185,5 +1165,5 @@ def display_selected_data(selectedData, json_data, aux):
 
 # Run app ------------------------------------------------------------------------
 
-app.run_server(debug=True)
+app.run_server(debug=False)
 #if __name__ == '__main__': app.run_server(debug=False,port=8050,host='0.0.0.0')
