@@ -272,6 +272,28 @@ tab_day_pattern_layout = [
     ]
 
 # Tab Households and Persons Layout
+tab_hh_pers_filter = [
+        dbc.Card(
+        [
+        dbc.CardHeader(html.H1('Graph')), 
+        dbc.CardBody(
+            [
+                dbc.Label('Select dataset:'),
+                dbc.RadioItems(
+                    id='hhpers-dataset-type',
+                    options=[{'label': i, 'value': i} for i in 
+                             ['Household Size', 'Auto Ownership', 'Workers by Home and Work County']],
+                    value='Household Size'
+                ),
+                html.Br(),
+                html.Div(id='hhpers-dummy-dataset-type'),
+            ],
+        ), # end of CardBody
+        ],
+        className='aside-card'
+            ) # of Card
+    ]
+
 tab_hh_pers_layout = [
     dbc.Card(
         dbc.CardBody(
@@ -283,44 +305,55 @@ tab_hh_pers_layout = [
             ), style= {"margin-top": "20px"}
         ),
     dbc.Row(children=[
-        dbc.Col(
+         dbc.Col(
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2("Household Size"),
-                        dcc.Graph(id='household-size-graph'),       
+                        html.H2("Graph Title Placeholder"),
+                        dcc.Graph(id='hhpers-graph-container'),       
                         ]
                     ), style= {"margin-top": "20px"}
                 ),
-            width=7
+            width=12
             ), # end Col
-        dbc.Col(
-              dbc.Card(
-                dbc.CardBody(
-                    [
-                        html.H2("Auto Ownership"),
-                        dcc.Graph(id='auto-own-graph'),           
-                        ]
-                    ), style= {"margin-top": "20px"}
-                ),
-            width=5
-            ) # end Col
+        #dbc.Col(
+        #    dbc.Card(
+        #        dbc.CardBody(
+        #            [
+        #                html.H2("Household Size"),
+        #                dcc.Graph(id='household-size-graph'),       
+        #                ]
+        #            ), style= {"margin-top": "20px"}
+        #        ),
+        #    width=7
+        #    ), # end Col
+        #dbc.Col(
+        #      dbc.Card(
+        #        dbc.CardBody(
+        #            [
+        #                html.H2("Auto Ownership"),
+        #                dcc.Graph(id='auto-own-graph'),           
+        #                ]
+        #            ), style= {"margin-top": "20px"}
+        #        ),
+        #    width=5
+        #    ) # end Col
         ]
         ), # end Row
-    dbc.Row(children=[
-        dbc.Col(
-            dbc.Card(
-                dbc.CardBody(
-                    [
-                        html.H2("Workers"),
-                        html.Br(),
-                        html.Div(id='table-wrkr-container'),            
-                        ]
-                    ), style= {"margin-top": "20px"}
-                ),
-            width=5
-            ), # end col
-        ]),
+    #dbc.Row(children=[
+    #    dbc.Col(
+    #        dbc.Card(
+    #            dbc.CardBody(
+    #                [
+    #                    html.H2("Workers"),
+    #                    html.Br(),
+    #                    html.Div(id='table-wrkr-container'),            
+    #                    ]
+    #                ), style= {"margin-top": "20px"}
+    #            ),
+    #        width=5
+    #        ), # end col
+    #    ]),
     html.Div(id='dummy_div3')
     ]
 
@@ -460,6 +493,8 @@ def render_content_filter(tab):
         return tab_tours_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
+    elif tab == 'tab-hh-pers':
+        return tab_hh_pers_filter
     elif tab == 'taz-map':
         return taz_map_filter
     else:
@@ -882,31 +917,21 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, 
 
 @app.callback(
     [Output('table-totals-container', 'children'),
-     Output('household-size-graph', 'figure'),
-     #Output('auto-own-graph', 'figure'),
+     Output('hhpers-graph-container', 'figure')
      #Output('table-wrkr-container', 'children')
      ],
-     [Input('persons', 'children'),
+     [Input('hhpers-dataset-type', 'value'),
+      Input('persons', 'children'),
       Input('scenario-1-dropdown', 'value'),
       Input('scenario-2-dropdown', 'value'),
-      #Input('households', 'children'),
-      #Input('workers', 'children'),
-      #Input('auto_own', 'children'),
       Input('dummy_div3', 'children')]
     )
-#def update_visuals(pers_json, hh_json, wrkrs_json, auto_json, aux):
-def update_visuals(pers_json, scenario1, scenario2, aux):
+
+def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
-
-    #hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
-    #hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
-    #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
-    #auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
-    #wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
-    #wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
 
     def create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl):
         # calculate totals and collate into master dictionary
@@ -929,21 +954,7 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
         wrkrs_sum = map(lambda x: wrkrs_tbl[x][wrkrs_tbl[x]['pwtaz']>= 0]['psexpfac'].sum(), wrkrs_tbl.keys())
         wrkrs_d = dict(zip(wrkrs_tbl.keys(), wrkrs_sum))
         alldict['Total Workers'] = wrkrs_d
-        #dictlist = [pers_tbl, hh_tbl]
-        #dtypelist = ['Total Persons', 'Total Households']
-        #expfaclist = ['psexpfac', 'hhexpfac']
-        #for adict, dtype, expfac in zip(dictlist, dtypelist, expfaclist):
-        #    keys = list(adict)
-        #    sumlist = map(lambda x: pd.read_json(adict[x], orient = 'split')[expfac].sum(), keys)
-        #    d = dict(zip(keys, sumlist))
-        #    alldict[dtype] = d
-    
-        #wrkr_keys = list(wrkrs_tbl)
-        #wrkr_dfs = map(lambda x: pd.read_json(wrkrs_tbl[x], orient = 'split'), wrkr_keys)
-        #wrkr_sumlist = [wrkr_df[wrkr_df['pwtaz'] >= 0]['psexpfac'].sum() for wrkr_df in wrkr_dfs]
 
-        #wd = dict(zip(wrkr_keys, wrkr_sumlist))  
-        #alldict.update({'Total Workers': wd})
         df = pd.DataFrame.from_dict(alldict, orient = 'index').reset_index().rename(columns = {'index': ' '})
 
         # format numbers with separator
@@ -967,7 +978,6 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
     def create_simple_bar_graph(table, xcol, weightcol, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
-            #df = pd.read_json(table[key], orient='split')
             df = table[key]
             df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
             df = df.reset_index()
@@ -1041,16 +1051,19 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
     pers_tbl = json.loads(pers_json)
     hh_tbl = compile_csv_to_dict('household_size_vehs_workers.csv', vals)
     wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
-    #auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
-
-    #auto_tbl = json.loads(auto_json)
+    auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
 
     totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
-    hh_graph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
+
+    if data_type == 'Household Size':
+        agraph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
+    elif data_type == 'Auto Ownership':
+        agraph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
+    #hh_graph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
     #auto_graph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
     #wrkr_table = create_workers_table(wrkrs_tbl)
     
-    return totals_table, hh_graph#, auto_graph, wrkr_table
+    return totals_table, agraph #, hh_graph, auto_graph#, wrkr_table
 
 # Taz Map tab ------------------------------------------------------------------
 # load drop downs
