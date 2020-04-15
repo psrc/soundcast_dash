@@ -1056,6 +1056,7 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
              y = 'Workers', 
              color = 'Scenario'
              )
+        agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
         agraph.for_each_annotation(lambda a: a.update(text=a.text.replace("Household County=", "")))
         agraph.for_each_trace(lambda t: t.update(name=t.name.replace("Scenario=", "")))
         agraph_header = 'Workers by Household County by Work County'
