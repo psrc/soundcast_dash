@@ -10,6 +10,7 @@ import numpy as np
 import os
 import json
 import plotly.graph_objs as go
+import plotly.express as px
 import functools
 
 external_stylesheets = [dbc.themes.BOOTSTRAP]  # [dbc.themes.MATERIA]
@@ -903,7 +904,6 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, 
     [Output('table-totals-container', 'children'),
      Output('hhpers-graph-header', 'children'),
      Output('hhpers-graph-container', 'figure')
-     #Output('table-wrkr-container', 'children')
      ],
     [Input('hhpers-dataset-type', 'value'),
      Input('persons', 'children'),
@@ -988,8 +988,9 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
 
         datalist = []
         for key in wrkrs_tbl.keys():
-            df = pd.read_json(wrkrs_tbl[key], orient='split')
 
+            df = wrkrs_tbl[key]
+    
             df = df.merge(taz_geog, left_on='hhtaz', right_on='taz')
             df.rename(columns={'geog_name': 'hh_county'}, inplace=True)
 
@@ -1010,28 +1011,27 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         format_number_dp = functools.partial(format_number, decimal_places=0)
         for i in range(2, len(df_scenarios.columns)):
             df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
+        return df_scenarios
+        #t = html.Div(
+        #    [dash_table.DataTable(id='table-workers',
+        #                          columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+        #                          data=df_scenarios.to_dict('rows'),
+        #                          style_cell_conditional = [
+        #                              {
+        #                                  'if': {'column_id': i},
+        #                                  'textAlign': 'left'
+        #                                  } for i in ['Household County', 'Work County']
+        #                              ],
+        #                          style_cell = {
+        #                              'font-family':'Segoe UI',
+        #                              'font-size': 11,
+        #                              'text-align': 'center'}
+        #                          )
+        #        ]
+        #    )
 
-        t = html.Div(
-            [
-                dash_table.DataTable(
-                    id='table-workers',
-                    columns=[{"name": i, "id": i} for i in df_scenarios.columns],
-                    data=df_scenarios.to_dict('rows'),
-                    style_cell_conditional=[
-                        {
-                            'if': {'column_id': i},
-                            'textAlign': 'left'
-                        } for i in ['Household County', 'Work County']
-                    ],
-                    style_cell={
-                        'font-family': 'Segoe UI',
-                        'font-size': 11,
-                        'text-align': 'center'}
-                )
-            ]
-        )
-
-        return t
+        #return t
+    
 
     vals = [scenario1, scenario2]
     pers_tbl = json.loads(pers_json)
@@ -1041,6 +1041,8 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
 
     totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
 
+   
+
     if data_type == 'Household Size':
         agraph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
         agraph_header = 'Household Size'
@@ -1048,7 +1050,24 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         agraph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
         agraph_header = 'Auto Ownership'
 
-    #wrkr_table = create_workers_table(wrkrs_tbl)
+    elif data_type == 'Workers by County':
+        wdf = create_workers_table(wrkrs_tbl)
+        wdf_melt = pd.melt(wdf, id_vars =['Household County', 'Work County'], 
+                        value_vars = vals,
+                        var_name='Scenario', value_name='Workers')
+        agraph = px.bar(wdf_melt, 
+             height = 900, 
+             #width = 950,
+             barmode = 'group', 
+             facet_row = 'Household County', 
+             x = 'Work County', 
+             y = 'Workers', 
+             color = 'Scenario'
+             )
+        agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
+        agraph.for_each_annotation(lambda a: a.update(text=a.text.replace("Household County=", "")))
+        agraph.for_each_trace(lambda t: t.update(name=t.name.replace("Scenario=", "")))
+        agraph_header = 'Workers by Household County by Work County'
 
     return totals_table, agraph_header, agraph
 
