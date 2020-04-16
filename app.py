@@ -990,7 +990,7 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         for key in wrkrs_tbl.keys():
 
             df = wrkrs_tbl[key]
-    
+
             df = df.merge(taz_geog, left_on='hhtaz', right_on='taz')
             df.rename(columns={'geog_name': 'hh_county'}, inplace=True)
 
@@ -1031,7 +1031,6 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         #    )
 
         #return t
-    
 
     vals = [scenario1, scenario2]
     pers_tbl = json.loads(pers_json)
@@ -1040,8 +1039,6 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
     auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
 
     totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
-
-   
 
     if data_type == 'Household Size':
         agraph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
@@ -1052,18 +1049,19 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
 
     elif data_type == 'Workers by County':
         wdf = create_workers_table(wrkrs_tbl)
-        wdf_melt = pd.melt(wdf, id_vars =['Household County', 'Work County'], 
-                        value_vars = vals,
-                        var_name='Scenario', value_name='Workers')
-        agraph = px.bar(wdf_melt, 
-             height = 900, 
-             #width = 950,
-             barmode = 'group', 
-             facet_row = 'Household County', 
-             x = 'Work County', 
-             y = 'Workers', 
-             color = 'Scenario'
-             )
+        wdf_melt = pd.melt(wdf, id_vars=['Household County', 'Work County'],
+                           value_vars=vals,
+                           var_name='Scenario', value_name='Workers')
+        agraph = px.bar(
+            wdf_melt,
+            height=900,
+            #width=950,
+            barmode='group',
+            facet_row='Household County',
+            x='Work County',
+            y='Workers',
+            color='Scenario'
+        )
         agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
         agraph.for_each_annotation(lambda a: a.update(text=a.text.replace("Household County=", "")))
         agraph.for_each_trace(lambda t: t.update(name=t.name.replace("Scenario=", "")))
