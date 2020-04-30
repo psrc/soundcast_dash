@@ -23,8 +23,12 @@ def format_number(x, decimal_places):
     return formula.format(x)
 
 
-available_scenarios = [name for name in os.listdir('data') if os.path.isdir(os.path.join('data', name)) and name != 'data']
-mode_dict = {1: 'walk', 2: 'bike', 3: 'sov', 4: 'hov2', 5: 'hov3', 6: 'w_transit', 7: 'd_transit', 8: 'school_bus', 9: 'other', 0: 'other'}
+available_scenarios = [name for name in os.listdir('data')
+                       if os.path.isdir(os.path.join('data', name))
+                       and name != 'data']
+mode_dict = {1: 'walk', 2: 'bike', 3: 'sov', 4: 'hov2', 5: 'hov3',
+             6: 'w_transit', 7: 'd_transit', 8: 'school_bus', 9: 'other',
+             0: 'other'}
 taz_gdf = gpd.read_file('data/data/taz2010nowater.shp')
 taz_gdf['id'] = taz_gdf.index
 
@@ -41,7 +45,8 @@ scenario_select_layout = dbc.Card(
                         dcc.Dropdown(
                             id="scenario-1-dropdown",
                             options=[
-                                {"label": col, "value": col} for col in available_scenarios
+                                {"label": col, "value": col} for col
+                                in available_scenarios
                             ],
                             value=available_scenarios[0],
                         ),
@@ -53,7 +58,8 @@ scenario_select_layout = dbc.Card(
                         dcc.Dropdown(
                             id="scenario-2-dropdown",
                             options=[
-                                {"label": col, "value": col} for col in available_scenarios
+                                {"label": col, "value": col} for col
+                                in available_scenarios
                             ],
                             value=available_scenarios[1],
                         ),
@@ -101,7 +107,8 @@ tab_trips_mc_layout = [dbc.Card(
             html.Br(),
             dbc.RadioItems(
                 id='mode-share-type',
-                options=[{'label': i, 'value': i} for i in ['Mode Share', 'Trips by Mode']],
+                options=[{'label': i, 'value': i} for i
+                         in ['Mode Share', 'Trips by Mode']],
                 value='Mode Share',
                 inline=True
                 ),
@@ -156,7 +163,8 @@ tab_tours_mc_layout = [
                 html.Br(),
                 dbc.RadioItems(
                     id='tour-mode-share-type',
-                    options=[{'label': i, 'value': i} for i in ['Mode Share', 'Tours by Mode']],
+                    options=[{'label': i, 'value': i} for i
+                             in ['Mode Share', 'Tours by Mode']],
                     value='Mode Share',
                     inline=True
                 ),
@@ -186,14 +194,16 @@ tab_day_pattern_filter = [
                     dbc.Label('Day Pattern Type:'),
                     dbc.RadioItems(
                         id='dpatt-dataset-type',
-                        options=[{'label': i, 'value': i} for i in ['Tours', 'Trips']],
+                        options=[{'label': i, 'value': i} for i
+                                 in ['Tours', 'Trips']],
                         value='Tours'
                     ),
                     html.Br(),
                     html.Div(id='dummy-dataset-type'),
                 ],
             ),  # end of CardBody
-            dbc.CardHeader(html.H1('Day Pattern by Person Type'), className='additional-header'),
+            dbc.CardHeader(html.H1('Day Pattern by Person Type'),
+                           className='additional-header'),
             dbc.CardBody(
                 [
                     dbc.Label('Destination Purpose:'),
@@ -216,11 +226,14 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2(id='dpatt-perc-dpurp-gen-header'),  # "Percent of X by Purpose"
-                        html.Br(),
-                        html.Div(id='dpatt-table-perc-tours-dpurp-gen-container'),
+                        # "Percent of X by Purpose"
+                        html.H2(id='dpatt-perc-dpurp-gen-header'),
 
-                        ]
+                        html.Br(),
+                        html.Div(
+                            id='dpatt-table-perc-tours-dpurp-gen-container'),
+
+                    ]
                     ), style={"margin-top": "20px"}
                 ),
             width=6
@@ -229,11 +242,14 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2(id='dpatt-dpurp-gen-header'),  # "X per Person by Purpose"
-                        html.Br(),
-                        html.Div(id='dpatt-table-tours-dpurp-gen-container'),
+                        # "X per Person by Purpose"
+                        html.H2(id='dpatt-dpurp-gen-header'),
 
-                        ]
+                        html.Br(),
+                        html.Div(
+                            id='dpatt-table-tours-dpurp-gen-container'),
+
+                    ]
                     ), style={"margin-top": "20px"}
                 ),
             width=6
@@ -246,8 +262,10 @@ tab_day_pattern_layout = [
                 dbc.CardBody(
                     [
                         html.H2(id='dpatt-tours-pptyp-purpose-header'),
-                        #html.Div(children=[html.Div(id='dpatt-table-tours-purpose-container'),
-                        #                   dcc.Graph(id='dpatt-graph-tours-purpose')],className='inline-container'),
+                        #html.Div(children=[
+                        #   html.Div(id='dpatt-table-tours-purpose-container'),
+                        #   dcc.Graph(id='dpatt-graph-tours-purpose')],
+                        #   className='inline-container'),
                         html.Div(id='dpatt-table-tours-purpose-container'),
                         #dcc.Graph(id='dpatt-graph-tours-purpose'),
 
@@ -285,7 +303,8 @@ tab_hh_pers_filter = [
                     dbc.RadioItems(
                         id='hhpers-dataset-type',
                         options=[{'label': i, 'value': i} for i in
-                                 ['Household Size', 'Auto Ownership', 'Workers by County']],
+                                 ['Household Size', 'Auto Ownership',
+                                  'Workers by County']],
                         value='Household Size'
                     ),
                     html.Br(),
@@ -463,7 +482,7 @@ hidden_divs = dbc.Container([
 
 app.layout = html.Div([navbar, main_body, hidden_divs])
 
-# App Callbacks ----------------------------------------------------------------
+# App Callbacks --------------------------------------------------------------
 
 # filters
 @app.callback(Output('tabs-content-filter', 'children'),
@@ -498,7 +517,7 @@ def render_content(tab):
         return taz_map_layout
 
 
-# Scenario Selection callback ---------------------------------------------------
+# Scenario Selection callback ------------------------------------------------
 @app.callback(
         [Output('trips', 'children'),
          Output('tours', 'children'),
@@ -517,8 +536,10 @@ def page_1_dropdown(val1, val2):
     tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
     pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
-    #hhs1 = pd.read_csv(os.path.join('data', val1, 'household_size_vehs_workers.csv'))
-    #hhs2 = pd.read_csv(os.path.join('data', val2, 'household_size_vehs_workers.csv'))
+    #hhs1 = pd.read_csv(os.path.join('data', val1,
+    #                                'household_size_vehs_workers.csv'))
+    #hhs2 = pd.read_csv(os.path.join('data', val2,
+    #                                'household_size_vehs_workers.csv'))
     #dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
     #dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
     #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
@@ -553,10 +574,12 @@ def page_1_dropdown(val1, val2):
     #    val1: wrkrs1.to_json(orient='split'),
     #    val2: wrkrs2.to_json(orient='split')
     #    }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # , json.dumps(dtaz_trips)#, json.dumps(households), json.dumps(auto_own), json.dumps(workers)
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # ,
+    #json.dumps(dtaz_trips) #, json.dumps(households), json.dumps(auto_own),
+    #json.dumps(workers)
 
 
-# Trips Mode Choice tab ------------------------------------------------------------------
+# Trips Mode Choice tab ------------------------------------------------------
 @app.callback(
     [Output('person-type-dropdown', 'options'),
      Output('dpurp-dropdown', 'options')],
@@ -573,7 +596,8 @@ def load_drop_downs(json_data, aux):
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.dpurp.unique()])
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
+    return [{'label': i, 'value': i} for i
+            in person_types], [{'label': i, 'value': i} for i in dpurp]
 
 
 @app.callback([Output('mode-choice-graph', 'figure'),
@@ -595,9 +619,11 @@ def update_graph(json_data, person_type, dpurp, share_type):
         if dpurp != 'All':
             df = df[df['dpurp'] == dpurp]
         if share_type == 'Mode Share':
-            df_mode_share = df[['mode', 'trexpfac']].groupby('mode').sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+            df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
+                .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
         else:
-            df_mode_share = df[['mode', 'trexpfac']].groupby('mode').sum()[['trexpfac']]
+            df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
+                .sum()[['trexpfac']]
         df_mode_share.reset_index(inplace=True)
 
         # mode choice graph
@@ -609,7 +635,8 @@ def update_graph(json_data, person_type, dpurp, share_type):
         data1.append(trace1)
 
         # trip distance histogram
-        df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr').sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+        df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+            .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
         df_deptm_share.reset_index(inplace=True)
 
         trace2 = go.Bar(
@@ -636,10 +663,11 @@ def update_graph(json_data, person_type, dpurp, share_type):
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
-    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+    return {'data': data1, 'layout': layout1},
+    {'data': data2, 'layout': layout2}
 
 
-# Tours Mode Choice tab ------------------------------------------------------------------
+# Tours Mode Choice tab -----------------------------------------------------
 # load drop downs
 @app.callback(
     [Output('tour-person-type-dropdown', 'options'),
@@ -656,7 +684,8 @@ def tour_load_drop_downs(json_data, aux):
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.pdpurp.unique()])
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
+    return [{'label': i, 'value': i} for i in person_types],
+    [{'label': i, 'value': i} for i in dpurp]
 
 
 @app.callback([Output('tour-mode-choice-graph', 'figure'),
@@ -677,9 +706,11 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
         if dpurp != 'All':
             df = df[df['pdpurp'] == dpurp]
         if share_type == 'Mode Share':
-            df_mode_share = df[['tmodetp', 'toexpfac']].groupby('tmodetp').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+            df_mode_share = df[['tmodetp', 'toexpfac']].groupby('tmodetp')\
+                .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         else:
-            df_mode_share = df[['tmodetp', 'toexpfac']].groupby('tmodetp').sum()[['toexpfac']]
+            df_mode_share = df[['tmodetp', 'toexpfac']].groupby('tmodetp')\
+                .sum()[['toexpfac']]
         df_mode_share.reset_index(inplace=True)
 
         # mode choice graph
@@ -691,7 +722,8 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
         data1.append(trace1)
 
         # trip distance histogram
-        df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr').sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+        df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr')\
+            .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         df_deptm_share.reset_index(inplace=True)
 
         trace2 = go.Bar(
@@ -718,10 +750,11 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
-    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+    return {'data': data1, 'layout': layout1},
+    {'data': data2, 'layout': layout2}
 
 
-# Day Pattern tab ------------------------------------------------------------------
+# Day Pattern tab ------------------------------------------------------------
 # load drop downs
 @app.callback(
     Output('dpatt-dpurp-dropdown', 'options'),
@@ -753,7 +786,8 @@ def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')])
 def update_tours_by_pptype_purpose_header(dataset_type, dpurp, aux, aux1):
-    header_pptyp_dpurp = dpurp + ' ' + dataset_type + ' per Person by Person Type'
+    header_pptyp_dpurp = dpurp + ' ' + dataset_type + \
+        ' per Person by Person Type'
     header_perc_dpurp_gen = 'Percent of' + ' ' + dataset_type + ' by Purpose'
     header_dpurp_gen = dataset_type + ' per Person by Purpose'
     return header_pptyp_dpurp, header_perc_dpurp_gen, header_dpurp_gen
@@ -773,7 +807,8 @@ def update_tours_by_pptype_purpose_header(dataset_type, dpurp, aux, aux1):
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')]
     )
-def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, aux1):
+def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp,
+                   aux, aux1):
     def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
         df = table.copy()
         group_cols_list.append(key)
@@ -782,8 +817,10 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp, aux, 
         df = df[group_cols_list]
         return df
 
-    def calc_delta(table, keyslist, old_colname, new_colname, decimal_places, percent_delta=True):
-        format_number_two_dp = functools.partial(format_number, decimal_places=decimal_places)
+    def calc_delta(table, keyslist, old_colname, new_colname, decimal_places,
+                   percent_delta=True):
+        format_number_two_dp = functools.partial(format_number,
+                                                 decimal_places=decimal_places)
         table['Difference'] = table[keyslist[0]] - table[keyslist[1]]
         if percent_delta:
             table['Percent Difference'] = (table['Difference']/table[keyslist[1]]) * 100
