@@ -1151,7 +1151,7 @@ def map_update_graph(json_data, dpurp, aux):
     key = list(datasets)[0]
     df = pd.read_json(datasets[key], orient='split')
     df = pd.DataFrame(df.groupby(['dtaz', 'mode'])['trexpfac'].sum())
-    df.reset_index(inplace True)
+    df.reset_index(inplace=True)
     df = df.pivot(index='dtaz', columns='mode', values='trexpfac')
     df.fillna(0, inplace=True)
     df['sum_trips'] = df.sum(axis=1)
