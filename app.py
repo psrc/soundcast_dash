@@ -596,8 +596,7 @@ def load_drop_downs(json_data, aux):
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.dpurp.unique()])
-    return [{'label': i, 'value': i} for i
-            in person_types], [{'label': i, 'value': i} for i in dpurp]
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
 
 
 @app.callback([Output('mode-choice-graph', 'figure'),
@@ -663,8 +662,7 @@ def update_graph(json_data, person_type, dpurp, share_type):
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
-    return {'data': data1, 'layout': layout1},
-    {'data': data2, 'layout': layout2}
+    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 
 
 # Tours Mode Choice tab -----------------------------------------------------
@@ -684,8 +682,7 @@ def tour_load_drop_downs(json_data, aux):
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.pdpurp.unique()])
-    return [{'label': i, 'value': i} for i in person_types],
-    [{'label': i, 'value': i} for i in dpurp]
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
 
 
 @app.callback([Output('tour-mode-choice-graph', 'figure'),
@@ -750,8 +747,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
-    return {'data': data1, 'layout': layout1},
-    {'data': data2, 'layout': layout2}
+    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 
 
 # Day Pattern tab ------------------------------------------------------------
