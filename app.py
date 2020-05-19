@@ -968,9 +968,11 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         alldict['Total Households'] = hh_d
 
         # workers
-        wrkrs_sum = map(lambda x: wrkrs_tbl[x][wrkrs_tbl[x]['pwtaz'] >= 0]['psexpfac'].sum(), wrkrs_tbl.keys())
-        wrkrs_d = dict(zip(wrkrs_tbl.keys(), wrkrs_sum))
-        alldict['Total Workers'] = wrkrs_d
+        pers_df = map(lambda x: pd.read_json(pers_tbl[x], orient='split'), keys)
+        pers_dict = dict(zip(keys, pers_df))
+        wrkrs_df = map(lambda x: pers_dict[x][pers_dict[x]['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])][expfac].sum(), keys)
+        wrkrs_dict = dict(zip(keys, wrkrs_df))
+        alldict['Total Workers'] = wrkrs_dict
 
         df = pd.DataFrame.from_dict(alldict, orient='index').reset_index().rename(columns={'index': ' '})
 
@@ -1239,5 +1241,5 @@ def display_selected_data(selectedData, json_data, aux):
 
 # Run app ------------------------------------------------------------------------
 
-app.run_server(debug=False)
+app.run_server(debug=True)
 #if __name__ == '__main__': app.run_server(debug=False,port=8050,host='0.0.0.0')
