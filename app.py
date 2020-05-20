@@ -184,6 +184,55 @@ tab_tours_mc_layout = [
     ),
 ]
 
+# Length and distance Layout
+tab_length_distance_mc_filter = [dbc.Card(
+    [
+        dbc.CardHeader(html.H1('Filters')),
+        dbc.CardBody(
+            [
+
+                dbc.Label('Person Type:'),
+                dcc.Dropdown(
+                    value='All',
+                    id='tour-person-type-dropdown-distance'
+                ),
+                html.Br(),
+                dbc.Label('Destination Purpose:'),
+                dcc.Dropdown(
+                    value='All',
+                    id='tour-dpurp-dropdown-distance'
+                ),
+                html.Br(),
+                #html.Div(id='df', style={'display': 'none'}),
+                html.Div(id='dummy_div6'),
+            ],
+            #className = 'bg-light',
+        )],
+    className='aside-card'
+)]
+
+tab_length_distance_mc_layout = [
+    
+    dbc.Card(
+        dbc.CardBody(
+            [
+                html.H2('Tour Duration'),
+                dcc.Graph(id='tour-duration-graph'),
+                html.Br(),
+                dbc.RadioItems(
+                    id='length-distance-share-type',
+                    options=[{'label': i, 'value': i} for i
+                             in ['Share', 'Total']],
+                    value='Share',
+                    inline=True
+                ),
+            ]
+        ),
+
+        style={"margin-top": "20px"},
+    ),
+]
+
 # Tab Day Pattern Layout
 tab_day_pattern_filter = [
     dbc.Card(
@@ -440,6 +489,7 @@ tabs = dbc.Tabs(
     children=[
         dbc.Tab(label="Trips", tab_id="tab-trips-mc"),
         dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
+        dbc.Tab(label="Length and Distance", tab_id="tab-length-distance-mc"),
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
         dbc.Tab(label="TAZ Map", tab_id="taz-map")
@@ -474,8 +524,9 @@ hidden_divs = dbc.Container([
     html.Div(id='trips', style={'display': 'none'}),
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
+    html.Div(id='tours_duration', style={'display': 'none'}),
     #html.Div(id='households', style={'display': 'none'}),
-    html.Div(id='dtaz_trips', style={'display': 'none'}),
+    #html.Div(id='dtaz_trips', style={'display': 'none'}),
     #html.Div(id='auto_own', style={'display': 'none'}),
     #html.Div(id='workers', style={'display': 'none'},)
 ])
@@ -492,6 +543,8 @@ def render_content_filter(tab):
         return tab_trips_mc_filter
     elif tab == 'tab-tours-mc':
         return tab_tours_mc_filter
+    elif tab == 'tab-length-distance-mc':
+        return tab_length_distance_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
     elif tab == 'tab-hh-pers':
@@ -509,6 +562,8 @@ def render_content(tab):
         return tab_trips_mc_layout
     elif tab == 'tab-tours-mc':
         return tab_tours_mc_layout
+    elif tab == 'tab-length-distance-mc':
+        return tab_length_distance_mc_layout
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_layout
     elif tab == 'tab-hh-pers':
@@ -522,6 +577,7 @@ def render_content(tab):
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
+         Output('tours_duration', 'children'),
          #Output('households', 'children'),
          #Output('dtaz_trips', 'children'),
          #Output('auto_own', 'children'),
@@ -536,6 +592,8 @@ def page_1_dropdown(val1, val2):
     tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
     pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
+    tour_duration1 = pd.read_csv(os.path.join('data', val1, 'tour_duration.csv'))
+    tour_duration2 = pd.read_csv(os.path.join('data', val2, 'tour_duration.csv'))
     #hhs1 = pd.read_csv(os.path.join('data', val1,
     #                                'household_size_vehs_workers.csv'))
     #hhs2 = pd.read_csv(os.path.join('data', val2,
@@ -558,6 +616,10 @@ def page_1_dropdown(val1, val2):
         val1: pers1.to_json(orient='split'),
         val2: pers2.to_json(orient='split')
         }
+    tours_duration = {
+        val1: tour_duration1.to_json(orient='split'),
+        val2: tour_duration2.to_json(orient='split')
+        }
     #households = {
     #     val1: hhs1.to_json(orient='split'),
     #     val2: hhs2.to_json(orient='split')
@@ -574,7 +636,7 @@ def page_1_dropdown(val1, val2):
     #    val1: wrkrs1.to_json(orient='split'),
     #    val2: wrkrs2.to_json(orient='split')
     #    }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # ,
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(tours_duration)  # ,
     #json.dumps(dtaz_trips) #, json.dumps(households), json.dumps(auto_own),
     #json.dumps(workers)
 
@@ -748,6 +810,74 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+
+
+# Length and Distance tab -----------------------------------------------------
+# load drop downs
+@app.callback(
+    [Output('tour-person-type-dropdown-distance', 'options'),
+     Output('tour-dpurp-dropdown-distance', 'options')],
+    [Input('tours_duration', 'children'),
+     Input('dummy_div6', 'children')])
+def length_distance_load_drop_downs(json_data, aux):
+    print('length and distance filter callback')
+    person_types = ['All']
+    dpurp = ['All']
+
+    datasets = json.loads(json_data)
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
+    person_types.extend([x for x in df.pptyp.unique()])
+    dpurp.extend([x for x in df.pdpurp.unique()])
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
+
+
+@app.callback(Output('tour-duration-graph', 'figure'),
+              [Input('tours_duration', 'children'),
+               Input('tour-person-type-dropdown-distance', 'value'),
+               Input('tour-dpurp-dropdown-distance', 'value'),
+               Input('length-distance-share-type', 'value')])
+def length_distance_update_graph(json_data, person_type, dpurp, share_type):
+    print('length and distance update graph callback')
+    datasets = json.loads(json_data)
+    data1 = []
+    data2 = []
+    for key in datasets.keys():
+        df = pd.read_json(datasets[key], orient='split')
+        if person_type != 'All':
+            df = df[df['pptyp'] == person_type]
+        if dpurp != 'All':
+            df = df[df['pdpurp'] == dpurp]
+
+        max_dist = df['tour_duration'].max()
+        bin_size = 30
+        df['tour_duration_bin'] = pd.cut(df['tour_duration'], bins=range(0, max_dist,bin_size), labels=range(bin_size, max_dist,bin_size))
+
+        #share_type = 'Mode Share'
+        if share_type == 'Share':
+            df_tour_duration = df.groupby(['tour_duration_bin']).sum()/df['toexpfac'].sum() * 100
+        else:
+            df_tour_duration = df.groupby(['tour_duration_bin']).sum()
+        df_tour_duration.reset_index(inplace=True)
+
+        # Bar Chart
+        trace1 = go.Scatter(
+            x=df_tour_duration['tour_duration_bin'],
+            y=df_tour_duration['toexpfac'],
+            name=key
+            )
+        data1.append(trace1)
+
+    layout1 = go.Layout(
+            barmode='group',
+            xaxis={'title': 'mode'},
+            yaxis={'title': share_type, 'zeroline': False},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+
+    return {'data': data1, 'layout': layout1}
 
 
 # Day Pattern tab ------------------------------------------------------------
