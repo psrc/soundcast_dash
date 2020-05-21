@@ -121,6 +121,14 @@ tab_trips_mc_layout = [dbc.Card(
         dbc.CardBody(
             [
                 html.H2('Trip Departure Hour:'),
+                html.Br(),
+                dbc.RadioItems(
+                    id='mode-share-type-deptm',
+                    options=[{'label': i, 'value': i} for i
+                             in ['Mode Share', 'Trips by Mode']],
+                    value='Mode Share',
+                    inline=True
+                    ),
                 dcc.Graph(id='trip-deptm-graph'),
             ]
         ),
@@ -177,6 +185,14 @@ tab_tours_mc_layout = [
         dbc.CardBody(
             [
                 html.H2('Tour Departure Hour:'),
+                html.Br(),
+                dbc.RadioItems(
+                    id='tour-mode-share-type-deptm',
+                    options=[{'label': i, 'value': i} for i
+                             in ['Mode Share', 'Tours by Mode']],
+                    value='Mode Share',
+                    inline=True
+                ),
                 dcc.Graph(id='tour-deptm-graph'),
             ]
         ),
@@ -654,6 +670,7 @@ def load_drop_downs(json_data, aux):
     dpurp = ['All']
 
     datasets = json.loads(json_data)
+    
     key = list(datasets)[0]
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
@@ -666,8 +683,9 @@ def load_drop_downs(json_data, aux):
               [Input('trips', 'children'),
                Input('person-type-dropdown', 'value'),
                Input('dpurp-dropdown', 'value'),
-               Input('mode-share-type', 'value')])
-def update_graph(json_data, person_type, dpurp, share_type):
+               Input('mode-share-type', 'value'),
+               Input('mode-share-type-deptm', 'value')])
+def update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
     print('trip_update graph callback')
     datasets = json.loads(json_data)
     data1 = []
@@ -696,8 +714,12 @@ def update_graph(json_data, person_type, dpurp, share_type):
         data1.append(trace1)
 
         # trip distance histogram
-        df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
-            .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+        if share_type_deptm == 'Mode Share':
+            df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+                .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+        else:
+            df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+                .sum()[['trexpfac']]
         df_deptm_share.reset_index(inplace=True)
 
         trace2 = go.Bar(
@@ -709,7 +731,7 @@ def update_graph(json_data, person_type, dpurp, share_type):
 
     layout1 = go.Layout(
             barmode='group',
-            xaxis={'title': 'mode'},
+            xaxis={'title': 'Mode'},
             yaxis={'title': share_type, 'zeroline': False},
             hovermode='closest',
             autosize=True,
@@ -718,8 +740,8 @@ def update_graph(json_data, person_type, dpurp, share_type):
 
     layout2 = go.Layout(
             barmode='group',
-            xaxis={'title': 'departure hour'},
-            yaxis={'title': 'share', 'zeroline': False},
+            xaxis={'title': 'Departure Hour'},
+            yaxis={'title': share_type_deptm, 'zeroline': False},
             hovermode='closest',
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
@@ -752,8 +774,9 @@ def tour_load_drop_downs(json_data, aux):
               [Input('tours', 'children'),
                Input('tour-person-type-dropdown', 'value'),
                Input('tour-dpurp-dropdown', 'value'),
-               Input('tour-mode-share-type', 'value')])
-def tour_update_graph(json_data, person_type, dpurp, share_type):
+               Input('tour-mode-share-type', 'value'),
+               Input('tour-mode-share-type-deptm', 'value')])
+def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
     print('tour update graph callback')
     datasets = json.loads(json_data)
     data1 = []
@@ -781,8 +804,12 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
         data1.append(trace1)
 
         # trip distance histogram
-        df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr')\
-            .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+        if share_type_deptm == 'Mode Share':
+            df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr')\
+                .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
+        else:
+            df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr')\
+                .sum()[['toexpfac']]
         df_deptm_share.reset_index(inplace=True)
 
         trace2 = go.Bar(
@@ -794,7 +821,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
 
     layout1 = go.Layout(
             barmode='group',
-            xaxis={'title': 'mode'},
+            xaxis={'title': 'Mode'},
             yaxis={'title': share_type, 'zeroline': False},
             hovermode='closest',
             autosize=True,
@@ -803,8 +830,8 @@ def tour_update_graph(json_data, person_type, dpurp, share_type):
 
     layout2 = go.Layout(
             barmode='group',
-            xaxis={'title': 'departure hour'},
-            yaxis={'title': 'share', 'zeroline': False},
+            xaxis={'title': 'Departure Hour'},
+            yaxis={'title': share_type_deptm, 'zeroline': False},
             hovermode='closest',
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
