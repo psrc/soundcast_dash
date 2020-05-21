@@ -206,18 +206,25 @@ tab_length_distance_mc_filter = [dbc.Card(
         dbc.CardHeader(html.H1('Filters')),
         dbc.CardBody(
             [
-
+                                html.Br(),
+                dbc.Label('Mode:'),
+                dcc.Dropdown(
+                    value='All',
+                    id='distance-mode-dropdown'
+                ),
+                html.Br(),
                 dbc.Label('Person Type:'),
                 dcc.Dropdown(
                     value='All',
-                    id='tour-person-type-dropdown-distance'
+                    id='distance-person-type-dropdown'
                 ),
                 html.Br(),
                 dbc.Label('Destination Purpose:'),
                 dcc.Dropdown(
                     value='All',
-                    id='tour-dpurp-dropdown-distance'
+                    id='distance-dpurp-dropdown'
                 ),
+
                 html.Br(),
                 #html.Div(id='df', style={'display': 'none'}),
                 html.Div(id='dummy_div6'),
@@ -233,7 +240,6 @@ tab_length_distance_mc_layout = [
         dbc.CardBody(
             [
                 html.H2('Tour Duration'),
-                dcc.Graph(id='tour-duration-graph'),
                 html.Br(),
                 dbc.RadioItems(
                     id='length-distance-share-type',
@@ -242,9 +248,9 @@ tab_length_distance_mc_layout = [
                     value='Share',
                     inline=True
                 ),
+                dcc.Graph(id='tour-duration-graph'),
             ]
         ),
-
         style={"margin-top": "20px"},
     ),
 ]
@@ -594,6 +600,8 @@ def render_content(tab):
          Output('tours', 'children'),
          Output('persons', 'children'),
          Output('tours_duration', 'children'),
+         #Output('trip_time', 'children'),
+         #Output('trip_distance', 'children'),
          #Output('households', 'children'),
          #Output('dtaz_trips', 'children'),
          #Output('auto_own', 'children'),
@@ -610,6 +618,8 @@ def page_1_dropdown(val1, val2):
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
     tour_duration1 = pd.read_csv(os.path.join('data', val1, 'tour_duration.csv'))
     tour_duration2 = pd.read_csv(os.path.join('data', val2, 'tour_duration.csv'))
+    #tour_time = pd.read_csv(os.path.join('data', val1, 'tour_duration.csv'))
+    #tour_duration2 = pd.read_csv(os.path.join('data', val2, 'tour_duration.csv'))
     #hhs1 = pd.read_csv(os.path.join('data', val1,
     #                                'household_size_vehs_workers.csv'))
     #hhs2 = pd.read_csv(os.path.join('data', val2,
@@ -803,7 +813,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
             )
         data1.append(trace1)
 
-        # trip distance histogram
+         # trip distance histogram
         if share_type_deptm == 'Mode Share':
             df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr')\
                 .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
@@ -812,13 +822,13 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
                 .sum()[['toexpfac']]
         df_deptm_share.reset_index(inplace=True)
 
-        trace2 = go.Bar(
+        trace2 = go.Scatter(
             x=df_deptm_share['tlvorg_hr'],
             y=df_deptm_share['toexpfac'].astype(int),
             name=key
         )
         data2.append(trace2)
-
+        
     layout1 = go.Layout(
             barmode='group',
             xaxis={'title': 'Mode'},
@@ -842,29 +852,39 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
 # Length and Distance tab -----------------------------------------------------
 # load drop downs
 @app.callback(
-    [Output('tour-person-type-dropdown-distance', 'options'),
-     Output('tour-dpurp-dropdown-distance', 'options')],
+    [Output('distance-person-type-dropdown', 'options'),
+     Output('distance-dpurp-dropdown', 'options'),
+     Output('distance-mode-dropdown', 'options')],
     [Input('tours_duration', 'children'),
      Input('dummy_div6', 'children')])
 def length_distance_load_drop_downs(json_data, aux):
     print('length and distance filter callback')
     person_types = ['All']
     dpurp = ['All']
+    mode = ['All']
 
     datasets = json.loads(json_data)
     key = list(datasets)[0]
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.pdpurp.unique()])
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
+    if 'mode' in df.columns:
+        mode_col = 'mode'    # Trip
+    else: 
+        mode_col = 'tmodetp'    # Tour
+    mode.extend([x for x in df[mode_col].unique()])
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], \
+        [{'label': i, 'value': i} for i in mode]
+
 
 
 @app.callback(Output('tour-duration-graph', 'figure'),
               [Input('tours_duration', 'children'),
-               Input('tour-person-type-dropdown-distance', 'value'),
-               Input('tour-dpurp-dropdown-distance', 'value'),
+               Input('distance-person-type-dropdown', 'value'),
+               Input('distance-dpurp-dropdown', 'value'),
+               Input('distance-mode-dropdown', 'value'),
                Input('length-distance-share-type', 'value')])
-def length_distance_update_graph(json_data, person_type, dpurp, share_type):
+def length_distance_update_graph(json_data, person_type, dpurp, mode, share_type):
     print('length and distance update graph callback')
     datasets = json.loads(json_data)
     data1 = []
@@ -875,12 +895,17 @@ def length_distance_update_graph(json_data, person_type, dpurp, share_type):
             df = df[df['pptyp'] == person_type]
         if dpurp != 'All':
             df = df[df['pdpurp'] == dpurp]
+        if mode != 'All':
+            if 'mode' in df.columns:
+                df = df[df['mode'] == mode]    # Trip
+            if 'tmodetp' in df.columns:
+                df = df[df['tmodetp'] == mode]    # Tours
 
-        max_dist = df['tour_duration'].max()
+        max_dist = int(df['tour_duration'].max())
         bin_size = 30
         df['tour_duration_bin'] = pd.cut(df['tour_duration'], bins=range(0, max_dist,bin_size), labels=range(bin_size, max_dist,bin_size))
 
-        #share_type = 'Mode Share'
+
         if share_type == 'Share':
             df_tour_duration = df.groupby(['tour_duration_bin']).sum()/df['toexpfac'].sum() * 100
         else:
@@ -897,7 +922,7 @@ def length_distance_update_graph(json_data, person_type, dpurp, share_type):
 
     layout1 = go.Layout(
             barmode='group',
-            xaxis={'title': 'mode'},
+            xaxis={'title': 'Tour Duration'},
             yaxis={'title': share_type, 'zeroline': False},
             hovermode='closest',
             autosize=True,
