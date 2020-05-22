@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_table
+from sqlalchemy import create_engine
 import pandas as pd
 import geopandas as gpd
 import numpy as np
@@ -363,6 +364,20 @@ tab_day_pattern_layout = [
     html.Div(id='dummy_div5'),
 ]
 
+# Tab Work Layout
+tab_work_layout = [
+    dbc.Card(
+        dbc.CardBody(
+            [
+                html.H2("Totals"),
+                html.Br(),
+                html.Div(id='table-totals-container-work'),
+                ]
+            ), style={"margin-top": "20px"}
+        ),
+    html.Div(id='dummy_div7')
+]
+
 # Tab Households and Persons Layout
 tab_hh_pers_filter = [
     dbc.Card(
@@ -513,6 +528,7 @@ tabs = dbc.Tabs(
         dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
         dbc.Tab(label="Length and Distance", tab_id="tab-length-distance-mc"),
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
+        dbc.Tab(label="Work", tab_id="tab-work"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
         dbc.Tab(label="TAZ Map", tab_id="taz-map")
     ],
@@ -569,6 +585,8 @@ def render_content_filter(tab):
         return tab_length_distance_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
+    #elif tab == 'tab-work':
+    #    return tab_work_filter
     elif tab == 'tab-hh-pers':
         return tab_hh_pers_filter
     elif tab == 'taz-map':
@@ -588,6 +606,8 @@ def render_content(tab):
         return tab_length_distance_mc_layout
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_layout
+    elif tab == 'tab-work':
+        return tab_work_layout
     elif tab == 'tab-hh-pers':
         return tab_hh_pers_layout
     elif tab == 'taz-map':
@@ -1112,6 +1132,106 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp,
 
     return tp, tppp, t, {'data': graph_datalist, 'layout': layout}
 
+# Work tab ------------------------------------------------------------------
+
+
+@app.callback(
+    Output('table-totals-container-work', 'children')
+     ,
+    [Input('persons', 'children'),
+     Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('dummy_div7', 'children')]
+    )
+def update_visuals(pers_json, scenario1, scenario2, aux):
+    def compile_csv_to_dict(filename, scenario_list):
+        dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
+        dfs_dict = dict(zip(scenario_list, dfs))
+        return(dfs_dict)
+
+    def create_totals_table(work_home_tbl):
+        engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+        parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
+        #taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+
+        datalist = []
+        for key in work_home_tbl.keys():
+
+            df = work_home_tbl[key]
+
+            df = df.merge(parcel_geog, left_on='pwpcl',right_on='ParcelID')
+            df = df.merge(parcel_geog, left_on='hhparcel',right_on='ParcelID', suffixes=['_work','_home'])
+            # Get work-from-home people
+            df_wfh = df[df['hhparcel'] == df['pwpcl']]
+
+            df = df_wfh.groupby('CountyName_work').sum()[['psexpfac']]
+            df.loc['Total',:] = df.sum(axis=0)
+
+            df.rename(columns={'psexpfac': key}, inplace=True)
+            df = df.reset_index()
+
+            datalist.append(df)
+
+        df_scenarios = pd.merge(datalist[0], datalist[1], on=['CountyName_work'])
+        df_scenarios.rename(columns={'CountyName_work': 'County'}, inplace=True)
+        # format numbers with separator
+        format_number_dp = functools.partial(format_number, decimal_places=0)
+        for i in range(2, len(df_scenarios.columns)):
+            df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
+        #return df_scenarios
+
+        t = html.Div(
+            [dash_table.DataTable(id='table-totals-work',
+                                  columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+                                  data=df_scenarios.to_dict('rows'),
+                                  style_cell={
+                                      'font-family': 'Segoe UI',
+                                      'font-size': 14,
+                                      'text-align': 'center'}
+                                  )
+             ]
+            )
+
+        return t
+
+
+    vals = [scenario1, scenario2]
+    #pers_tbl = json.loads(pers_json)
+    work_home_tbl = compile_csv_to_dict('work_home_location.csv', vals)
+    #wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
+    #auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
+
+    totals_table = create_totals_table(work_home_tbl)
+
+    #if data_type == 'Household Size':
+    #    agraph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
+    #    agraph_header = 'Household Size'
+    #elif data_type == 'Auto Ownership':
+    #    agraph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
+    #    agraph_header = 'Auto Ownership'
+
+    #elif data_type == 'Workers by County':
+    #    wdf = create_workers_table(wrkrs_tbl)
+    #    wdf_melt = pd.melt(wdf, id_vars=['Household County', 'Work County'],
+    #                       value_vars=vals,
+    #                       var_name='Scenario', value_name='Workers')
+    #    agraph = px.bar(
+    #        wdf_melt,
+    #        height=900,
+    #        #width=950,
+    #        barmode='group',
+    #        facet_row='Household County',
+    #        x='Work County',
+    #        y='Workers',
+    #        color='Scenario'
+    #    )
+    #    agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
+    #    agraph.for_each_annotation(lambda a: a.update(text=a.text.replace("Household County=", "")))
+    #    agraph.for_each_trace(lambda t: t.update(name=t.name.replace("Scenario=", "")))
+    #    agraph_header = 'Workers by Household County by Work County'
+
+    return totals_table
+
 # Households and Persons tab ------------------------------------------------------------------
 
 
@@ -1228,26 +1348,8 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         format_number_dp = functools.partial(format_number, decimal_places=0)
         for i in range(2, len(df_scenarios.columns)):
             df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
-        return df_scenarios
-        #t = html.Div(
-        #    [dash_table.DataTable(id='table-workers',
-        #                          columns=[{"name": i, "id": i} for i in df_scenarios.columns],
-        #                          data=df_scenarios.to_dict('rows'),
-        #                          style_cell_conditional = [
-        #                              {
-        #                                  'if': {'column_id': i},
-        #                                  'textAlign': 'left'
-        #                                  } for i in ['Household County', 'Work County']
-        #                              ],
-        #                          style_cell = {
-        #                              'font-family':'Segoe UI',
-        #                              'font-size': 11,
-        #                              'text-align': 'center'}
-        #                          )
-        #        ]
-        #    )
 
-        #return t
+        return df_scenarios
 
     vals = [scenario1, scenario2]
     pers_tbl = json.loads(pers_json)
