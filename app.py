@@ -369,7 +369,7 @@ tab_work_layout = [
     dbc.Card(
         dbc.CardBody(
             [
-                html.H2("Totals"),
+                html.H2("Work-From-Home Workers by County"),
                 html.Br(),
                 html.Div(id='table-totals-container-work'),
                 ]
@@ -1149,22 +1149,24 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_totals_table(work_home_tbl):
-        engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
-        parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
-        #taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+    def create_totals_table(work_home_tbl, work_from_home_tours_tbl):
+        #engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+        #parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
+        taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
 
         datalist = []
+        datalist2 = []
         for key in work_home_tbl.keys():
 
             df = work_home_tbl[key]
+            wfh_total = df[df['pwpcl'] == df['hhparcel']]['psexpfac'].sum()
 
-            df = df.merge(parcel_geog, left_on='pwpcl',right_on='ParcelID')
-            df = df.merge(parcel_geog, left_on='hhparcel',right_on='ParcelID', suffixes=['_work','_home'])
-            # Get work-from-home people
+            df = df.merge(taz_geog, left_on='pwtaz',right_on='taz')
+            df = df.merge(taz_geog, left_on='hhtaz',right_on='taz', suffixes=['_work','_home'])
+
+            # Select only work-from-home people
             df_wfh = df[df['hhparcel'] == df['pwpcl']]
-
-            df = df_wfh.groupby('CountyName_work').sum()[['psexpfac']]
+            df = df_wfh.groupby('geog_name_work').sum()[['psexpfac']]
             df.loc['Total',:] = df.sum(axis=0)
 
             df.rename(columns={'psexpfac': key}, inplace=True)
@@ -1172,13 +1174,27 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
 
             datalist.append(df)
 
-        df_scenarios = pd.merge(datalist[0], datalist[1], on=['CountyName_work'])
-        df_scenarios.rename(columns={'CountyName_work': 'County'}, inplace=True)
+                
+            # Tour Rates
+            df = work_from_home_tours_tbl[key]
+            df = df[df['hhparcel'] == df['pwpcl']].groupby('pdpurp').sum()[['toexpfac']]
+            df = df.reset_index()
+            df['toexpfac'] = df['toexpfac']/wfh_total*1.0
+            df.rename(columns={'toexpfac': key}, inplace=True)
+            datalist2.append(df)
+
+        df_scenarios = pd.merge(datalist[0], datalist[1], on=['geog_name_work'], how='outer')
+        df_scenarios.rename(columns={'geog_name_work': 'County'}, inplace=True)
         # format numbers with separator
         format_number_dp = functools.partial(format_number, decimal_places=0)
-        for i in range(2, len(df_scenarios.columns)):
+        for i in range(1, len(df_scenarios.columns)):
             df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
-        #return df_scenarios
+
+        # Calculate tour rates
+        df_tour_scenarios = pd.merge(datalist2[0], datalist2[1], on=['pdpurp'])
+        format_number_dp = functools.partial(format_number, decimal_places=2)
+        for i in range(1, len(df_tour_scenarios.columns)):
+            df_tour_scenarios.iloc[:, i] = df_tour_scenarios.iloc[:, i].apply(format_number_dp)
 
         t = html.Div(
             [dash_table.DataTable(id='table-totals-work',
@@ -1188,47 +1204,29 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
                                       'font-family': 'Segoe UI',
                                       'font-size': 14,
                                       'text-align': 'center'}
-                                  )
+                                  ),
+             html.Br(),
+             html.H2("Tour Rate by Purpose for Work-From-Home Workers"),
+             dash_table.DataTable(id='table-totals-work2',
+                                  columns=[{"name": i, "id": i} for i in df_tour_scenarios.columns],
+                                  data=df_tour_scenarios.to_dict('rows'),
+                                  style_cell={
+                                      'font-family': 'Segoe UI',
+                                      'font-size': 14,
+                                      'text-align': 'center'}
+                                  ),
              ]
             )
 
         return t
 
 
+
     vals = [scenario1, scenario2]
-    #pers_tbl = json.loads(pers_json)
     work_home_tbl = compile_csv_to_dict('work_home_location.csv', vals)
-    #wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
-    #auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
+    work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
 
-    totals_table = create_totals_table(work_home_tbl)
-
-    #if data_type == 'Household Size':
-    #    agraph = create_simple_bar_graph(hh_tbl, 'hhsize', 'hhexpfac', 'Household Size', 'Households')
-    #    agraph_header = 'Household Size'
-    #elif data_type == 'Auto Ownership':
-    #    agraph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
-    #    agraph_header = 'Auto Ownership'
-
-    #elif data_type == 'Workers by County':
-    #    wdf = create_workers_table(wrkrs_tbl)
-    #    wdf_melt = pd.melt(wdf, id_vars=['Household County', 'Work County'],
-    #                       value_vars=vals,
-    #                       var_name='Scenario', value_name='Workers')
-    #    agraph = px.bar(
-    #        wdf_melt,
-    #        height=900,
-    #        #width=950,
-    #        barmode='group',
-    #        facet_row='Household County',
-    #        x='Work County',
-    #        y='Workers',
-    #        color='Scenario'
-    #    )
-    #    agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
-    #    agraph.for_each_annotation(lambda a: a.update(text=a.text.replace("Household County=", "")))
-    #    agraph.for_each_trace(lambda t: t.update(name=t.name.replace("Scenario=", "")))
-    #    agraph_header = 'Workers by Household County by Work County'
+    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl)
 
     return totals_table
 
