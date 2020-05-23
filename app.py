@@ -260,7 +260,7 @@ tab_length_distance_mc_layout = [
 tab_day_pattern_filter = [
     dbc.Card(
         [
-            dbc.CardHeader(html.H1('Dataset')),
+            dbc.CardHeader(html.H1('Select')),
             dbc.CardBody(
                 [
                     dbc.Label('Day Pattern Type:'),
@@ -271,8 +271,18 @@ tab_day_pattern_filter = [
                         value='Tours'
                     ),
                     html.Br(),
+                    dbc.Label('Format Type:'),
+                    dbc.RadioItems(
+                        id='dpatt-format-type',
+                        options=[{'label': i, 'value': i} for i
+                                 in ['Percent', 'Per Person']],
+                        value='Percent'
+                    ),
+                    html.Br(),
                     html.Div(id='dummy-dataset-type'),
+                    html.Div(id='dummy-format-type'),
                 ],
+        
             ),  # end of CardBody
             dbc.CardHeader(html.H1('Day Pattern by Person Type'),
                            className='additional-header'),
@@ -294,32 +304,50 @@ tab_day_pattern_filter = [
 
 tab_day_pattern_layout = [
     dbc.Row(children=[
+        dbc.Col(            
+            # insert top table: Totals
+            dbc.Card(
+                  dbc.CardBody(
+                        [
+                            html.H2("Totals Table"), # make header dynamic to dataset type ""
+                            html.Br(),
+                            html.Div(id='dpatt-tot-container'),
+                        ]
+                        ), style={"margin-top": "20px"}
+                ), # end top table card
+            )
+        ]),
+    dbc.Row(children=[
         dbc.Col(
             dbc.Card(
                 dbc.CardBody(
                     [
-                        # "Percent of X by Purpose"
-                        html.H2(id='dpatt-perc-dpurp-gen-header'),
-
+                        html.H2(id='dpatt-gen-header'), # this header will print "Percent of X by Purpose" or "X per Person by Purpose"
                         html.Br(),
-                        html.Div(
-                            id='dpatt-table-perc-tours-dpurp-gen-container'),
+                        html.Div(id='dpatt-table-container')
+                        ## "Percent of X by Purpose"
+                        #html.H2(id='dpatt-perc-dpurp-gen-header'),
+
+                        #html.Br(),
+                        #html.Div(
+                        #    id='dpatt-table-perc-tours-dpurp-gen-container'),
 
                     ]
                     ), style={"margin-top": "20px"}
-                ),
+                ), # end card
             width=6
             ),  # end Col
         dbc.Col(
             dbc.Card(
                 dbc.CardBody(
                     [
-                        # "X per Person by Purpose"
-                        html.H2(id='dpatt-dpurp-gen-header'),
+                        html.Div(id='dpatt-graph-container')
+                        ## "X per Person by Purpose"
+                        #html.H2(id='dpatt-dpurp-gen-header'),
 
-                        html.Br(),
-                        html.Div(
-                            id='dpatt-table-tours-dpurp-gen-container'),
+                        #html.Br(),
+                        #html.Div(
+                        #    id='dpatt-table-tours-dpurp-gen-container'),
 
                     ]
                     ), style={"margin-top": "20px"}
@@ -974,30 +1002,47 @@ def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
     return [{'label': i, 'value': i} for i in dpurp]
 
 
-# dynamic label based on dpurp selection
+# dynamic headers
 @app.callback(
-    [Output('dpatt-tours-pptyp-purpose-header', 'children'),
-     Output('dpatt-perc-dpurp-gen-header', 'children'),
-     Output('dpatt-dpurp-gen-header', 'children')],
+    [Output('dpatt-gen-header', 'children'),
+     Output('dpatt-tours-pptyp-purpose-header', 'children')],
     [Input('dpatt-dataset-type', 'value'),
+     Input('dpatt-format-type', 'value'),
      Input('dpatt-dpurp-dropdown', 'value'),
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')])
-def update_tours_by_pptype_purpose_header(dataset_type, dpurp, aux, aux1):
-    header_pptyp_dpurp = dpurp + ' ' + dataset_type + \
-        ' per Person by Person Type'
-    header_perc_dpurp_gen = 'Percent of' + ' ' + dataset_type + ' by Purpose'
-    header_dpurp_gen = dataset_type + ' per Person by Purpose'
-    return header_pptyp_dpurp, header_perc_dpurp_gen, header_dpurp_gen
+def update_tours_by_pptype_purpose_header(dataset_type, format_type, dpurp, aux, aux1):
+    header_pptyp_dpurp = dpurp + ' ' + dataset_type + ' per Person by Person Type'
+    if format_type == 'Percent':
+        gen_header = 'Percent of' + ' ' + dataset_type + ' by Purpose'
+    else:
+        gen_header = dataset_type + ' per Person by Purpose'
+    return gen_header, header_pptyp_dpurp 
+#@app.callback(
+#    [Output('dpatt-tours-pptyp-purpose-header', 'children'),
+#     Output('dpatt-perc-dpurp-gen-header', 'children'),
+#     Output('dpatt-dpurp-gen-header', 'children')],
+#    [Input('dpatt-dataset-type', 'value'),
+#     Input('dpatt-dpurp-dropdown', 'value'),
+#     Input('dummy_div4', 'children'),
+#     Input('dummy_div5', 'children')])
+#def update_tours_by_pptype_purpose_header(dataset_type, dpurp, aux, aux1):
+#    header_pptyp_dpurp = dpurp + ' ' + dataset_type + \
+#        ' per Person by Person Type'
+#    header_perc_dpurp_gen = 'Percent of' + ' ' + dataset_type + ' by Purpose'
+#    header_dpurp_gen = dataset_type + ' per Person by Purpose'
+#    return header_pptyp_dpurp, header_perc_dpurp_gen, header_dpurp_gen
 
 
 # all content, render as DashTables + graph
 @app.callback(
-    [Output('dpatt-table-perc-tours-dpurp-gen-container', 'children'),
-     Output('dpatt-table-tours-dpurp-gen-container', 'children'),
+    [Output('dpatt-table-container', 'children'),
+     #Output('dpatt-table-perc-tours-dpurp-gen-container', 'children'),
+     #Output('dpatt-table-tours-dpurp-gen-container', 'children'),
      Output('dpatt-table-tours-purpose-container', 'children'),
      Output('dpatt-graph-tours-purpose', 'figure')],
     [Input('dpatt-dataset-type', 'value'),
+     Input('dpatt-format-type', 'value'),
      Input('trips', 'children'),
      Input('tours', 'children'),
      Input('persons', 'children'),
@@ -1005,7 +1050,7 @@ def update_tours_by_pptype_purpose_header(dataset_type, dpurp, aux, aux1):
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')]
     )
-def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp,
+def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json, dpurp,
                    aux, aux1):
     def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
         df = table.copy()
@@ -1092,17 +1137,23 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp,
     newdf_dpurp = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=dataset_dpurp_col), datalist_all_dpurp)
     newdf = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=['pptyp', dataset_dpurp_col]), datalist)
 
-    # create percent of tours by purpose
+    ## create percent of tours by purpose
     tp_tbl = newdf_dpurp_gen.copy()
     for key in keyslist:
         tp_tbl[key] = (tp_tbl[key]/tp_tbl[key].sum()) * 100
     tp_tbl = calc_delta(tp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2, percent_delta=False)
-    tp = create_dash_table('dpatt-table-perc-tours-dpurp-gen', tp_tbl, ['Destination Purpose'], '.7vw')
+    #tp = create_dash_table('dpatt-table-perc-tours-dpurp-gen', tp_tbl, ['Destination Purpose'], '.7vw')
 
     # create dash tables for tours per person and purpose
     tppp_tbl = newdf_dpurp.copy()
     tppp_tbl = calc_delta(tppp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2)
-    tppp = create_dash_table('dpatt-table-tours-dpurp-gen', tppp_tbl, ['Destination Purpose'], '.7vw')
+    #tppp = create_dash_table('dpatt-table-tours-dpurp-gen', tppp_tbl, ['Destination Purpose'], '.7vw')
+
+    if format_type == 'Percent':
+        gen_table = create_dash_table('dpatt-gen-table-percent', tp_tbl, ['Destination Purpose'], '.7vw')
+    else:
+        gen_table = create_dash_table('dpatt-gen-table-per-pers', tppp_tbl, ['Destination Purpose'], '.7vw')
+
 
     # create dash table for tours per person by person type and purpose
     datatbl = newdf.copy()
@@ -1130,7 +1181,8 @@ def update_visuals(dataset_type, trips_json, tours_json, pers_json, dpurp,
         font=dict(family='Segoe UI', color='#7f7f7f')
         )
 
-    return tp, tppp, t, {'data': graph_datalist, 'layout': layout}
+    #return tp, tppp, t, {'data': graph_datalist, 'layout': layout}
+    return gen_table, t, {'data': graph_datalist, 'layout': layout}
 
 # Work tab ------------------------------------------------------------------
 
