@@ -309,8 +309,7 @@ tab_day_pattern_layout = [
             dbc.Card(
                   dbc.CardBody(
                         [
-                            html.H2("Totals Table"), # make header dynamic to dataset type ""
-                            html.Br(),
+                            html.H2(id='dpatt-tot-header'), # make header dynamic to dataset type ""
                             html.Div(id='dpatt-tot-container'),
                         ]
                         ), style={"margin-top": "20px"}
@@ -983,7 +982,8 @@ def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
 
 # dynamic headers
 @app.callback(
-    [Output('dpatt-gen-header', 'children'),
+    [Output('dpatt-tot-header', 'children'),
+     Output('dpatt-gen-header', 'children'),
      Output('dpatt-tours-pptyp-purpose-header', 'children')],
     [Input('dpatt-dataset-type', 'value'),
      Input('dpatt-format-type', 'value'),
@@ -991,16 +991,18 @@ def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')])
 def update_headers(dataset_type, format_type, dpurp, aux, aux1):
+    tot_header = "All " + dataset_type
     header_pptyp_dpurp = dpurp + ' ' + dataset_type + ' per Person by Person Type'
     if format_type == 'Percent':
         gen_header = 'Percent of' + ' ' + dataset_type + ' by Purpose'
     else:
         gen_header = dataset_type + ' per Person by Purpose'
-    return gen_header, header_pptyp_dpurp 
+    return tot_header, gen_header, header_pptyp_dpurp 
 
-# all content, render as DashTables + graph
+# all content, render as DashTables + graphs
 @app.callback(
-    [Output('dpatt-table-container', 'children'),
+    [Output('dpatt-tot-container', 'children'),
+     Output('dpatt-table-container', 'children'),
      Output('dpatt-graph-container', 'figure'),
      Output('dpatt-table-tours-purpose-container', 'children'),
      Output('dpatt-graph-tours-purpose', 'figure')],
@@ -1076,6 +1078,7 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
             yaxis={'title': y_title, 'zeroline': False},
             hovermode='closest',
             autosize=True,
+            margin={'t':20},
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
         return layout_gen_table 
@@ -1101,6 +1104,27 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     keys = dataset.keys()
     keyslist = list(keys)
 
+    ## create total table
+    alldict = {}
+    # sum dataset
+    dataset_sum = map(lambda x: pd.read_json(dataset[x], orient='split')[dataset_weight_col].sum(), keys)
+    dataset_dict = dict(zip(keys, dataset_sum))
+    alldict['Total ' + dataset_type] = dataset_dict
+    # sum persons
+    pkeys = pers.keys()
+    dtype = 'Total Persons'
+    expfac = 'psexpfac'
+    sum = map(lambda x: pd.read_json(pers[x], orient='split')[expfac].sum(), pkeys)
+    d = dict(zip(pkeys, sum))
+    alldict[dtype] = d
+    # compile and calculate per person
+    df_tot = pd.DataFrame.from_dict(alldict, orient='columns')
+    df_tot[dataset_type + ' per Person'] = df_tot['Total ' + dataset_type]/df_tot['Total Persons']
+    df_tot = df_tot.reset_index().rename(columns={'index': 'Scenario'})
+
+    tot_table = create_dash_table('dpatt-tot-tbl', df_tot, ['Scenario'], 13) 
+         
+    # generate 'by Purpose' tables
     for key in keys:
         df = pd.read_json(dataset[key], orient='split')
 
@@ -1153,7 +1177,7 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     graph_data_pers_type = create_graph_data(dataset, newdf, 'pptyp')
     graph_layout_pers_type = create_graph_layout(dpurp + ' ' + dataset_type + ' per Person')
 
-    return gen_table, {'data': graph_data, 'layout': graph_layout}, t, {'data': graph_data_pers_type, 'layout': graph_layout_pers_type}
+    return tot_table, gen_table, {'data': graph_data, 'layout': graph_layout}, t, {'data': graph_data_pers_type, 'layout': graph_layout_pers_type}
 
 # Work tab ------------------------------------------------------------------
 
@@ -1337,6 +1361,7 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
             yaxis={'title': yaxis_title, 'zeroline': False},
             hovermode='closest',
             autosize=True,
+            margin={'t':20},
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
         return {'data': datalist, 'layout': layout}
