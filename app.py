@@ -1120,7 +1120,13 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     # compile and calculate per person
     df_tot = pd.DataFrame.from_dict(alldict, orient='columns')
     df_tot[dataset_type + ' per Person'] = df_tot['Total ' + dataset_type]/df_tot['Total Persons']
+    df_tot[dataset_type + ' per Person'] = df_tot[dataset_type + ' per Person'].round(2)
     df_tot = df_tot.reset_index().rename(columns={'index': 'Scenario'})
+
+    # format numbers with separator
+    format_number_dp = functools.partial(format_number, decimal_places=0)
+    for i in range(1, len(df_tot.columns)-1):
+        df_tot.iloc[:, i] = df_tot.iloc[:, i].apply(format_number_dp)
 
     tot_table = create_dash_table('dpatt-tot-tbl', df_tot, ['Scenario'], 13) 
          
