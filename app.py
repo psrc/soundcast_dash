@@ -126,8 +126,8 @@ tab_trips_mc_layout = [dbc.Card(
                 dbc.RadioItems(
                     id='mode-share-type-deptm',
                     options=[{'label': i, 'value': i} for i
-                             in ['Mode Share', 'Trips by Mode']],
-                    value='Mode Share',
+                             in ['Distribution', 'Total Trips']],
+                    value='Distribution',
                     inline=True
                     ),
                 dcc.Graph(id='trip-deptm-graph'),
@@ -173,7 +173,7 @@ tab_tours_mc_layout = [
                 dbc.RadioItems(
                     id='tour-mode-share-type',
                     options=[{'label': i, 'value': i} for i
-                             in ['Mode Share', 'Tours by Mode']],
+                             in ['Mode Share', 'Total Tours']],
                     value='Mode Share',
                     inline=True
                 ),
@@ -190,8 +190,8 @@ tab_tours_mc_layout = [
                 dbc.RadioItems(
                     id='tour-mode-share-type-deptm',
                     options=[{'label': i, 'value': i} for i
-                             in ['Mode Share', 'Tours by Mode']],
-                    value='Mode Share',
+                             in ['Distribution', 'Total Tours']],
+                    value='Distribution',
                     inline=True
                 ),
                 dcc.Graph(id='tour-deptm-graph'),
@@ -237,23 +237,33 @@ tab_length_distance_mc_filter = [dbc.Card(
 
 tab_length_distance_mc_layout = [
     
-    dbc.Card(
-        dbc.CardBody(
-            [
-                html.H2('Tour Duration'),
-                html.Br(),
-                dbc.RadioItems(
-                    id='length-distance-share-type',
-                    options=[{'label': i, 'value': i} for i
-                             in ['Share', 'Total']],
-                    value='Share',
-                    inline=True
+
+    dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        dcc.Graph(id='tour-duration-graph'),
+                        ]
+                    ), style={"margin-top": "20px"}
                 ),
-                dcc.Graph(id='tour-duration-graph'),
-            ]
-        ),
-        style={"margin-top": "20px"},
-    ),
+            width=12
+            ),  # end Col
+        ]
+        ), 
+        dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        dcc.Graph(id='trip-time-graph'),
+                        ]
+                    ), style={"margin-top": "20px"}
+                ),
+            width=12
+            ),  # end Col
+        ]
+        ), 
 ]
 
 # Tab Day Pattern Layout
@@ -750,7 +760,7 @@ def update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
         data1.append(trace1)
 
         # trip distance histogram
-        if share_type_deptm == 'Mode Share':
+        if share_type_deptm == 'Distribution':
             df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
                 .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
         else:
@@ -758,7 +768,7 @@ def update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
                 .sum()[['trexpfac']]
         df_deptm_share.reset_index(inplace=True)
 
-        trace2 = go.Bar(
+        trace2 = go.Scatter(
             x=df_deptm_share['deptm_hr'],
             y=df_deptm_share['trexpfac'].astype(int),
             name=key)
@@ -823,7 +833,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
             df = df[df['pptyp'] == person_type]
         if dpurp != 'All':
             df = df[df['pdpurp'] == dpurp]
-        if share_type == 'Mode Share':
+        if share_type == 'Distribution':
             df_mode_share = df[['tmodetp', 'toexpfac']].groupby('tmodetp')\
                 .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         else:
@@ -840,7 +850,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
         data1.append(trace1)
 
          # trip distance histogram
-        if share_type_deptm == 'Mode Share':
+        if share_type_deptm == 'Distribution':
             df_deptm_share = df[['tlvorg_hr', 'toexpfac']].groupby('tlvorg_hr')\
                 .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         else:
@@ -881,9 +891,9 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
     [Output('distance-person-type-dropdown', 'options'),
      Output('distance-dpurp-dropdown', 'options'),
      Output('distance-mode-dropdown', 'options')],
-    [Input('tours_duration', 'children'),
+    [Input('trips', 'children'),
      Input('dummy_div6', 'children')])
-def length_distance_load_drop_downs(json_data, aux):
+def tour_load_drop_downs(json_data, aux):
     print('length and distance filter callback')
     person_types = ['All']
     dpurp = ['All']
@@ -893,69 +903,159 @@ def length_distance_load_drop_downs(json_data, aux):
     key = list(datasets)[0]
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
-    dpurp.extend([x for x in df.pdpurp.unique()])
-    if 'mode' in df.columns:
-        mode_col = 'mode'    # Trip
-    else: 
-        mode_col = 'tmodetp'    # Tour
-    mode.extend([x for x in df[mode_col].unique()])
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], \
-        [{'label': i, 'value': i} for i in mode]
+    dpurp.extend([x for x in df.dpurp.unique()])
+    mode.extend([x for x in df['mode'].unique()])
 
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in mode]
 
+@app.callback(
+    [Output('tour-duration-graph', 'figure'),
+     Output('trip-time-graph', 'figure')],
+    [Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('distance-person-type-dropdown', 'value'),
+     Input('distance-dpurp-dropdown', 'value'),
+     Input('distance-mode-dropdown', 'value'),
+     ]
+     # Input('dummy_div6', 'children')]
+    )
+def update_visuals(scenario1, scenario2, person_type, dpurp, mode):
+    print('length and distance graph callback')
+    print(person_type)
+    print(mode)
+    
+    def compile_csv_to_dict(filename, scenario_list):
+        dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
+        dfs_dict = dict(zip(scenario_list, dfs))
+        return(dfs_dict)
 
-@app.callback(Output('tour-duration-graph', 'figure'),
-              [Input('tours_duration', 'children'),
-               Input('distance-person-type-dropdown', 'value'),
-               Input('distance-dpurp-dropdown', 'value'),
-               Input('distance-mode-dropdown', 'value'),
-               Input('length-distance-share-type', 'value')])
-def length_distance_update_graph(json_data, person_type, dpurp, mode, share_type):
-    print('length and distance update graph callback')
-    datasets = json.loads(json_data)
-    data1 = []
-    data2 = []
-    for key in datasets.keys():
-        df = pd.read_json(datasets[key], orient='split')
-        if person_type != 'All':
-            df = df[df['pptyp'] == person_type]
-        if dpurp != 'All':
-            df = df[df['pdpurp'] == dpurp]
-        if mode != 'All':
-            if 'mode' in df.columns:
-                df = df[df['mode'] == mode]    # Trip
-            if 'tmodetp' in df.columns:
-                df = df[df['tmodetp'] == mode]    # Tours
+    def create_simple_bar_graph(table, xcol, weightcol, person_type, mode, dpurp, xaxis_title, yaxis_title):
+        datalist = []
+        for key in table.keys():
+            df = table[key]
+            df = df[df[xcol] > 0]
+            for filter_name, filter_value in {'pptyp': person_type, 'mode': mode, 'dpurp': dpurp}.items():
+                if filter_value != 'All':
+                    print(filter_name)
+                    
+                    df = df[df[filter_name] == filter_value]
+                    # df = df.sort_values(xcol)
+                    # print(len(df))
+            df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
+            df = df.reset_index()
+            df = df.sort_values(xcol)
+            df[xcol] = df[xcol].astype('int')
+            
+            print(df[xcol].head())
 
-        max_dist = int(df['tour_duration'].max())
-        bin_size = 30
-        df['tour_duration_bin'] = pd.cut(df['tour_duration'], bins=range(0, max_dist,bin_size), labels=range(bin_size, max_dist,bin_size))
+            trace = go.Scatter(
+                line_shape='linear',
+                x=df[xcol].copy(),
+                y=df[weightcol].copy(),
+                name=key
+                )
+            datalist.append(trace)
 
-
-        if share_type == 'Share':
-            df_tour_duration = df.groupby(['tour_duration_bin']).sum()/df['toexpfac'].sum() * 100
-        else:
-            df_tour_duration = df.groupby(['tour_duration_bin']).sum()
-        df_tour_duration.reset_index(inplace=True)
-
-        # Bar Chart
-        trace1 = go.Scatter(
-            x=df_tour_duration['tour_duration_bin'],
-            y=df_tour_duration['toexpfac'],
-            name=key
-            )
-        data1.append(trace1)
-
-    layout1 = go.Layout(
+        layout = go.Layout(
             barmode='group',
-            xaxis={'title': 'Tour Duration'},
-            yaxis={'title': share_type, 'zeroline': False},
+            xaxis={'title': xaxis_title, 'type': 'linear'},
+            yaxis={'title': yaxis_title, 'zeroline': False},
             hovermode='closest',
             autosize=True,
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Segoe UI', color='#7f7f7f'),
             )
+        return {'data': datalist, 'layout': layout}
 
-    return {'data': data1, 'layout': layout1}
+    vals = [scenario1, scenario2]
+
+    trip_dist_tbl = compile_csv_to_dict('trip_distance.csv', vals)
+    trip_time_tbl = compile_csv_to_dict('trip_time.csv', vals)
+    
+    agraph = create_simple_bar_graph(trip_dist_tbl, 'travdist_bin', 'trexpfac', person_type, mode, dpurp, 'Trip Distance', 'Trips')
+    bgraph = create_simple_bar_graph(trip_time_tbl, 'travtime_bin', 'trexpfac', person_type, mode, dpurp, 'Trip Time', 'Trips')
+    
+
+    return agraph, bgraph
+
+    # def create_totals_table(work_home_tbl, work_from_home_tours_tbl):
+    #     #engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+    #     #parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
+    #     taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+
+    #     datalist = []
+    #     datalist2 = []
+    #     for key in work_home_tbl.keys():
+
+    #         df = work_home_tbl[key]
+    #         wfh_total = df[df['pwpcl'] == df['hhparcel']]['psexpfac'].sum()
+
+    #         df = df.merge(taz_geog, left_on='pwtaz',right_on='taz')
+    #         df = df.merge(taz_geog, left_on='hhtaz',right_on='taz', suffixes=['_work','_home'])
+
+    #         # Select only work-from-home people
+    #         df_wfh = df[df['hhparcel'] == df['pwpcl']]
+    #         df = df_wfh.groupby('geog_name_work').sum()[['psexpfac']]
+    #         df.loc['Total',:] = df.sum(axis=0)
+
+    #         df.rename(columns={'psexpfac': key}, inplace=True)
+    #         df = df.reset_index()
+
+    #         datalist.append(df)
+
+    #         # Tour Rates
+    #         df = work_from_home_tours_tbl[key]
+    #         df = df[df['hhparcel'] == df['pwpcl']].groupby('pdpurp').sum()[['toexpfac']]
+    #         df = df.reset_index()
+    #         df['toexpfac'] = df['toexpfac']/wfh_total*1.0
+    #         df.rename(columns={'toexpfac': key}, inplace=True)
+    #         datalist2.append(df)
+
+    #     df_scenarios = pd.merge(datalist[0], datalist[1], on=['geog_name_work'], how='outer')
+    #     df_scenarios.rename(columns={'geog_name_work': 'County'}, inplace=True)
+    #     # format numbers with separator
+    #     format_number_dp = functools.partial(format_number, decimal_places=0)
+    #     for i in range(1, len(df_scenarios.columns)):
+    #         df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
+
+    #     # Calculate tour rates
+    #     df_tour_scenarios = pd.merge(datalist2[0], datalist2[1], on=['pdpurp'])
+    #     format_number_dp = functools.partial(format_number, decimal_places=2)
+    #     for i in range(1, len(df_tour_scenarios.columns)):
+    #         df_tour_scenarios.iloc[:, i] = df_tour_scenarios.iloc[:, i].apply(format_number_dp)
+
+    #     t = html.Div(
+    #         [dash_table.DataTable(id='table-totals-work',
+    #                               columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+    #                               data=df_scenarios.to_dict('rows'),
+    #                               style_cell={
+    #                                   'font-family': 'Segoe UI',
+    #                                   'font-size': 14,
+    #                                   'text-align': 'center'}
+    #                               ),
+    #          html.Br(),
+    #          html.H2("Tour Rate by Purpose for Work-From-Home Workers"),
+    #          dash_table.DataTable(id='table-totals-work2',
+    #                               columns=[{"name": i, "id": i} for i in df_tour_scenarios.columns],
+    #                               data=df_tour_scenarios.to_dict('rows'),
+    #                               style_cell={
+    #                                   'font-family': 'Segoe UI',
+    #                                   'font-size': 14,
+    #                                   'text-align': 'center'}
+    #                               ),
+    #          ]
+    #         )
+
+    #     return t
+
+
+
+    # vals = [scenario1, scenario2]
+    # work_home_tbl = compile_csv_to_dict('tours_duration.csv', vals)
+    # work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
+
+    # totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl)
+
+    # return totals_table
 
 
 # Day Pattern tab ------------------------------------------------------------
@@ -1197,6 +1297,7 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
      Input('dummy_div7', 'children')]
     )
 def update_visuals(pers_json, scenario1, scenario2, aux):
+    print('work update graph callback')
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
