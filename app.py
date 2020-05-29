@@ -346,7 +346,7 @@ tab_day_pattern_layout = [
             dbc.Card(
                   dbc.CardBody(
                         [
-                            html.H2(id='dpatt-tot-header'), # make header dynamic to dataset type ""
+                            html.H2(id='dpatt-tot-header'), 
                             html.Div(id='dpatt-tot-container'),
                         ]
                         ), style={"margin-top": "20px"}
@@ -358,7 +358,7 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2(id='dpatt-gen-header'), # this header will print "Percent of X by Purpose" or "X per Person by Purpose"
+                        html.H2(id='dpatt-gen-header'), 
                         html.Div(id='dpatt-table-container')
                     ]
                     ), style={"margin-top": "20px"}
@@ -382,8 +382,8 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        html.H2(id='dpatt-tours-pptyp-purpose-header'),
-                        html.Div(id='dpatt-table-tours-purpose-container')
+                        html.H2(id='dpatt-pptyp-purpose-header'),
+                        html.Div(id='dpatt-table-pptyp-purpose-container')
                     ]
                 ),
                 style={"margin-top": "20px"}
@@ -394,7 +394,7 @@ tab_day_pattern_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
-                        dcc.Graph(id='dpatt-graph-tours-purpose'),
+                        dcc.Graph(id='dpatt-graph-pptyp-purpose'),
 
                     ]
                 ), style={"margin-top": "20px"}
@@ -1073,7 +1073,7 @@ def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
 @app.callback(
     [Output('dpatt-tot-header', 'children'),
      Output('dpatt-gen-header', 'children'),
-     Output('dpatt-tours-pptyp-purpose-header', 'children')],
+     Output('dpatt-pptyp-purpose-header', 'children')],
     [Input('dpatt-dataset-type', 'value'),
      Input('dpatt-format-type', 'value'),
      Input('dpatt-dpurp-dropdown', 'value'),
@@ -1081,11 +1081,13 @@ def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
      Input('dummy_div5', 'children')])
 def update_headers(dataset_type, format_type, dpurp, aux, aux1):
     tot_header = "All " + dataset_type
-    header_pptyp_dpurp = dpurp + ' ' + dataset_type + ' per Person by Person Type'
     if format_type == 'Percent':
         gen_header = 'Percent of' + ' ' + dataset_type + ' by Purpose'
+        header_pptyp_dpurp = 'Percent of ' + dpurp + ' ' + dataset_type + ' by Person Type'
     else:
         gen_header = dataset_type + ' per Person by Purpose'
+        header_pptyp_dpurp = dpurp + ' ' + dataset_type + ' per Person by Person Type'
+
     return tot_header, gen_header, header_pptyp_dpurp 
 
 # all content, render as DashTables + graphs
@@ -1093,8 +1095,8 @@ def update_headers(dataset_type, format_type, dpurp, aux, aux1):
     [Output('dpatt-tot-container', 'children'),
      Output('dpatt-table-container', 'children'),
      Output('dpatt-graph-container', 'figure'),
-     Output('dpatt-table-tours-purpose-container', 'children'),
-     Output('dpatt-graph-tours-purpose', 'figure')],
+     Output('dpatt-table-pptyp-purpose-container', 'children'),
+     Output('dpatt-graph-pptyp-purpose', 'figure')],
     [Input('dpatt-dataset-type', 'value'),
      Input('dpatt-format-type', 'value'),
      Input('trips', 'children'),
@@ -1171,7 +1173,7 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
         return layout_gen_table 
-
+    print('This is the Day Pattern callback')
     # load all data
     trips = json.loads(trips_json)
     tours = json.loads(tours_json)
@@ -1186,9 +1188,10 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
         dataset_weight_col = 'trexpfac'
         dataset_dpurp_col = 'dpurp'
 
-    datalist = []  # X per person by person type and purpose
+    datalist = []  # X per person by person type and purpose 
+    datalist_perc = [] # X by person type and purpose (percent)
     datalist_all_dpurp = []  # X per person by purpose
-    datalist_dpurp_gen = []  # X by purpose
+    datalist_dpurp_gen = []  # X by purpose (percent)
 
     keys = dataset.keys()
     keyslist = list(keys)
@@ -1225,52 +1228,73 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
 
         df_dpurp_gen = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col]].reset_index()
         df_dpurp_gen = df_dpurp_gen.rename(columns={dataset_weight_col: key})
-        datalist_dpurp_gen.append(df_dpurp_gen[[dataset_dpurp_col, key]])
+        datalist_dpurp_gen.append(df_dpurp_gen[[dataset_dpurp_col, key]]) # X by purpose (percent)
 
         df_pers = pd.read_json(pers[key], orient='split')
         df_pers = df_pers.groupby(['pptyp']).sum()[['psexpfac']]
         df = df.groupby(['pptyp', dataset_dpurp_col]).sum()[[dataset_weight_col]].reset_index().merge(df_pers, on='pptyp')
-
+        
+        # X per person by purpose
         df_dpurp = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col, 'psexpfac']].reset_index()
         datalist_all_dpurp.append(calc_dpatt_per_person(df_dpurp, [dataset_dpurp_col], dataset_weight_col, key))
-
+        
+        # X per person by person type and purpose 
         df_ptype = df[df[dataset_dpurp_col] == dpurp]
-        datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', dataset_dpurp_col], dataset_weight_col, key))
+        print(df_ptype)
+        datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', dataset_dpurp_col], dataset_weight_col, key)) 
+        
+        # X by person type and purpose (percent)
+        df_ptype_perc = df_ptype.copy()
+        df_ptype_perc = df_ptype_perc[['pptyp', dataset_dpurp_col, dataset_weight_col]]
+        df_ptype_perc = df_ptype_perc.rename(columns={dataset_weight_col: key})
+        print(df_ptype_perc)
+        datalist_perc.append(df_ptype_perc)
 
-    newdf_dpurp_gen = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=dataset_dpurp_col), datalist_dpurp_gen)
-    newdf_dpurp = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=dataset_dpurp_col), datalist_all_dpurp)
-    newdf = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=['pptyp', dataset_dpurp_col]), datalist)
-
-    ## create percent of X by purpose
-    tp_tbl = newdf_dpurp_gen.copy()
-    for key in keyslist:
-        tp_tbl[key] = (tp_tbl[key]/tp_tbl[key].sum()) * 100
-    tp_tbl = calc_delta(tp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2, percent_delta=False)
-
-    ## create dash tables for X per person and purpose
-    tppp_tbl = newdf_dpurp.copy()
-    tppp_tbl = calc_delta(tppp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2)
+    newdf_dpurp_gen = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=dataset_dpurp_col), datalist_dpurp_gen) # X by purpose (percent)
+    newdf_dpurp = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=dataset_dpurp_col), datalist_all_dpurp)  # X per person by purpose
+    newdf = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=['pptyp', dataset_dpurp_col]), datalist) # X per person by person type and purpose 
+    newdf_perc = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=['pptyp', dataset_dpurp_col]), datalist_perc) # X by person type and purpose (percent)
     
     ## generate final tables according to filters
     if format_type == 'Percent':
+        tp_tbl = newdf_dpurp_gen.copy()
+        for key in keyslist:
+            tp_tbl[key] = (tp_tbl[key]/tp_tbl[key].sum()) * 100
+        tp_tbl = calc_delta(tp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2, percent_delta=False)
+   
         gen_table = create_dash_table('dpatt-gen-table-percent', tp_tbl, ['Destination Purpose'], '.7vw')
         graph_data = create_graph_data(dataset, tp_tbl, 'Destination Purpose')
         graph_layout = create_graph_layout('Percent of ' + dataset_type)
+
+        ## create dash table for X by person type and purpose (percent)
+        datatbl = newdf_perc.copy()
+        datatbl = datatbl.drop(dataset_dpurp_col, axis=1)
+        for key in keyslist:
+            datatbl[key] = (datatbl[key]/datatbl[key].sum()) * 100
+        datatbl = calc_delta(datatbl, keyslist, 'pptyp', 'Person Type', 2, percent_delta=False)
+        print(datatbl)
+        t = create_dash_table('dpatt-table-pptyp-purposes', datatbl, ['Person Type'], '.6vw')
+
+        # create graph
+        graph_data_pers_type = create_graph_data(dataset, datatbl, 'Person Type')
+        graph_layout_pers_type = create_graph_layout('Percent of ' + dpurp + ' ' + dataset_type)
+
     else:
-        gen_table = create_dash_table('dpatt-gen-table-per-pers', tppp_tbl, ['Destination Purpose'], '.7vw')
-        graph_data = create_graph_data(dataset, tppp_tbl, 'Destination Purpose')
-        graph_layout = create_graph_layout(dataset_type + 's per Person')
+        tp_tbl = newdf_dpurp.copy()
+        tp_tbl = calc_delta(tp_tbl, keyslist, dataset_dpurp_col, 'Destination Purpose', 2)
+        gen_table = create_dash_table('dpatt-gen-table-per-pers', tp_tbl, ['Destination Purpose'], '.7vw')
+        graph_data = create_graph_data(dataset, tp_tbl, 'Destination Purpose')
+        graph_layout = create_graph_layout(dataset_type + ' per Person')
 
+        ## create dash table for X per person by person type and purpose
+        datatbl = newdf.copy()
+        datatbl = datatbl.drop(dataset_dpurp_col, axis=1)
+        datatbl = calc_delta(datatbl, keyslist, 'pptyp', 'Person Type', 2)
+        t = create_dash_table('dpatt-table-pptyp-purposes', datatbl, ['Person Type'], '.6vw')
 
-    ## create dash table for tours per person by person type and purpose
-    datatbl = newdf.copy()
-    datatbl = datatbl.drop(dataset_dpurp_col, axis=1)
-    datatbl = calc_delta(datatbl, keyslist, 'pptyp', 'Person Type', 2)
-    t = create_dash_table('dpatt-table-tours-purposes', datatbl, ['Person Type'], '.6vw')
-
-    # create graph
-    graph_data_pers_type = create_graph_data(dataset, newdf, 'pptyp')
-    graph_layout_pers_type = create_graph_layout(dpurp + ' ' + dataset_type + ' per Person')
+        # create graph
+        graph_data_pers_type = create_graph_data(dataset, newdf, 'pptyp')
+        graph_layout_pers_type = create_graph_layout(dpurp + ' ' + dataset_type + ' per Person')
 
     return tot_table, gen_table, {'data': graph_data, 'layout': graph_layout}, t, {'data': graph_data_pers_type, 'layout': graph_layout_pers_type}
 
