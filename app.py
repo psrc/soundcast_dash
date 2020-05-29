@@ -205,9 +205,32 @@ tab_tours_mc_layout = [
 tab_length_distance_mc_filter = [dbc.Card(
     [
         dbc.CardHeader(html.H1('Filters')),
+            dbc.CardBody(
+                [
+                    dbc.Label('Dataset Type:'),
+                    dbc.RadioItems(
+                        id='distance-dataset-type',
+                        options=[{'label': i, 'value': i} for i
+                                 in ['Trips', 'Tours']],
+                        value='Trips'
+                    ),
+                    html.Br(),
+                    dbc.Label('Format Type:'),
+                    dbc.RadioItems(
+                        id='distance-format-type',
+                        options=[{'label': i, 'value': i} for i
+                                 in ['Percent', 'Total']],
+                        value='Percent'
+                    ),
+                    html.Br(),
+                    html.Div(id='dummy-dataset-type'),
+                    html.Div(id='dummy-format-type'),
+                ],
+                ),  # end of CardBody
+        dbc.CardHeader(html.H1('Filters')),
         dbc.CardBody(
             [
-                                html.Br(),
+                html.Br(),
                 dbc.Label('Mode:'),
                 dcc.Dropdown(
                     value='All',
@@ -243,6 +266,8 @@ tab_length_distance_mc_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
+                        html.H2(id='distance-graph1-header'), # make header dynamic to dataset type ""
+                        # html.Div(id='distance-tot-container'),
                         dcc.Graph(id='tour-duration-graph'),
                         ]
                     ), style={"margin-top": "20px"}
@@ -256,6 +281,8 @@ tab_length_distance_mc_layout = [
             dbc.Card(
                 dbc.CardBody(
                     [
+                        html.H2(id='distance-graph2-header'), # make header dynamic to dataset type ""
+                        # html.Div(id='distance-tot-container'),
                         dcc.Graph(id='trip-time-graph'),
                         ]
                     ), style={"margin-top": "20px"}
@@ -908,6 +935,37 @@ def tour_load_drop_downs(json_data, aux):
 
     return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in mode]
 
+
+# dynamic headers
+@app.callback(
+    [Output('distance-graph1-header', 'children'),
+     Output('distance-graph2-header', 'children')],
+    [Input('distance-person-type-dropdown', 'value'),
+     Input('distance-dpurp-dropdown', 'value'),
+     Input('distance-mode-dropdown', 'value'),
+     Input('distance-dataset-type', 'value'),
+     Input('distance-format-type', 'value'),
+     ])
+def update_headers(person_type, dpurp, mode, dataset_type, format_type):
+
+    result = []
+    for chart_type in [' Distance', ' Time']:
+
+        if dpurp != 'All':
+            header_graph1 = dpurp + ' ' + dataset_type + chart_type
+        else:
+            header_graph1 = dataset_type + chart_type
+        if mode != 'All':
+            header_graph1 += ' by ' + mode
+        if person_type != 'All':
+            header_graph1 += ' for ' + person_type
+        print(header_graph1)
+        result.append(header_graph1)
+    # test = [header_graph1, header_graph1]
+    print(result)
+    return result
+
+
 @app.callback(
     [Output('tour-duration-graph', 'figure'),
      Output('trip-time-graph', 'figure')],
@@ -916,38 +974,41 @@ def tour_load_drop_downs(json_data, aux):
      Input('distance-person-type-dropdown', 'value'),
      Input('distance-dpurp-dropdown', 'value'),
      Input('distance-mode-dropdown', 'value'),
+     Input('distance-dataset-type', 'value'),
+     Input('distance-format-type', 'value'),
      ]
      # Input('dummy_div6', 'children')]
     )
-def update_visuals(scenario1, scenario2, person_type, dpurp, mode):
+def update_visuals(scenario1, scenario2, person_type, dpurp, mode, dataset_type, format_type):
     print('length and distance graph callback')
-    print(person_type)
-    print(mode)
     
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_simple_bar_graph(table, xcol, weightcol, person_type, mode, dpurp, xaxis_title, yaxis_title):
+    def create_line_graph(table, xcol, weightcol, person_type, mode, dpurp, dataset_type, format_type, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
             df = table[key]
             df = df[df[xcol] > 0]
+
+            if dataset_type == 'Tour':
+                df.rename(columns={'pdpurp': 'dpurp', 'tmodetp': 'mode'}, inplace=True)
+
+            # Apply person type, mode, and purpose filters
             for filter_name, filter_value in {'pptyp': person_type, 'mode': mode, 'dpurp': dpurp}.items():
-                if filter_value != 'All':
-                    print(filter_name)
-                    
+                if filter_value != 'All': 
                     df = df[df[filter_name] == filter_value]
-                    # df = df.sort_values(xcol)
-                    # print(len(df))
+
             df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
             df = df.reset_index()
-            df = df.sort_values(xcol)
-            df[xcol] = df[xcol].astype('int')
-            
-            print(df[xcol].head())
+            df[weightcol] = df[weightcol].astype('int')
 
+            # Calculate shares if selected
+            if format_type == 'Percent':
+                df[weightcol] = df[weightcol]/df[weightcol].sum()
+            
             trace = go.Scatter(
                 line_shape='linear',
                 x=df[xcol].copy(),
@@ -968,95 +1029,23 @@ def update_visuals(scenario1, scenario2, person_type, dpurp, mode):
 
     vals = [scenario1, scenario2]
 
-    trip_dist_tbl = compile_csv_to_dict('trip_distance.csv', vals)
-    trip_time_tbl = compile_csv_to_dict('trip_time.csv', vals)
-    
-    agraph = create_simple_bar_graph(trip_dist_tbl, 'travdist_bin', 'trexpfac', person_type, mode, dpurp, 'Trip Distance', 'Trips')
-    bgraph = create_simple_bar_graph(trip_time_tbl, 'travtime_bin', 'trexpfac', person_type, mode, dpurp, 'Trip Time', 'Trips')
-    
+    if dataset_type == 'Trips':
+        dist_tbl = compile_csv_to_dict('trip_distance.csv', vals)
+        time_tbl = compile_csv_to_dict('trip_time.csv', vals)
+        agraph = create_line_graph(dist_tbl, 'travdist_bin', 'trexpfac', person_type, mode, 
+            dpurp, dataset_type, format_type, format_type + ' Distance', format_type)
+        bgraph = create_line_graph(time_tbl, 'travtime_bin', 'trexpfac', person_type, mode, 
+            dpurp, dataset_type, format_type,  format_type + ' Time', format_type)
+    else:
+        time_tbl = compile_csv_to_dict('tour_duration.csv', vals)
+        dist_tbl = compile_csv_to_dict('tour_duration.csv', vals)        
+        agraph = create_line_graph(time_tbl, 'tour_duration', 'toexpfac', person_type, mode, 
+            dpurp, dataset_type, format_type, format_type + ' Duration', format_type)
+        # bgraph = create_line_graph(dist_tbl, 'tour_duration', 'toexpfac', person_type, mode, 
+        #     dpurp, dataset_type, format_type,  format_type + ' Duration', format_type)
+        bgraph = {'data': []}
 
     return agraph, bgraph
-
-    # def create_totals_table(work_home_tbl, work_from_home_tours_tbl):
-    #     #engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
-    #     #parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
-    #     taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
-
-    #     datalist = []
-    #     datalist2 = []
-    #     for key in work_home_tbl.keys():
-
-    #         df = work_home_tbl[key]
-    #         wfh_total = df[df['pwpcl'] == df['hhparcel']]['psexpfac'].sum()
-
-    #         df = df.merge(taz_geog, left_on='pwtaz',right_on='taz')
-    #         df = df.merge(taz_geog, left_on='hhtaz',right_on='taz', suffixes=['_work','_home'])
-
-    #         # Select only work-from-home people
-    #         df_wfh = df[df['hhparcel'] == df['pwpcl']]
-    #         df = df_wfh.groupby('geog_name_work').sum()[['psexpfac']]
-    #         df.loc['Total',:] = df.sum(axis=0)
-
-    #         df.rename(columns={'psexpfac': key}, inplace=True)
-    #         df = df.reset_index()
-
-    #         datalist.append(df)
-
-    #         # Tour Rates
-    #         df = work_from_home_tours_tbl[key]
-    #         df = df[df['hhparcel'] == df['pwpcl']].groupby('pdpurp').sum()[['toexpfac']]
-    #         df = df.reset_index()
-    #         df['toexpfac'] = df['toexpfac']/wfh_total*1.0
-    #         df.rename(columns={'toexpfac': key}, inplace=True)
-    #         datalist2.append(df)
-
-    #     df_scenarios = pd.merge(datalist[0], datalist[1], on=['geog_name_work'], how='outer')
-    #     df_scenarios.rename(columns={'geog_name_work': 'County'}, inplace=True)
-    #     # format numbers with separator
-    #     format_number_dp = functools.partial(format_number, decimal_places=0)
-    #     for i in range(1, len(df_scenarios.columns)):
-    #         df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
-
-    #     # Calculate tour rates
-    #     df_tour_scenarios = pd.merge(datalist2[0], datalist2[1], on=['pdpurp'])
-    #     format_number_dp = functools.partial(format_number, decimal_places=2)
-    #     for i in range(1, len(df_tour_scenarios.columns)):
-    #         df_tour_scenarios.iloc[:, i] = df_tour_scenarios.iloc[:, i].apply(format_number_dp)
-
-    #     t = html.Div(
-    #         [dash_table.DataTable(id='table-totals-work',
-    #                               columns=[{"name": i, "id": i} for i in df_scenarios.columns],
-    #                               data=df_scenarios.to_dict('rows'),
-    #                               style_cell={
-    #                                   'font-family': 'Segoe UI',
-    #                                   'font-size': 14,
-    #                                   'text-align': 'center'}
-    #                               ),
-    #          html.Br(),
-    #          html.H2("Tour Rate by Purpose for Work-From-Home Workers"),
-    #          dash_table.DataTable(id='table-totals-work2',
-    #                               columns=[{"name": i, "id": i} for i in df_tour_scenarios.columns],
-    #                               data=df_tour_scenarios.to_dict('rows'),
-    #                               style_cell={
-    #                                   'font-family': 'Segoe UI',
-    #                                   'font-size': 14,
-    #                                   'text-align': 'center'}
-    #                               ),
-    #          ]
-    #         )
-
-    #     return t
-
-
-
-    # vals = [scenario1, scenario2]
-    # work_home_tbl = compile_csv_to_dict('tours_duration.csv', vals)
-    # work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
-
-    # totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl)
-
-    # return totals_table
-
 
 # Day Pattern tab ------------------------------------------------------------
 # load drop downs
