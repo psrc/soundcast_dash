@@ -50,6 +50,7 @@ scenario_select_layout = dbc.Card(
                                 in available_scenarios
                             ],
                             value=available_scenarios[0],
+                            clearable=False
                         ),
                     ]
                 ),
@@ -63,6 +64,7 @@ scenario_select_layout = dbc.Card(
                                 in available_scenarios
                             ],
                             value=available_scenarios[1],
+                            clearable=False
                         ),
                     ]
                 ),  # end dbc.FormGroup
@@ -82,12 +84,14 @@ tab_trips_mc_filter = [dbc.Card(
                 dbc.Label('Person Type:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='person-type-dropdown'
                 ),
                 html.Br(),
                 dbc.Label('Destination Purpose:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='dpurp-dropdown'
                 ),
                 html.Br(),
@@ -147,12 +151,14 @@ tab_tours_mc_filter = [dbc.Card(
                 dbc.Label('Person Type:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='tour-person-type-dropdown'
                 ),
                 html.Br(),
                 dbc.Label('Destination Purpose:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='tour-dpurp-dropdown'
                 ),
                 html.Br(),
@@ -207,14 +213,6 @@ tab_length_distance_mc_filter = [dbc.Card(
         dbc.CardHeader(html.H1('Filters')),
             dbc.CardBody(
                 [
-                    dbc.Label('Dataset Type:'),
-                    dbc.RadioItems(
-                        id='distance-dataset-type',
-                        options=[{'label': i, 'value': i} for i
-                                 in ['Trips', 'Tours']],
-                        value='Trips'
-                    ),
-                    html.Br(),
                     dbc.Label('Format Type:'),
                     dbc.RadioItems(
                         id='distance-format-type',
@@ -234,18 +232,21 @@ tab_length_distance_mc_filter = [dbc.Card(
                 dbc.Label('Mode:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='distance-mode-dropdown'
                 ),
                 html.Br(),
                 dbc.Label('Person Type:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='distance-person-type-dropdown'
                 ),
                 html.Br(),
                 dbc.Label('Destination Purpose:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='distance-dpurp-dropdown'
                 ),
 
@@ -291,6 +292,7 @@ tab_length_distance_mc_layout = [
             ),  # end Col
         ]
         ), 
+
 ]
 
 # Tab Day Pattern Layout
@@ -328,6 +330,7 @@ tab_day_pattern_filter = [
                     dbc.Label('Destination Purpose:'),
                     dcc.Dropdown(
                         value='Escort',
+                        clearable=False,
                         id='dpatt-dpurp-dropdown'
                     ),
                     html.Br(),
@@ -495,6 +498,7 @@ taz_map_filter = [dbc.Card(
                 dbc.Label('Destination Purpose:'),
                 dcc.Dropdown(
                     value='All',
+                    clearable=False,
                     id='dpurp-dropdown2'
                 ),
                 html.Br(),
@@ -568,8 +572,8 @@ content = html.Div(id='tabs-content')
 tabs = dbc.Tabs(
     children=[
         dbc.Tab(label="Trips", tab_id="tab-trips-mc"),
+        dbc.Tab(label="Trip Length and Distance", tab_id="tab-length-distance-mc"),
         dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
-        dbc.Tab(label="Length and Distance", tab_id="tab-length-distance-mc"),
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
         dbc.Tab(label="Work", tab_id="tab-work"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
@@ -622,10 +626,10 @@ app.layout = html.Div([navbar, main_body, hidden_divs])
 def render_content_filter(tab):
     if tab == 'tab-trips-mc':
         return tab_trips_mc_filter
-    elif tab == 'tab-tours-mc':
-        return tab_tours_mc_filter
     elif tab == 'tab-length-distance-mc':
         return tab_length_distance_mc_filter
+    elif tab == 'tab-tours-mc':
+        return tab_tours_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
     #elif tab == 'tab-work':
@@ -643,10 +647,10 @@ def render_content_filter(tab):
 def render_content(tab):
     if tab == 'tab-trips-mc':
         return tab_trips_mc_layout
-    elif tab == 'tab-tours-mc':
-        return tab_tours_mc_layout
     elif tab == 'tab-length-distance-mc':
         return tab_length_distance_mc_layout
+    elif tab == 'tab-tours-mc':
+        return tab_tours_mc_layout
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_layout
     elif tab == 'tab-work':
@@ -662,7 +666,6 @@ def render_content(tab):
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
-         Output('tours_duration', 'children'),
          #Output('trip_time', 'children'),
          #Output('trip_distance', 'children'),
          #Output('households', 'children'),
@@ -679,8 +682,6 @@ def page_1_dropdown(val1, val2):
     tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
     pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
-    tour_duration1 = pd.read_csv(os.path.join('data', val1, 'tour_duration.csv'))
-    tour_duration2 = pd.read_csv(os.path.join('data', val2, 'tour_duration.csv'))
     #tour_time = pd.read_csv(os.path.join('data', val1, 'tour_duration.csv'))
     #tour_duration2 = pd.read_csv(os.path.join('data', val2, 'tour_duration.csv'))
     #hhs1 = pd.read_csv(os.path.join('data', val1,
@@ -705,10 +706,6 @@ def page_1_dropdown(val1, val2):
         val1: pers1.to_json(orient='split'),
         val2: pers2.to_json(orient='split')
         }
-    tours_duration = {
-        val1: tour_duration1.to_json(orient='split'),
-        val2: tour_duration2.to_json(orient='split')
-        }
     #households = {
     #     val1: hhs1.to_json(orient='split'),
     #     val2: hhs2.to_json(orient='split')
@@ -725,7 +722,7 @@ def page_1_dropdown(val1, val2):
     #    val1: wrkrs1.to_json(orient='split'),
     #    val2: wrkrs2.to_json(orient='split')
     #    }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons), json.dumps(tours_duration)  # ,
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # ,
     #json.dumps(dtaz_trips) #, json.dumps(households), json.dumps(auto_own),
     #json.dumps(workers)
 
@@ -943,18 +940,16 @@ def tour_load_drop_downs(json_data, aux):
     [Input('distance-person-type-dropdown', 'value'),
      Input('distance-dpurp-dropdown', 'value'),
      Input('distance-mode-dropdown', 'value'),
-     Input('distance-dataset-type', 'value'),
      Input('distance-format-type', 'value'),
      ])
-def update_headers(person_type, dpurp, mode, dataset_type, format_type):
+def update_headers(person_type, dpurp, mode, format_type):
 
     result = []
     for chart_type in [' Distance', ' Time']:
-
         if dpurp != 'All':
-            header_graph1 = dpurp + ' ' + dataset_type + chart_type
+            header_graph1 = dpurp + ' Trip ' + chart_type
         else:
-            header_graph1 = dataset_type + chart_type
+            header_graph1 = 'Trip ' + chart_type
         if mode != 'All':
             header_graph1 += ' by ' + mode
         if person_type != 'All':
@@ -974,12 +969,11 @@ def update_headers(person_type, dpurp, mode, dataset_type, format_type):
      Input('distance-person-type-dropdown', 'value'),
      Input('distance-dpurp-dropdown', 'value'),
      Input('distance-mode-dropdown', 'value'),
-     Input('distance-dataset-type', 'value'),
      Input('distance-format-type', 'value'),
      ]
      # Input('dummy_div6', 'children')]
     )
-def update_visuals(scenario1, scenario2, person_type, dpurp, mode, dataset_type, format_type):
+def update_visuals(scenario1, scenario2, person_type, dpurp, mode, format_type):
     print('length and distance graph callback')
     
     def compile_csv_to_dict(filename, scenario_list):
@@ -987,14 +981,11 @@ def update_visuals(scenario1, scenario2, person_type, dpurp, mode, dataset_type,
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_line_graph(table, xcol, weightcol, person_type, mode, dpurp, dataset_type, format_type, xaxis_title, yaxis_title):
+    def create_line_graph(table, xcol, weightcol, person_type, mode, dpurp, format_type, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
             df = table[key]
             df = df[df[xcol] > 0]
-
-            if dataset_type == 'Tour':
-                df.rename(columns={'pdpurp': 'dpurp', 'tmodetp': 'mode'}, inplace=True)
 
             # Apply person type, mode, and purpose filters
             for filter_name, filter_value in {'pptyp': person_type, 'mode': mode, 'dpurp': dpurp}.items():
@@ -1004,6 +995,10 @@ def update_visuals(scenario1, scenario2, person_type, dpurp, mode, dataset_type,
             df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
             df = df.reset_index()
             df[weightcol] = df[weightcol].astype('int')
+
+            # Exclude outlying 1% of data
+            df['cumulative_share'] = df['trexpfac'].cumsum()/df['trexpfac'].sum()
+            df = df[df['cumulative_share'] < 0.99]
 
             # Calculate shares if selected
             if format_type == 'Percent':
@@ -1029,21 +1024,12 @@ def update_visuals(scenario1, scenario2, person_type, dpurp, mode, dataset_type,
 
     vals = [scenario1, scenario2]
 
-    if dataset_type == 'Trips':
-        dist_tbl = compile_csv_to_dict('trip_distance.csv', vals)
-        time_tbl = compile_csv_to_dict('trip_time.csv', vals)
-        agraph = create_line_graph(dist_tbl, 'travdist_bin', 'trexpfac', person_type, mode, 
-            dpurp, dataset_type, format_type, format_type + ' Distance', format_type)
-        bgraph = create_line_graph(time_tbl, 'travtime_bin', 'trexpfac', person_type, mode, 
-            dpurp, dataset_type, format_type,  format_type + ' Time', format_type)
-    else:
-        time_tbl = compile_csv_to_dict('tour_duration.csv', vals)
-        dist_tbl = compile_csv_to_dict('tour_duration.csv', vals)        
-        agraph = create_line_graph(time_tbl, 'tour_duration', 'toexpfac', person_type, mode, 
-            dpurp, dataset_type, format_type, format_type + ' Duration', format_type)
-        # bgraph = create_line_graph(dist_tbl, 'tour_duration', 'toexpfac', person_type, mode, 
-        #     dpurp, dataset_type, format_type,  format_type + ' Duration', format_type)
-        bgraph = {'data': []}
+    dist_tbl = compile_csv_to_dict('trip_distance.csv', vals)
+    time_tbl = compile_csv_to_dict('trip_time.csv', vals)
+    agraph = create_line_graph(dist_tbl, 'travdist_bin', 'trexpfac', person_type, mode, 
+        dpurp, format_type, 'Trip Distance (miles)', format_type)
+    bgraph = create_line_graph(time_tbl, 'travtime_bin', 'trexpfac', person_type, mode, 
+        dpurp, format_type,  format_type + ' Travel Time (min.)', format_type)
 
     return agraph, bgraph
 
