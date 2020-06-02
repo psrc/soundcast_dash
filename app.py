@@ -207,6 +207,66 @@ tab_tours_mc_layout = [
     ),
 ]
 
+# Tours 2  Layout
+tab_tours2_mc_filter = [dbc.Card(
+    [       dbc.CardHeader(html.H1('Filters')),
+            dbc.CardBody(
+                [
+                    dbc.Label('Format Type:'),
+                    dbc.RadioItems(
+                        id='tour2-format-type',
+                        options=[{'label': i, 'value': i} for i
+                                 in ['Percent', 'Total']],
+                        value='Percent'
+                    ),
+                    html.Br(),
+                    html.Div(id='dummy-dataset-type'),
+                    html.Div(id='dummy-format-type'),
+                ],
+                ),  # end of CardBody
+        dbc.CardHeader(html.H1('Filters')),
+        dbc.CardBody(
+            [
+
+                html.Br(),
+                dbc.Label('Mode:'),
+                dcc.Dropdown(
+                    value='All',
+                    clearable=False,
+                    id='tour2-mode-dropdown'
+                ),
+                html.Br(),
+                #html.Div(id='df', style={'display': 'none'}),
+                html.Div(id='dummy_div8'),
+                html.Br(),
+                dbc.Label('Purpose:'),
+                dcc.Dropdown(
+                    value='Escort',
+                    clearable=False,
+                    id='tour2-purpose-dropdown'
+                ),
+                html.Br(),
+                #html.Div(id='df', style={'display': 'none'}),
+                html.Div(id='dummy_div8'),
+            ],
+            #className = 'bg-light',
+        )],
+    className='aside-card'
+)]
+
+tab_tours2_mc_layout = [
+    dbc.Card(
+        dbc.CardBody(
+            [
+                html.H2("Trips by Tour"),
+                html.Br(),
+                dcc.Graph(id='trips-by-tour'),
+            ],
+        ),
+        style={"margin-top": "20px"},
+    ),
+]
+
 # Length and distance Layout
 tab_length_distance_mc_filter = [dbc.Card(
     [
@@ -574,6 +634,7 @@ tabs = dbc.Tabs(
         dbc.Tab(label="Trips", tab_id="tab-trips-mc"),
         dbc.Tab(label="Trip Length and Distance", tab_id="tab-length-distance-mc"),
         dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
+        dbc.Tab(label="Tours 2", tab_id="tab-tours2-mc"),
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
         dbc.Tab(label="Work", tab_id="tab-work"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
@@ -630,6 +691,8 @@ def render_content_filter(tab):
         return tab_length_distance_mc_filter
     elif tab == 'tab-tours-mc':
         return tab_tours_mc_filter
+    elif tab == 'tab-tours2-mc':
+        return tab_tours2_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
     #elif tab == 'tab-work':
@@ -651,6 +714,8 @@ def render_content(tab):
         return tab_length_distance_mc_layout
     elif tab == 'tab-tours-mc':
         return tab_tours_mc_layout
+    elif tab == 'tab-tours2-mc':
+        return tab_tours2_mc_layout
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_layout
     elif tab == 'tab-work':
@@ -908,6 +973,83 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 
+
+# Tour 2; trips by tour
+# Tours Mode Choice tab -----------------------------------------------------
+# load drop downs
+@app.callback(
+    [Output('tour2-purpose-dropdown', 'options'),
+     Output('tour2-mode-dropdown', 'options')],
+    [Input('trips', 'children'),
+     Input('dummy_div8', 'children')])
+def tour2_load_drop_downs(json_data, aux):
+    print('length and distance filter callback')
+    mode = ['All']
+
+    datasets = json.loads(json_data)
+    key = list(datasets)[0]
+    df = pd.read_json(datasets[key], orient='split')
+    dpurp = [x for x in df.dpurp.unique()]
+    mode.extend([x for x in df['mode'].unique()])
+
+    return [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in mode]
+
+@app.callback(Output('trips-by-tour', 'figure'),
+              [ Input('scenario-1-dropdown', 'value'),
+                Input('scenario-2-dropdown', 'value'),
+                Input('tour2-format-type', 'value'),
+                Input('tour2-mode-dropdown', 'value'),
+                Input('tour2-purpose-dropdown', 'value')])
+def update_visuals(scenario1, scenario2, format_type, mode, dpurp):
+    print('tours 2 callback')
+    
+    def compile_csv_to_dict(filename, scenario_list):
+        dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
+        dfs_dict = dict(zip(scenario_list, dfs))
+        return(dfs_dict)
+
+    def create_line_graph(table, xcol, weightcol, format_type, mode, dpurp, xaxis_title, yaxis_title):
+        datalist = []
+        for key in table.keys():
+            df = table[key]
+
+            # Apply mode, and purpose filters
+            for filter_name, filter_value in {'pdpurp': dpurp}.items():
+                print(filter_value)
+                df = df[df[filter_name] == filter_value]
+
+            df = df[xcol+[weightcol]].groupby(xcol).sum()[[weightcol]]
+
+            df = df.reset_index()
+            df[weightcol] = df[weightcol].astype('int')
+
+            # Calculate shares if selected
+            if format_type == 'Percent':
+                df[weightcol] = df[weightcol]/df[weightcol].sum()
+       
+            trace = go.Bar(
+                y=df['dpurp'].copy(),
+                x=df[weightcol].copy(),
+                name=key,
+                orientation='h',
+                )
+            datalist.append(trace)
+
+        layout = go.Layout(
+            barmode='group',
+            yaxis={'type': 'category', 'automargin': True},
+            xaxis={'title': yaxis_title, 'zeroline': False},
+            hovermode='closest',
+            font=dict(family='Segoe UI', color='#7f7f7f'),
+            )
+        return {'data': datalist, 'layout': layout}
+
+    vals = [scenario1, scenario2]
+
+    tbl = compile_csv_to_dict('trips_by_tour.csv', vals)
+    agraph = create_line_graph(tbl, ['pdpurp','dpurp'], 'trexpfac', format_type, mode, dpurp, 'Purpose', format_type)
+
+    return agraph
 
 # Length and Distance tab -----------------------------------------------------
 # load drop downs
