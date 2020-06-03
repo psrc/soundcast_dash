@@ -241,7 +241,7 @@ tab_tours2_mc_filter = [dbc.Card(
                 html.Br(),
                 dbc.Label('Purpose:'),
                 dcc.Dropdown(
-                    value='Escort',
+                    value='Work',
                     clearable=False,
                     id='tour2-purpose-dropdown'
                 ),
@@ -258,7 +258,7 @@ tab_tours2_mc_layout = [
     dbc.Card(
         dbc.CardBody(
             [
-                html.H2("Trips by Tour"),
+                html.H2(id='trips-tour-header'),
                 html.Br(),
                 dcc.Graph(id='trips-by-tour'),
             ],
@@ -389,7 +389,7 @@ tab_day_pattern_filter = [
                 [
                     dbc.Label('Destination Purpose:'),
                     dcc.Dropdown(
-                        value='Escort',
+                        value='Work',
                         clearable=False,
                         id='dpatt-dpurp-dropdown'
                     ),
@@ -1002,6 +1002,22 @@ def tour2_load_drop_downs(json_data, aux):
 
     return [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in mode]
 
+@app.callback(
+    [Output('trips-tour-header', 'children')],
+    [Input('tour2-mode-dropdown', 'value'),
+     Input('tour2-purpose-dropdown', 'value'),
+     ])
+def update_headers(mode, dpurp):
+
+    result = []
+    header_graph1 = 'Trips by Tours: ' + dpurp + ' Tours '    
+    if mode != 'All':
+        header_graph1 += ' by ' + mode
+
+    result.append(header_graph1)
+
+    return result
+
 @app.callback(Output('trips-by-tour', 'figure'),
               [ Input('scenario-1-dropdown', 'value'),
                 Input('scenario-2-dropdown', 'value'),
@@ -1023,7 +1039,7 @@ def update_visuals(scenario1, scenario2, format_type, mode, dpurp):
 
             # Apply mode, and purpose filters
             for filter_name, filter_value in {'pdpurp': dpurp}.items():
-                print(filter_value)
+
                 df = df[df[filter_name] == filter_value]
 
             df = df[xcol+[weightcol]].groupby(xcol).sum()[[weightcol]]
@@ -1104,10 +1120,9 @@ def update_headers(person_type, dpurp, mode, format_type):
             header_graph1 += ' by ' + mode
         if person_type != 'All':
             header_graph1 += ' for ' + person_type
-        print(header_graph1)
+
         result.append(header_graph1)
-    # test = [header_graph1, header_graph1]
-    print(result)
+
     return result
 
 
@@ -1376,14 +1391,13 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
         
         # X per person by person type and purpose 
         df_ptype = df[df[dataset_dpurp_col] == dpurp]
-        print(df_ptype)
+
         datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', dataset_dpurp_col], dataset_weight_col, key)) 
         
         # X by person type and purpose (percent)
         df_ptype_perc = df_ptype.copy()
         df_ptype_perc = df_ptype_perc[['pptyp', dataset_dpurp_col, dataset_weight_col]]
         df_ptype_perc = df_ptype_perc.rename(columns={dataset_weight_col: key})
-        print(df_ptype_perc)
         datalist_perc.append(df_ptype_perc)
 
     newdf_dpurp_gen = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=dataset_dpurp_col), datalist_dpurp_gen) # X by purpose (percent)
@@ -1408,7 +1422,7 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
         for key in keyslist:
             datatbl[key] = (datatbl[key]/datatbl[key].sum()) * 100
         datatbl = calc_delta(datatbl, keyslist, 'pptyp', 'Person Type', 2, percent_delta=False)
-        print(datatbl)
+
         t = create_dash_table('dpatt-table-pptyp-purposes', datatbl, ['Person Type'], '.6vw')
 
         # create graph
@@ -1544,8 +1558,6 @@ def update_visuals(pers_json, scenario1, scenario2, data_type, aux):
     return totals_table
 
 # Households and Persons tab ------------------------------------------------------------------
-
-
 @app.callback(
     [Output('table-totals-container', 'children'),
      Output('hhpers-graph-header', 'children'),
@@ -1751,20 +1763,17 @@ def map_update_graph(json_data, dpurp, aux):
     df['sum_trips'] = df.sum(axis=1)
     df.reset_index(inplace=True)
     gdf = taz_gdf.copy()
-    print(gdf.columns)
-    #gdf = gdf.head(5)
-    #print (gdf)
+
     gdf = gdf.merge(df, left_on='TAZ', right_on='dtaz')
     gdf['geometry'] = gdf['geometry'].to_crs(epsg=4326)
     geojson_data = json.loads(gdf.to_json())
-    #print (gdf.columns)
-    print(gdf['Transit'])
+
     gdf['mode_share'] = (gdf['Transit']/gdf['sum_trips']) * 100
     trace = go.Choroplethmapbox(geojson=geojson_data, locations=gdf['id'], z=gdf['mode_share'], autocolorscale=False,
                                 colorscale="YlGnBu", zauto=False, zmid=12, zmin=0, zmax=15, marker={'line': {'color': 'rgb(180,180,180)', 'width': 0.5}},
                                 colorbar={"thickness": 10, "len": 0.3, "x": 0.9, "y": 0.7,
                                 'title': {"text": 'transit', "side": "bottom"}})
-    #print (trace)
+
 
     return {"data": [trace],
             "layout": go.Layout(title='transit', mapbox_style="open-street-map", mapbox_zoom=7.5, mapbox_center={"lat": 47.609, "lon": -122.291}, height=800, geo={'showframe': False, 'showcoastlines': False, })}
@@ -1814,8 +1823,7 @@ def display_selected_data(selectedData, json_data, aux):
         gdf = gdf[gdf['id'].isin(ids)]
         gdf = gdf[['mode', 'trexpfac']].groupby('mode').sum()[['trexpfac']]
         gdf.reset_index(inplace=True)
-        print(len(gdf))
-        print(gdf.columns)
+
         trace1 = go.Bar(
             x=gdf['mode'].copy(),
             y=gdf['trexpfac'].copy(),
@@ -1831,7 +1839,7 @@ def display_selected_data(selectedData, json_data, aux):
             autosize=True,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
-        #print (df)
+
     return {'data': data1, 'layout': layout1}
 
 
