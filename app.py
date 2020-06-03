@@ -470,12 +470,20 @@ tab_day_pattern_layout = [
     html.Div(id='dummy_div5'),
 ]
 
+
 # Tab Work Layout
 tab_work_layout = [
     dbc.Card(
         dbc.CardBody(
             [
                 html.H2("Work-From-Home Workers by County"),
+                dbc.RadioItems(
+                    id='work-county-data-type',
+                    options=[{'label': i, 'value': i} for i
+                             in ['Total', 'Distribution']],
+                    value='Total',
+                    inline=True
+                    ),
                 html.Br(),
                 html.Div(id='table-totals-container-work'),
                 ]
@@ -1435,19 +1443,22 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     [Input('persons', 'children'),
      Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
+     Input('work-county-data-type', 'value'),
      Input('dummy_div7', 'children')]
     )
-def update_visuals(pers_json, scenario1, scenario2, aux):
+def update_visuals(pers_json, scenario1, scenario2, data_type, aux):
     print('work update graph callback')
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_totals_table(work_home_tbl, work_from_home_tours_tbl):
+    def create_totals_table(work_home_tbl, work_from_home_tours_tbl, data_type):
         #engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
         #parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
         taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+
+        
 
         datalist = []
         datalist2 = []
@@ -1462,7 +1473,15 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
             # Select only work-from-home people
             df_wfh = df[df['hhparcel'] == df['pwpcl']]
             df = df_wfh.groupby('geog_name_work').sum()[['psexpfac']]
-            df.loc['Total',:] = df.sum(axis=0)
+
+            if data_type == 'Distribution':
+                df['psexpfac'] = df['psexpfac']/df['psexpfac'].sum()
+                format_number_dp = functools.partial(format_number, decimal_places=2)
+                # df['psexpfac'] = df['psexpfac'].apply(format_number_dp)
+            else:
+                format_number_dp = functools.partial(format_number, decimal_places=0)
+                # df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_number, decimal_places=0))
+                df.loc['Total',:] = df.sum(axis=0)
 
             df.rename(columns={'psexpfac': key}, inplace=True)
             df = df.reset_index()
@@ -1481,7 +1500,6 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
         df_scenarios = pd.merge(datalist[0], datalist[1], on=['geog_name_work'], how='outer')
         df_scenarios.rename(columns={'geog_name_work': 'County'}, inplace=True)
         # format numbers with separator
-        format_number_dp = functools.partial(format_number, decimal_places=0)
         for i in range(1, len(df_scenarios.columns)):
             df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
 
@@ -1521,7 +1539,7 @@ def update_visuals(pers_json, scenario1, scenario2, aux):
     work_home_tbl = compile_csv_to_dict('work_home_location.csv', vals)
     work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
 
-    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl)
+    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl, data_type)
 
     return totals_table
 
