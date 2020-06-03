@@ -922,7 +922,7 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
             df = df[df['pptyp'] == person_type]
         if dpurp != 'All':
             df = df[df['pdpurp'] == dpurp]
-        if share_type == 'Distribution':
+        if share_type in ['Distribution','Mode Share']:
             df_mode_share = df[['tmodetp', 'toexpfac']].groupby('tmodetp')\
                 .sum()[['toexpfac']]/df[['toexpfac']].sum() * 100
         else:
