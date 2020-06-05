@@ -27,6 +27,7 @@ def format_number(x, decimal_places):
 available_scenarios = [name for name in os.listdir('data')
                        if os.path.isdir(os.path.join('data', name))
                        and name != 'data']
+available_scenarios.insert(0,"None")
 mode_dict = {1: 'walk', 2: 'bike', 3: 'sov', 4: 'hov2', 5: 'hov3',
              6: 'w_transit', 7: 'd_transit', 8: 'school_bus', 9: 'other',
              0: 'other'}
@@ -49,7 +50,7 @@ scenario_select_layout = dbc.Card(
                                 {"label": col, "value": col} for col
                                 in available_scenarios
                             ],
-                            value=available_scenarios[0],
+                            value=available_scenarios[1],
                             clearable=False
                         ),
                     ]
@@ -63,8 +64,22 @@ scenario_select_layout = dbc.Card(
                                 {"label": col, "value": col} for col
                                 in available_scenarios
                             ],
-                            value=available_scenarios[1],
-                            clearable=False
+                            value=available_scenarios[2],
+                            clearable=True
+                        ),
+                    ]
+                ),  # end dbc.FormGroup
+                dbc.FormGroup(
+                    [
+                        dbc.Label("Scenario 3"),
+                        dcc.Dropdown(
+                            id="scenario-3-dropdown",
+                            options=[
+                                {"label": col, "value": col} for col
+                                in available_scenarios
+                            ],
+                            value="None",
+                            clearable=True
                         ),
                     ]
                 ),  # end dbc.FormGroup
@@ -771,66 +786,46 @@ def render_content(tab):
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
-         #Output('trip_time', 'children'),
-         #Output('trip_distance', 'children'),
-         #Output('households', 'children'),
-         #Output('dtaz_trips', 'children'),
-         #Output('auto_own', 'children'),
-         #Output('workers', 'children')
          ],
         [Input('scenario-1-dropdown', 'value'),
-         Input('scenario-2-dropdown', 'value')])
-def page_1_dropdown(val1, val2):
+         Input('scenario-2-dropdown', 'value'),
+         Input('scenario-3-dropdown', 'value')])
+def page_1_dropdown(val1, val2, val3):
     trips1 = pd.read_csv(os.path.join('data', val1, 'trip_purpose_mode.csv'))
     trips2 = pd.read_csv(os.path.join('data', val2, 'trip_purpose_mode.csv'))
+
     tours1 = pd.read_csv(os.path.join('data', val1, 'tour_purpose_mode.csv'))
     tours2 = pd.read_csv(os.path.join('data', val2, 'tour_purpose_mode.csv'))
+    
     pers1 = pd.read_csv(os.path.join('data', val1, 'person_type.csv'))
     pers2 = pd.read_csv(os.path.join('data', val2, 'person_type.csv'))
-    #tour_time = pd.read_csv(os.path.join('data', val1, 'tour_duration.csv'))
-    #tour_duration2 = pd.read_csv(os.path.join('data', val2, 'tour_duration.csv'))
-    #hhs1 = pd.read_csv(os.path.join('data', val1,
-    #                                'household_size_vehs_workers.csv'))
-    #hhs2 = pd.read_csv(os.path.join('data', val2,
-    #                                'household_size_vehs_workers.csv'))
-    #dtaz_trips1 = pd.read_csv(os.path.join('data', val1, 'trip_dtaz.csv'))
-    #dtaz_trips2 = pd.read_csv(os.path.join('data', val2, 'trip_dtaz.csv'))
-    #auto_own1 = pd.read_csv(os.path.join('data', val1, 'auto_ownership.csv'))
-    #auto_own2 = pd.read_csv(os.path.join('data', val2, 'auto_ownership.csv'))
-    #wrkrs1 = pd.read_csv(os.path.join('data', val1, 'work_flows.csv'))
-    #wrkrs2 = pd.read_csv(os.path.join('data', val2, 'work_flows.csv'))
+
+    if val3 != 'None':
+        trips3 = pd.read_csv(os.path.join('data', val3, 'trip_purpose_mode.csv'))
+        tours3 = pd.read_csv(os.path.join('data', val3, 'tour_purpose_mode.csv'))
+        pers3 = pd.read_csv(os.path.join('data', val3, 'person_type.csv'))
+
     trips = {
         val1: trips1.to_json(orient='split'),
-        val2: trips2.to_json(orient='split')
+        val2: trips2.to_json(orient='split'),
         }
+
     tours = {
         val1: tours1.to_json(orient='split'),
-        val2: tours2.to_json(orient='split')
+        val2: tours2.to_json(orient='split'),
         }
+
     persons = {
         val1: pers1.to_json(orient='split'),
-        val2: pers2.to_json(orient='split')
+        val2: pers2.to_json(orient='split'),
         }
-    #households = {
-    #     val1: hhs1.to_json(orient='split'),
-    #     val2: hhs2.to_json(orient='split')
-    #    }
-    #dtaz_trips = {
-    #     val1: dtaz_trips1.to_json(orient='split'),
-    #     val2: dtaz_trips2.to_json(orient='split')
-    #    }
-    #auto_own = {
-    #     val1: auto_own1.to_json(orient='split'),
-    #     val2: auto_own2.to_json(orient='split')
-    #    }
-    #workers = {
-    #    val1: wrkrs1.to_json(orient='split'),
-    #    val2: wrkrs2.to_json(orient='split')
-    #    }
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # ,
-    #json.dumps(dtaz_trips) #, json.dumps(households), json.dumps(auto_own),
-    #json.dumps(workers)
 
+    if val3 != 'None':
+        trips[val3] = trips3.to_json(orient='split')
+        tours[val3] = tours3.to_json(orient='split')
+        persons[val3] = pers3.to_json(orient='split')
+
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # ,
 
 # Trips Mode Choice tab ------------------------------------------------------
 @app.callback(
@@ -845,13 +840,12 @@ def load_drop_downs(json_data, aux):
     dpurp = ['All']
 
     datasets = json.loads(json_data)
-    
+
     key = list(datasets)[0]
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.dpurp.unique()])
     return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
-
 
 @app.callback([Output('mode-choice-graph', 'figure'),
                Output('trip-deptm-graph', 'figure')],
@@ -865,6 +859,7 @@ def update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
     datasets = json.loads(json_data)
     data1 = []
     data2 = []
+
     for key in datasets.keys():
         print(key)
         df = pd.read_json(datasets[key], orient='split')
@@ -1061,11 +1056,12 @@ def update_headers(mode, dpurp, stop_type):
               Output('stops-by-tour', 'figure')],
               [ Input('scenario-1-dropdown', 'value'),
                 Input('scenario-2-dropdown', 'value'),
+                Input('scenario-3-dropdown', 'value'),
                 Input('tour2-format-type', 'value'),
                 Input('tour2-mode-dropdown', 'value'),
                 Input('tour2-purpose-dropdown', 'value'),
                 Input('stops-by-tour-type', 'value')])
-def update_visuals(scenario1, scenario2, format_type, mode, dpurp, stop_type):
+def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, stop_type):
     print('tours 2 callback')
     
     def compile_csv_to_dict(filename, scenario_list):
@@ -1076,28 +1072,29 @@ def update_visuals(scenario1, scenario2, format_type, mode, dpurp, stop_type):
     def create_bar_chart_horiz(table, xcol, weightcol, format_type, mode, dpurp, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
-            df = table[key]
+            if key != 'None':
+                df = table[key]
 
-            # Apply mode, and purpose filters
-            for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
-                if filter_value != 'All':
-                    df = df[df[filter_name] == filter_value]
-            df = df[xcol+[weightcol]].groupby(xcol).sum()[[weightcol]]
+                # Apply mode, and purpose filters
+                for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
+                    if filter_value != 'All':
+                        df = df[df[filter_name] == filter_value]
+                df = df[xcol+[weightcol]].groupby(xcol).sum()[[weightcol]]
 
-            df = df.reset_index()
-            df[weightcol] = df[weightcol].astype('int')
+                df = df.reset_index()
+                df[weightcol] = df[weightcol].astype('int')
 
-            # Calculate shares if selected
-            if format_type == 'Percent':
-                df[weightcol] = df[weightcol]/df[weightcol].sum()
+                # Calculate shares if selected
+                if format_type == 'Percent':
+                    df[weightcol] = df[weightcol]/df[weightcol].sum()
 
-            trace = go.Bar(
-                y=df['dpurp'].copy(),
-                x=df[weightcol].copy(),
-                name=key,
-                orientation='h',
-                )
-            datalist.append(trace)
+                trace = go.Bar(
+                    y=df['dpurp'].copy(),
+                    x=df[weightcol].copy(),
+                    name=key,
+                    orientation='h',
+                    )
+                datalist.append(trace)
 
         layout = go.Layout(
             barmode='group',
@@ -1111,32 +1108,33 @@ def update_visuals(scenario1, scenario2, format_type, mode, dpurp, stop_type):
     def create_bar_chart(table, xcol, weightcol, format_type, mode, dpurp, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
-            df = table[key]
+            if key != 'None':
+                df = table[key]
 
-            df['all_stops'] = df['tripsh1'] + df['tripsh2'] 
+                df['all_stops'] = df['tripsh1'] + df['tripsh2'] 
 
-            # Apply mode, purpose, and tour part filters
-            for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
-                if filter_value != 'All':
-                    df = df[df[filter_name] == filter_value]
-            df = df[[xcol,weightcol]].groupby(xcol).sum()[[weightcol]]
+                # Apply mode, purpose, and tour part filters
+                for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
+                    if filter_value != 'All':
+                        df = df[df[filter_name] == filter_value]
+                df = df[[xcol,weightcol]].groupby(xcol).sum()[[weightcol]]
 
-            df = df.reset_index()
-            df[weightcol] = df[weightcol].astype('int')
+                df = df.reset_index()
+                df[weightcol] = df[weightcol].astype('int')
 
-            # Exclude outlying 1% of data
-            df = df[df[weightcol].cumsum()/df[weightcol].sum() < 0.99]
+                # Exclude outlying 1% of data
+                df = df[df[weightcol].cumsum()/df[weightcol].sum() < 0.99]
 
-            # Calculate shares if selected
-            if format_type == 'Percent':
-                df[weightcol] = df[weightcol]/df[weightcol].sum()
+                # Calculate shares if selected
+                if format_type == 'Percent':
+                    df[weightcol] = df[weightcol]/df[weightcol].sum()
 
-            trace = go.Bar(
-                x=df[xcol].astype('int').copy(),
-                y=df[weightcol].copy(),
-                name=key,
-                )
-            datalist.append(trace)
+                trace = go.Bar(
+                    x=df[xcol].astype('int').copy(),
+                    y=df[weightcol].copy(),
+                    name=key,
+                    )
+                datalist.append(trace)
 
         layout = go.Layout(
             barmode='group',
@@ -1148,6 +1146,8 @@ def update_visuals(scenario1, scenario2, format_type, mode, dpurp, stop_type):
         return {'data': datalist, 'layout': layout}
 
     vals = [scenario1, scenario2]
+    if scenario3 != 'None':
+        vals.append(scenario3)
 
     trips_by_tour_tbl = compile_csv_to_dict('trips_by_tour.csv', vals)
     stops_by_tour_tbl = compile_csv_to_dict('tour_stops.csv', vals)
@@ -1218,6 +1218,7 @@ def update_headers(person_type, dpurp, mode, format_type):
      Output('trip-time-graph', 'figure')],
     [Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value'),
      Input('distance-person-type-dropdown', 'value'),
      Input('distance-dpurp-dropdown', 'value'),
      Input('distance-mode-dropdown', 'value'),
@@ -1225,7 +1226,7 @@ def update_headers(person_type, dpurp, mode, format_type):
      ]
      # Input('dummy_div6', 'children')]
     )
-def update_visuals(scenario1, scenario2, person_type, dpurp, mode, format_type):
+def update_visuals(scenario1, scenario2, scenario3, person_type, dpurp, mode, format_type):
     print('length and distance graph callback')
     
     def compile_csv_to_dict(filename, scenario_list):
@@ -1275,6 +1276,9 @@ def update_visuals(scenario1, scenario2, person_type, dpurp, mode, format_type):
         return {'data': datalist, 'layout': layout}
 
     vals = [scenario1, scenario2]
+    if scenario3 != 'None':
+        vals.append(scenario3)
+    print(vals)
 
     dist_tbl = compile_csv_to_dict('trip_distance.csv', vals)
     time_tbl = compile_csv_to_dict('trip_time.csv', vals)
@@ -1433,6 +1437,7 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
 
     keys = dataset.keys()
     keyslist = list(keys)
+    if "None" in keyslist: keyslist.remove("None")
 
     ## create total table
     alldict = {}
@@ -1544,10 +1549,11 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     [Input('persons', 'children'),
      Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value'),
      Input('work-county-data-type', 'value'),
      Input('dummy_div7', 'children')]
     )
-def update_visuals(pers_json, scenario1, scenario2, data_type, aux):
+def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
     print('work update graph callback')
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
@@ -1599,13 +1605,19 @@ def update_visuals(pers_json, scenario1, scenario2, data_type, aux):
             datalist2.append(df)
 
         df_scenarios = pd.merge(datalist[0], datalist[1], on=['geog_name_work'], how='outer')
+        if len(datalist) == 3:
+            df_scenarios = pd.merge(df_scenarios, datalist[2], on=['geog_name_work'], how='outer')
+        print(df_scenarios)
         df_scenarios.rename(columns={'geog_name_work': 'County'}, inplace=True)
+
         # format numbers with separator
         for i in range(1, len(df_scenarios.columns)):
             df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
 
         # Calculate tour rates
         df_tour_scenarios = pd.merge(datalist2[0], datalist2[1], on=['pdpurp'])
+        if len(datalist) == 3:
+            df_tour_scenarios = pd.merge(df_tour_scenarios, datalist2[2], on=['pdpurp'])
         format_number_dp = functools.partial(format_number, decimal_places=2)
         for i in range(1, len(df_tour_scenarios.columns)):
             df_tour_scenarios.iloc[:, i] = df_tour_scenarios.iloc[:, i].apply(format_number_dp)
@@ -1635,6 +1647,9 @@ def update_visuals(pers_json, scenario1, scenario2, data_type, aux):
         return t
 
     vals = [scenario1, scenario2]
+    if scenario3 != 'None':
+        vals.append(scenario3)
+    print(vals)
     work_home_tbl = compile_csv_to_dict('work_home_location.csv', vals)
     work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
 
@@ -1652,9 +1667,10 @@ def update_visuals(pers_json, scenario1, scenario2, data_type, aux):
      Input('persons', 'children'),
      Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value'),
      Input('dummy_div3', 'children')]
     )
-def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
+def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
@@ -1761,6 +1777,8 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, aux):
         return df_scenarios
 
     vals = [scenario1, scenario2]
+    if scenario3 != 'None':
+        vals.append(scenario3)
     pers_tbl = json.loads(pers_json)
     hh_tbl = compile_csv_to_dict('household_size_vehs_workers.csv', vals)
     wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
@@ -1812,6 +1830,7 @@ def map_read_data(scenario1, scenario2):
         scenario1: dtaz_trips1.to_json(orient='split'),
         scenario2: dtaz_trips2.to_json(orient='split')
     }
+    print(dtaz_trips)
     return json.dumps(dtaz_trips)
 
 
