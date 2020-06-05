@@ -1050,7 +1050,10 @@ def update_headers(mode, dpurp, stop_type):
 
     result.append(header_graph1)
 
-    header_graph2 = 'Stops on Tour: ' + dpurp + ' Tours | ' + stop_type
+    header_graph2 = 'Stops on Tour: ' + dpurp + ' Tours ' 
+    if mode != 'All':
+        header_graph2 += 'by ' + mode 
+    header_graph2 += ' | ' + stop_type
     result.append(header_graph2)
     return result
 
@@ -1113,8 +1116,9 @@ def update_visuals(scenario1, scenario2, format_type, mode, dpurp, stop_type):
             df['all_stops'] = df['tripsh1'] + df['tripsh2'] 
 
             # Apply mode, purpose, and tour part filters
-            for filter_name, filter_value in {'pdpurp': dpurp}.items():
-                df = df[df[filter_name] == filter_value]
+            for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
+                if filter_value != 'All':
+                    df = df[df[filter_name] == filter_value]
             df = df[[xcol,weightcol]].groupby(xcol).sum()[[weightcol]]
 
             df = df.reset_index()
@@ -1146,7 +1150,7 @@ def update_visuals(scenario1, scenario2, format_type, mode, dpurp, stop_type):
     vals = [scenario1, scenario2]
 
     trips_by_tour_tbl = compile_csv_to_dict('trips_by_tour.csv', vals)
-    stops_by_tour_tbl = compile_csv_to_dict('tour_stops_outbound.csv', vals)
+    stops_by_tour_tbl = compile_csv_to_dict('tour_stops.csv', vals)
     agraph = create_bar_chart_horiz(trips_by_tour_tbl, ['pdpurp','dpurp'], 'trexpfac', format_type, 
         mode, dpurp, 'Purpose', format_type)
 
