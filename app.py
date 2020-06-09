@@ -13,9 +13,18 @@ import plotly.graph_objs as go
 import plotly.express as px
 import functools
 
-external_stylesheets = [dbc.themes.BOOTSTRAP]  # [dbc.themes.MATERIA]
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app.config.suppress_callback_exceptions = True
+DEPLOY = True
+
+if DEPLOY:
+    app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], requests_pathname_prefix='/soundcast_dash/')
+    app.config.suppress_callback_exceptions = True
+    server = app.server
+else:
+    #external_stylesheets = [dbc.themes.BOOTSTRAP]  # [dbc.themes.MATERIA]
+    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    app.config.suppress_callback_exceptions = True
+
+
 
 
 def format_number(x, decimal_places):
@@ -1963,5 +1972,5 @@ def display_selected_data(selectedData, json_data, aux):
 
 # Run app ------------------------------------------------------------------------
 
-app.run_server(debug=True)
-#if __name__ == '__main__': app.run_server(debug=False,port=8050,host='0.0.0.0')
+#app.run_server(debug=True)
+if __name__ == '__main__': app.run_server(debug=True)
