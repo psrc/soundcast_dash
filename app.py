@@ -4,7 +4,6 @@ from dash.dependencies import Input, Output
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_table
-from sqlalchemy import create_engine
 import pandas as pd
 import geopandas as gpd
 import numpy as np
@@ -108,6 +107,13 @@ tab_trips_mc_filter = [dbc.Card(
                     value='All',
                     clearable=False,
                     id='dpurp-dropdown'
+                ),
+                html.Br(),
+                dbc.Label('Origin District:'),
+                dcc.Dropdown(
+                    value='All',
+                    clearable=False,
+                    id='origin-district'
                 ),
                 html.Br(),
                 html.Div(id='dummy_div'),
@@ -356,8 +362,6 @@ tab_length_distance_mc_filter = [dbc.Card(
                     clearable=False,
                     id='distance-dpurp-dropdown'
                 ),
-
-                html.Br(),
                 #html.Div(id='df', style={'display': 'none'}),
                 html.Div(id='dummy_div6'),
             ],
@@ -726,7 +730,7 @@ hidden_divs = dbc.Container([
     html.Div(id='tours', style={'display': 'none'}),
     html.Div(id='persons', style={'display': 'none'}),
     html.Div(id='tours_duration', style={'display': 'none'}),
-    #html.Div(id='households', style={'display': 'none'}),
+    html.Div(id='taz_geog', style={'display': 'none'}),
     #html.Div(id='dtaz_trips', style={'display': 'none'}),
     #html.Div(id='auto_own', style={'display': 'none'}),
     #html.Div(id='workers', style={'display': 'none'},)
@@ -786,6 +790,7 @@ def render_content(tab):
         [Output('trips', 'children'),
          Output('tours', 'children'),
          Output('persons', 'children'),
+         Output('taz_geog', 'children')
          ],
         [Input('scenario-1-dropdown', 'value'),
          Input('scenario-2-dropdown', 'value'),
@@ -825,36 +830,45 @@ def page_1_dropdown(val1, val2, val3):
         tours[val3] = tours3.to_json(orient='split')
         persons[val3] = pers3.to_json(orient='split')
 
-    return json.dumps(trips), json.dumps(tours), json.dumps(persons)  # ,
+    taz_geog = pd.read_csv(r'data/data/taz_geography.csv')
+
+    return json.dumps(trips), json.dumps(tours), json.dumps(persons), taz_geog.to_json(orient='split') # ,
 
 # Trips Mode Choice tab ------------------------------------------------------
 @app.callback(
     [Output('person-type-dropdown', 'options'),
-     Output('dpurp-dropdown', 'options')],
+     Output('dpurp-dropdown', 'options'),
+     Output('origin-district', 'options')],
     [Input('trips', 'children'),
+     Input('taz_geog', 'children'),
      Input('dummy_div', 'children')
      ])
-def load_drop_downs(json_data, aux):
+def load_drop_downs(json_data, taz_geog, aux):
     print('trip filter callback')
     person_types = ['All']
     dpurp = ['All']
-
+    o_district = ['All']
+    taz_geog = pd.read_json(taz_geog, orient='split')
     datasets = json.loads(json_data)
 
     key = list(datasets)[0]
     df = pd.read_json(datasets[key], orient='split')
     person_types.extend([x for x in df.pptyp.unique()])
     dpurp.extend([x for x in df.dpurp.unique()])
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
+    o_district.extend([x for x in taz_geog.district.unique()])
+
+    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in o_district]
 
 @app.callback([Output('mode-choice-graph', 'figure'),
                Output('trip-deptm-graph', 'figure')],
               [Input('trips', 'children'),
                Input('person-type-dropdown', 'value'),
                Input('dpurp-dropdown', 'value'),
+               Input('origin-district', 'value'),
                Input('mode-share-type', 'value'),
                Input('mode-share-type-deptm', 'value')])
-def update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
+def update_graph(json_data, person_type, dpurp, o_district, 
+                 share_type, share_type_deptm):
     print('trip_update graph callback')
     datasets = json.loads(json_data)
     data1 = []
@@ -867,6 +881,8 @@ def update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
             df = df[df['pptyp'] == person_type]
         if dpurp != 'All':
             df = df[df['dpurp'] == dpurp]
+        if o_district != 'All':
+            df = df[df['trip_o_district'] == o_district]
         if share_type == 'Mode Share':
             df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
                 .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
@@ -1353,6 +1369,8 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
         df = table.copy()
         group_cols_list.append(key)
+        print('inside the thing')
+        print(df)
         df['day_pattern_per_person'] = df[weight_name]/df['psexpfac']
         df = df.rename(columns={'day_pattern_per_person': key})
         df = df[group_cols_list]
@@ -1475,15 +1493,17 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
 
         df_pers = pd.read_json(pers[key], orient='split')
         df_pers = df_pers.groupby(['pptyp']).sum()[['psexpfac']]
-        df = df.groupby(['pptyp', dataset_dpurp_col]).sum()[[dataset_weight_col]].reset_index().merge(df_pers, on='pptyp')
         
         # X per person by purpose
-        df_dpurp = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col, 'psexpfac']].reset_index()
+        df_dpurp = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col]].reset_index()
+        df_dpurp['psexpfac'] = df_pers['psexpfac'].sum()
+        print(df_dpurp)
         datalist_all_dpurp.append(calc_dpatt_per_person(df_dpurp, [dataset_dpurp_col], dataset_weight_col, key))
         
         # X per person by person type and purpose 
+        df = df.groupby(['pptyp', dataset_dpurp_col]).sum()[[dataset_weight_col]].reset_index().merge(df_pers, on='pptyp')
         df_ptype = df[df[dataset_dpurp_col] == dpurp]
-
+        print('should not see this')
         datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', dataset_dpurp_col], dataset_weight_col, key)) 
         
         # X by person type and purpose (percent)
@@ -1541,8 +1561,6 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     return tot_table, gen_table, {'data': graph_data, 'layout': graph_layout}, t, {'data': graph_data_pers_type, 'layout': graph_layout_pers_type}
 
 # Work tab ------------------------------------------------------------------
-
-
 @app.callback(
     Output('table-totals-container-work', 'children')
      ,
@@ -1561,11 +1579,7 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
         return(dfs_dict)
 
     def create_totals_table(work_home_tbl, work_from_home_tours_tbl, data_type):
-        #engine = create_engine('sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
-        #parcel_geog = pd.read_sql('SELECT * FROM parcel_2018_geography', engine)
-        taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
-
-        
+        taz_geog = pd.read_csv(r'data/data/taz_geography.csv')
 
         datalist = []
         datalist2 = []
@@ -1746,7 +1760,7 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
         return {'data': datalist, 'layout': layout}
 
     def create_workers_table(wrkrs_tbl):
-        taz_geog = pd.read_sql_table('taz_geography', 'sqlite:///R:/e2projects_two/SoundCast/Inputs/dev/db/soundcast_inputs.db')
+        taz_geog = pd.read_csv(r'data/data/taz_geography.csv')
 
         datalist = []
         for key in wrkrs_tbl.keys():
