@@ -1951,4 +1951,4 @@ def display_selected_data(selectedData, json_data, aux):
 # Run app ------------------------------------------------------------------------
 
 #app.run_server(debug=True)
-if __name__ == '__main__': app.run_server(debug=False)
+if __name__ == '__main__': app.run_server(debug=True)
