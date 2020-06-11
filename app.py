@@ -13,7 +13,7 @@ import plotly.graph_objs as go
 import plotly.express as px
 import functools
 
-DEPLOY = False
+DEPLOY = True
 
 if DEPLOY:
     app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], requests_pathname_prefix='/soundcast_dash/')
