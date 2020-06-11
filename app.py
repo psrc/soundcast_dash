@@ -814,19 +814,16 @@ def page_1_dropdown(val1, val2, val3):
 
     for x in range(0, len(scenario_list)):
          if scenario_list[x] is not None:
-             print (scenario_list)
-             print (scenario_list[x])
+           
              trips = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))
              trips_dict[scenario_list[x]] = trips.to_json(orient='split')
-             print ('here')
-
+             
              tours = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_purpose_mode.csv'))
              tours_dict[scenario_list[x]] = tours.to_json(orient='split')
-             print ('here2')
 
              pers = pd.read_csv(os.path.join('data', scenario_list[x], 'person_type.csv'))
              persons_dict[scenario_list[x]] = pers.to_json(orient='split')
-             print ('here3')
+           
 
     return json.dumps(trips_dict), json.dumps(tours_dict), json.dumps(persons_dict) # ,
 
@@ -836,9 +833,8 @@ def page_1_dropdown(val1, val2, val3):
      Output('dpurp-dropdown', 'options'),
      Output('origin-district', 'options')],
     [Input('trips', 'children'),
-     Input('dummy_div', 'children')
      ])
-def load_drop_downs(json_data, aux):
+def load_drop_downs(json_data):
     #print('trip filter callback')
     person_types = ['All']
     dpurp = ['All']
@@ -1955,4 +1951,4 @@ def display_selected_data(selectedData, json_data, aux):
 # Run app ------------------------------------------------------------------------
 
 #app.run_server(debug=True)
-if __name__ == '__main__': app.run_server(debug=True)
+if __name__ == '__main__': app.run_server(debug=False)
