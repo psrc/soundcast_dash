@@ -12,8 +12,11 @@ import json
 import plotly.graph_objs as go
 import plotly.express as px
 import functools
+import yaml
 
-DEPLOY = True
+DEPLOY = False
+
+config = yaml.safe_load(open("config.yaml"))
 
 if DEPLOY:
     app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], requests_pathname_prefix='/soundcast_dash/')
@@ -830,23 +833,22 @@ def page_1_dropdown(val1, val2, val3):
     [Output('person-type-dropdown', 'options'),
      Output('dpurp-dropdown', 'options'),
      Output('origin-district', 'options')],
-    [Input('trips', 'children'),
-     Input('dummy_div', 'children')
-     ])
-def load_drop_downs(json_data, aux):
+    [Input('dummy_div', 'children')
+])
+def load_drop_downs(aux):
     #print('trip filter callback')
-    person_types = ['All']
-    dpurp = ['All']
-    o_district = ['All']
-    datasets = json.loads(json_data)
+    #person_types = ['All']
+    #dpurp = ['All']
+    #o_district = ['All']
+    #datasets = json.loads(json_data)
 
-    key = list(datasets)[0]
-    df = pd.read_json(datasets[key], orient='split')
-    person_types.extend([x for x in df.pptyp.unique()])
-    dpurp.extend([x for x in df.dpurp.unique()])
-    o_district.extend([x for x in taz_geog.district.unique()])
+    #key = list(datasets)[0]
+    #df = pd.read_json(datasets[key], orient='split')
+    #person_types.extend([x for x in df.pptyp.unique()])
+    #dpurp.extend([x for x in df.dpurp.unique()])
+    #o_district.extend([x for x in taz_geog.district.unique()])
 
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in o_district]
+    return [{'label': i, 'value': i} for i in config['person_type_list']], [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['district_list']]
 
 @app.callback([Output('mode-choice-graph', 'figure'),
                Output('trip-deptm-graph', 'figure')],
