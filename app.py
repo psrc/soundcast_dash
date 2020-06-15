@@ -14,7 +14,7 @@ import plotly.express as px
 import functools
 import yaml
 
-DEPLOY = False
+DEPLOY = True
 
 config = yaml.safe_load(open("config.yaml"))
 
@@ -850,61 +850,70 @@ def load_drop_downs(aux):
 
     return [{'label': i, 'value': i} for i in config['person_type_list']], [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['district_list']]
 
-@app.callback([Output('mode-choice-graph', 'figure'),
-               Output('trip-deptm-graph', 'figure')],
-              [Input('trips', 'children'),
+@app.callback(Output('mode-choice-graph', 'figure'),
+              [Input('scenario-1-dropdown', 'value'),
+               Input('scenario-2-dropdown', 'value'),
+               Input('scenario-3-dropdown', 'value'),
                Input('person-type-dropdown', 'value'),
                Input('dpurp-dropdown', 'value'),
                Input('origin-district', 'value'),
                Input('mode-share-type', 'value'),
                Input('mode-share-type-deptm', 'value')])
-def update_graph(json_data, person_type, dpurp, o_district, 
-                 share_type, share_type_deptm):
+def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district, 
+                 share_type, share_type_dept):
     #print('trip_update graph callback')
-    datasets = json.loads(json_data)
+    #datasets = json.loads(json_data)
     data1 = []
     data2 = []
+    scenario_list = [scenario1, scenario2, scenario3]
+    
+    trips_dict = {}
+    tours_dict = {}
+    persons_dict = {}
 
-    for key in datasets.keys():
-        #print(key)
-        df = pd.read_json(datasets[key], orient='split')
-        if person_type != 'All':
-            df = df[df['pptyp'] == person_type]
-        if dpurp != 'All':
-            df = df[df['dpurp'] == dpurp]
-        if o_district != 'All':
-            df = df[df['trip_o_district'] == o_district]
-        if share_type == 'Mode Share':
-            df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
-                .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
-        else:
-            df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
-                .sum()[['trexpfac']]
-        df_mode_share.reset_index(inplace=True)
+    for x in range(0, len(scenario_list)):
+        if scenario_list[x] is not None:
+            if o_district != 'All':
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode_trip_o_district_' + o_district + '.csv')) 
+            else:
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))    
+            if person_type != 'All':
+                df = df[df['pptyp'] == person_type]
+            if dpurp != 'All':
+                df = df[df['dpurp'] == dpurp]
+            #if o_district != 'All':
+            #    df = df[df['trip_o_district'] == o_district]
+            if share_type == 'Mode Share':
+                df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
+                    .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+            else:
+                df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
+                    .sum()[['trexpfac']]
+            df_mode_share.reset_index(inplace=True)
 
         # mode choice graph
-        trace1 = go.Bar(
-            x=df_mode_share['mode'].copy(),
-            y=df_mode_share['trexpfac'].copy(),
-            name=key
+            trace1 = go.Bar(
+                x=df_mode_share['mode'].copy(),
+                y=df_mode_share['trexpfac'].copy(),
+                name=scenario_list[x]
             )
-        data1.append(trace1)
+            data1.append(trace1)
 
         # trip distance histogram
-        if share_type_deptm == 'Distribution':
-            df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
-                .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
-        else:
-            df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
-                .sum()[['trexpfac']]
-        df_deptm_share.reset_index(inplace=True)
+        #if share_type_deptm == 'Distribution':
+        #    df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+        #        .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+        #else:
+        #    df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+        #        .sum()[['trexpfac']]
+        #df_deptm_share.reset_index(inplace=True)
 
-        trace2 = go.Scatter(
-            x=df_deptm_share['deptm_hr'],
-            y=df_deptm_share['trexpfac'].astype(int),
-            name=key)
+        #trace2 = go.Scatter(
+        #    x=df_deptm_share['deptm_hr'],
+        #    y=df_deptm_share['trexpfac'].astype(int),
+        #    name=key)
 
-        data2.append(trace2)
+        #data2.append(trace2)
 
     layout1 = go.Layout(
             barmode='group',
@@ -915,15 +924,16 @@ def update_graph(json_data, person_type, dpurp, o_district,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
 
-    layout2 = go.Layout(
-            barmode='group',
-            xaxis={'title': 'Departure Hour'},
-            yaxis={'title': share_type_deptm, 'zeroline': False},
-            hovermode='closest',
-            autosize=True,
-            font=dict(family='Segoe UI', color='#7f7f7f')
-            )
-    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+    #layout2 = go.Layout(
+    #        barmode='group',
+    #        xaxis={'title': 'Departure Hour'},
+    #        yaxis={'title': share_type_deptm, 'zeroline': False},
+    #        hovermode='closest',
+    #        autosize=True,
+    #        font=dict(family='Segoe UI', color='#7f7f7f')
+    #        )
+    #return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+    return {'data': data1, 'layout': layout1}
 
 
 # Tours Mode Choice tab -----------------------------------------------------
