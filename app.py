@@ -14,7 +14,7 @@ import plotly.express as px
 import functools
 import yaml
 
-DEPLOY = True
+DEPLOY = False
 
 config = yaml.safe_load(open("config.yaml"))
 
@@ -850,7 +850,8 @@ def load_drop_downs(aux):
 
     return [{'label': i, 'value': i} for i in config['person_type_list']], [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['district_list']]
 
-@app.callback(Output('mode-choice-graph', 'figure'),
+@app.callback([Output('mode-choice-graph', 'figure'),
+               Output('trip-deptm-graph', 'figure')],
               [Input('scenario-1-dropdown', 'value'),
                Input('scenario-2-dropdown', 'value'),
                Input('scenario-3-dropdown', 'value'),
@@ -860,7 +861,7 @@ def load_drop_downs(aux):
                Input('mode-share-type', 'value'),
                Input('mode-share-type-deptm', 'value')])
 def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district, 
-                 share_type, share_type_dept):
+                 share_type, share_type_deptm):
     #print('trip_update graph callback')
     #datasets = json.loads(json_data)
     data1 = []
@@ -874,9 +875,11 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district
     for x in range(0, len(scenario_list)):
         if scenario_list[x] is not None:
             if o_district != 'All':
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode_trip_o_district_' + o_district + '.csv')) 
+                #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode_trip_o_district_' + o_district + '.csv')) 
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_o_district_' + o_district + '.csv')) 
             else:
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))    
+                #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))  
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig.csv'))   
             if person_type != 'All':
                 df = df[df['pptyp'] == person_type]
             if dpurp != 'All':
@@ -900,20 +903,20 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district
             data1.append(trace1)
 
         # trip distance histogram
-        #if share_type_deptm == 'Distribution':
-        #    df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
-        #        .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
-        #else:
-        #    df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
-        #        .sum()[['trexpfac']]
-        #df_deptm_share.reset_index(inplace=True)
+            if share_type_deptm == 'Distribution':
+                df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+                    .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
+            else:
+                df_deptm_share = df[['deptm_hr', 'trexpfac']].groupby('deptm_hr')\
+                    .sum()[['trexpfac']]
+            df_deptm_share.reset_index(inplace=True)
+            
+            trace2 = go.Scatter(
+                x=df_deptm_share['deptm_hr'],
+                y=df_deptm_share['trexpfac'].astype(int),
+                name=scenario_list[x])
 
-        #trace2 = go.Scatter(
-        #    x=df_deptm_share['deptm_hr'],
-        #    y=df_deptm_share['trexpfac'].astype(int),
-        #    name=key)
-
-        #data2.append(trace2)
+            data2.append(trace2)
 
     layout1 = go.Layout(
             barmode='group',
@@ -924,16 +927,16 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
 
-    #layout2 = go.Layout(
-    #        barmode='group',
-    #        xaxis={'title': 'Departure Hour'},
-    #        yaxis={'title': share_type_deptm, 'zeroline': False},
-    #        hovermode='closest',
-    #        autosize=True,
-    #        font=dict(family='Segoe UI', color='#7f7f7f')
-    #        )
-    #return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
-    return {'data': data1, 'layout': layout1}
+    layout2 = go.Layout(
+            barmode='group',
+            xaxis={'title': 'Departure Hour'},
+            yaxis={'title': share_type_deptm, 'zeroline': False},
+            hovermode='closest',
+            autosize=True,
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+    return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+    #return {'data': data1, 'layout': layout1}
 
 
 # Tours Mode Choice tab -----------------------------------------------------
