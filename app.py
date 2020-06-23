@@ -14,7 +14,7 @@ import plotly.express as px
 import functools
 import yaml
 
-DEPLOY = False
+DEPLOY = True
 
 config = yaml.safe_load(open("config.yaml"))
 
