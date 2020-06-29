@@ -1,0 +1,10 @@
+trip_purpose_list: ['All', 'Change Mode Inserted Purpose', 'Escort', 
+'Meal', 'None/Home', 'Personal Business', 'School', 'Shop', 'Social', 'Work']
+
+person_type_list: ['All', 'Child Age 0-4', 'Child Age 5-15', 'Full-Time Worker', 
+'High School Student Age 16+', 'Non-Working Adult Age <65', 
+'Non-Working Adult Age 65+', 'Part-Time Worker', 'University Student']
+
+district_list: ['All', 'East Side', 'Everett-Lynwood-Edmonds', 'Kitsap', 
+'North Seattle-Shoreline', 'Renton-FedWay-Kent', 'S.Kitsap', 'Seattle CBD', 
+'South Pierce', 'Suburban Snohomish', 'Tacoma', 'West-South Seattle']
