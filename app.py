@@ -122,11 +122,20 @@ tab_trips_mc_filter = [dbc.Card(
                     id='dpurp-dropdown'
                 ),
                 html.Br(),
-                dbc.Label('Origin District:'),
+                dbc.Label('Trip End:'),
+                dbc.RadioItems(
+                    options=[{'label': i, 'value': i} for i
+                                 in ['Origin', 'Destination']],
+                    value='Origin',
+                    id='trip-end'
+                    
+                ),
+                html.Br(),
+                dbc.Label('District:'),
                 dcc.Dropdown(
                     value='All',
                     clearable=False,
-                    id='origin-district'
+                    id='trip-district'
                 ),
                 html.Br(),
                 html.Div(id='dummy_div'),
@@ -832,7 +841,7 @@ def page_1_dropdown(val1, val2, val3):
 @app.callback(
     [Output('person-type-dropdown', 'options'),
      Output('dpurp-dropdown', 'options'),
-     Output('origin-district', 'options')],
+     Output('trip-district', 'options')],
     [Input('dummy_div', 'children')
 ])
 def load_drop_downs(aux):
@@ -857,10 +866,11 @@ def load_drop_downs(aux):
                Input('scenario-3-dropdown', 'value'),
                Input('person-type-dropdown', 'value'),
                Input('dpurp-dropdown', 'value'),
-               Input('origin-district', 'value'),
+               Input('trip-end', 'value'),
+               Input('trip-district', 'value'),
                Input('mode-share-type', 'value'),
                Input('mode-share-type-deptm', 'value')])
-def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district, 
+def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_district, 
                  share_type, share_type_deptm):
     #print('trip_update graph callback')
     #datasets = json.loads(json_data)
@@ -874,9 +884,11 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, o_district
 
     for x in range(0, len(scenario_list)):
         if scenario_list[x] is not None:
-            if o_district != 'All':
+            if end_district != 'All':
+                end_type = 'o' if end == 'Origin' else 'd'
                 #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode_trip_o_district_' + o_district + '.csv')) 
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_o_district_' + o_district + '.csv')) 
+                #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_o_district_' + o_district + '.csv'))
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_' + end_type + '_district_' + end_district + '.csv'))  
             else:
                 #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))  
                 df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig.csv'))   
