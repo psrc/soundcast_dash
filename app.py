@@ -34,6 +34,11 @@ def format_number(x, decimal_places):
     formula = "{:,." + str(decimal_places) + "f}"
     return formula.format(x)
 
+def format_percent(x, decimal_places):
+    # formula = "{:. " + str(decimal_places) + "f%}"
+    formula = '{:.'+str(decimal_places)+'%}'
+    return formula.format(x)    
+
 
 available_scenarios = [name for name in os.listdir('data')
                        if os.path.isdir(os.path.join('data', name))
@@ -1534,47 +1539,38 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
         for key in work_home_tbl.keys():
 
             df = work_home_tbl[key]
-            wfh_total = df[df['pwpcl'] == df['hhparcel']]['psexpfac'].sum()
-
-            df = df.merge(taz_geog, left_on='pwtaz',right_on='taz')
-            df = df.merge(taz_geog, left_on='hhtaz',right_on='taz', suffixes=['_work','_home'])
-
-            # Select only work-from-home people
-            df_wfh = df[df['hhparcel'] == df['pwpcl']]
-            df = df_wfh.groupby('geog_name_work').sum()[['psexpfac']]
+            df.index = df['person_county']
+            df.drop('person_county', axis=1, inplace=True)
+            total_wfh = df['psexpfac'].sum()
 
             if data_type == 'Distribution':
                 df['psexpfac'] = df['psexpfac']/df['psexpfac'].sum()
-                format_number_dp = functools.partial(format_number, decimal_places=2)
-                # df['psexpfac'] = df['psexpfac'].apply(format_number_dp)
+                df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_percent, decimal_places=1))
             else:
                 format_number_dp = functools.partial(format_number, decimal_places=0)
-                # df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_number, decimal_places=0))
-                df.loc['Total',:] = df.sum(axis=0)
+                df.loc['Total',:] = df['psexpfac'].sum(axis=0)
+                df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_number, decimal_places=0))
 
             df.rename(columns={'psexpfac': key}, inplace=True)
             df = df.reset_index()
-
             datalist.append(df)
 
                 
             # Tour Rates
             df = work_from_home_tours_tbl[key]
-            df = df[df['hhparcel'] == df['pwpcl']].groupby('pdpurp').sum()[['toexpfac']]
+            df = df.groupby('pdpurp').sum()[['toexpfac']]
             df = df.reset_index()
-            df['toexpfac'] = df['toexpfac']/wfh_total*1.0
+            df['toexpfac'] = df['toexpfac']/total_wfh
             df.rename(columns={'toexpfac': key}, inplace=True)
+
             datalist2.append(df)
 
-        df_scenarios = pd.merge(datalist[0], datalist[1], on=['geog_name_work'], how='outer')
+        df_scenarios = pd.merge(datalist[0], datalist[1], on='person_county')
         if len(datalist) == 3:
-            df_scenarios = pd.merge(df_scenarios, datalist[2], on=['geog_name_work'], how='outer')
-        #print(df_scenarios)
-        df_scenarios.rename(columns={'geog_name_work': 'County'}, inplace=True)
-
+            df_scenarios = pd.merge(df_scenarios, datalist[2], on='person_county')
         # format numbers with separator
-        for i in range(1, len(df_scenarios.columns)):
-            df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
+        # for i in range(1, len(df_scenarios.columns)):
+        #     df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
 
         # Calculate tour rates
         df_tour_scenarios = pd.merge(datalist2[0], datalist2[1], on=['pdpurp'])
@@ -1587,6 +1583,7 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
         t = html.Div(
             [dash_table.DataTable(id='table-totals-work',
                                   columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+                                  # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
                                   data=df_scenarios.to_dict('rows'),
                                   style_cell={
                                       'font-family': 'Segoe UI',
@@ -1597,6 +1594,7 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
              html.H2("Tour Rate by Purpose for Work-From-Home Workers"),
              dash_table.DataTable(id='table-totals-work2',
                                   columns=[{"name": i, "id": i} for i in df_tour_scenarios.columns],
+                                  # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
                                   data=df_tour_scenarios.to_dict('rows'),
                                   style_cell={
                                       'font-family': 'Segoe UI',
@@ -1612,7 +1610,7 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
     vals = [scenario for scenario in scenario_list if scenario is not None]
     
     #print(vals)
-    work_home_tbl = compile_csv_to_dict('work_home_location.csv', vals)
+    work_home_tbl = compile_csv_to_dict('wfh_county.csv', vals)
     work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
 
     totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl, data_type)
