@@ -8,3 +8,6 @@ person_type_list: ['All', 'Child Age 0-4', 'Child Age 5-15', 'Full-Time Worker',
 district_list: ['All', 'East Side', 'Everett-Lynwood-Edmonds', 'Kitsap', 
 'North Seattle-Shoreline', 'Renton-FedWay-Kent', 'S.Kitsap', 'Seattle CBD', 
 'South Pierce', 'Suburban Snohomish', 'Tacoma', 'West-South Seattle']
+
+mode_list: ['Walk','Bike','SOV','HOV2','HOV3+','School Bus',
+'Transit','Other']

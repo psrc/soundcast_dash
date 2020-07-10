@@ -845,17 +845,6 @@ def page_1_dropdown(val1, val2, val3):
     [Input('dummy_div', 'children')
 ])
 def load_drop_downs(aux):
-    #print('trip filter callback')
-    #person_types = ['All']
-    #dpurp = ['All']
-    #o_district = ['All']
-    #datasets = json.loads(json_data)
-
-    #key = list(datasets)[0]
-    #df = pd.read_json(datasets[key], orient='split')
-    #person_types.extend([x for x in df.pptyp.unique()])
-    #dpurp.extend([x for x in df.dpurp.unique()])
-    #o_district.extend([x for x in taz_geog.district.unique()])
 
     return [{'label': i, 'value': i} for i in config['person_type_list']], [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['district_list']]
 
@@ -872,8 +861,7 @@ def load_drop_downs(aux):
                Input('mode-share-type-deptm', 'value')])
 def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_district, 
                  share_type, share_type_deptm):
-    #print('trip_update graph callback')
-    #datasets = json.loads(json_data)
+
     data1 = []
     data2 = []
     scenario_list = [scenario1, scenario2, scenario3]
@@ -886,18 +874,13 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
         if scenario_list[x] is not None:
             if end_district != 'All':
                 end_type = 'o' if end == 'Origin' else 'd'
-                #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode_trip_o_district_' + o_district + '.csv')) 
-                #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_o_district_' + o_district + '.csv'))
                 df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_' + end_type + '_district_' + end_district + '.csv'))  
             else:
-                #df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))  
                 df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig.csv'))   
             if person_type != 'All':
                 df = df[df['pptyp'] == person_type]
             if dpurp != 'All':
                 df = df[df['dpurp'] == dpurp]
-            #if o_district != 'All':
-            #    df = df[df['trip_o_district'] == o_district]
             if share_type == 'Mode Share':
                 df_mode_share = df[['mode', 'trexpfac']].groupby('mode')\
                     .sum()[['trexpfac']]/df[['trexpfac']].sum() * 100
@@ -948,7 +931,6 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
-    #return {'data': data1, 'layout': layout1}
 
 
 # Tours Mode Choice tab -----------------------------------------------------
@@ -956,21 +938,11 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
 @app.callback(
     [Output('tour-person-type-dropdown', 'options'),
      Output('tour-dpurp-dropdown', 'options')],
-    [Input('tours', 'children'),
-     Input('dummy_div2', 'children')])
-def tour_load_drop_downs(json_data, aux):
-    #print('tour filter callback')
-    person_types = ['All']
-    dpurp = ['All']
+    [Input('dummy_div2', 'children')])
+def tour_load_drop_downs(aux):
 
-    datasets = json.loads(json_data)
-    key = list(datasets)[0]
-    df = pd.read_json(datasets[key], orient='split')
-    person_types.extend([x for x in df.pptyp.unique()])
-    dpurp.extend([x for x in df.pdpurp.unique()])
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp]
-
-
+    return [{'label': i, 'value': i} for i in config['person_type_list']], [{'label': i, 'value': i} for i in config['trip_purpose_list']]
+ 
 @app.callback([Output('tour-mode-choice-graph', 'figure'),
                Output('tour-deptm-graph', 'figure')],
               [Input('tours', 'children'),
@@ -979,7 +951,7 @@ def tour_load_drop_downs(json_data, aux):
                Input('tour-mode-share-type', 'value'),
                Input('tour-mode-share-type-deptm', 'value')])
 def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_deptm):
-   #print('tour update graph callback')
+
     datasets = json.loads(json_data)
     data1 = []
     data2 = []
@@ -1047,19 +1019,10 @@ def tour_update_graph(json_data, person_type, dpurp, share_type, share_type_dept
 @app.callback(
     [Output('tour2-purpose-dropdown', 'options'),
      Output('tour2-mode-dropdown', 'options')],
-    [Input('trips', 'children'),
-     Input('dummy_div8', 'children')])
-def tour2_load_drop_downs(json_data, aux):
+    [Input('dummy_div8', 'children')])
+def tour2_load_drop_downs(aux):
     #print('length and distance filter callback')
-    mode = ['All']
-
-    datasets = json.loads(json_data)
-    key = list(datasets)[0]
-    df = pd.read_json(datasets[key], orient='split')
-    dpurp = [x for x in df.dpurp.unique()]
-    mode.extend([x for x in df['mode'].unique()])
-
-    return [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in mode]
+    return [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['mode_list']]
 
 @app.callback(
     [Output('trips-tour-header', 'children'),
@@ -1199,23 +1162,9 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, st
     [Output('distance-person-type-dropdown', 'options'),
      Output('distance-dpurp-dropdown', 'options'),
      Output('distance-mode-dropdown', 'options')],
-    [Input('trips', 'children'),
-     Input('dummy_div6', 'children')])
-def tour_load_drop_downs(json_data, aux):
-    #print('length and distance filter callback')
-    person_types = ['All']
-    dpurp = ['All']
-    mode = ['All']
-
-    datasets = json.loads(json_data)
-    key = list(datasets)[0]
-    df = pd.read_json(datasets[key], orient='split')
-    person_types.extend([x for x in df.pptyp.unique()])
-    dpurp.extend([x for x in df.dpurp.unique()])
-    mode.extend([x for x in df['mode'].unique()])
-
-    return [{'label': i, 'value': i} for i in person_types], [{'label': i, 'value': i} for i in dpurp], [{'label': i, 'value': i} for i in mode]
-
+    [Input('dummy_div6', 'children')])
+def tour_load_drop_downs(aux):
+    return [{'label': i, 'value': i} for i in config['person_type_list']], [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['mode_list']]
 
 # dynamic headers
 @app.callback(
@@ -1322,23 +1271,9 @@ def update_visuals(scenario1, scenario2, scenario3, person_type, dpurp, mode, fo
 # load drop downs
 @app.callback(
     Output('dpatt-dpurp-dropdown', 'options'),
-    [Input('dpatt-dataset-type', 'value'),
-     Input('tours', 'children'),
-     Input('trips', 'children'),
-     Input('dummy_div4', 'children')])
-def dpurp_dropdown(dataset_type, tours_json, trips_json, aux):
-    dpurp = []
-    if dataset_type == 'Tours':
-        dataset = json.loads(tours_json)
-        dataset_dpurp_col = 'pdpurp'
-    else:
-        dataset = json.loads(trips_json)
-        dataset_dpurp_col = 'dpurp'
-    key = list(dataset)[0]
-    df = pd.read_json(dataset[key], orient='split')
-    dpurp.extend([x for x in df[dataset_dpurp_col].unique()])
-    return [{'label': i, 'value': i} for i in dpurp]
-
+    [Input('dummy_div4', 'children')])
+def dpurp_dropdown(aux):
+    return [{'label': i, 'value': i} for i in config['trip_purpose_list'] if i != 'All']
 
 # dynamic headers
 @app.callback(
