@@ -842,34 +842,34 @@ def render_content(tab):
 
 
 # Scenario Selection callback ------------------------------------------------
-@app.callback(
-        [Output('trips', 'children'),
-         Output('tours', 'children'),
-         Output('persons', 'children'),
-         ],
-        [Input('scenario-1-dropdown', 'value'),
-         Input('scenario-2-dropdown', 'value'),
-         Input('scenario-3-dropdown', 'value')])
-def page_1_dropdown(val1, val2, val3):
+# @app.callback(
+#         [Output('trips', 'children'),
+#          Output('tours', 'children'),
+#          Output('persons', 'children'),
+#          ],
+#         [Input('scenario-1-dropdown', 'value'),
+#          Input('scenario-2-dropdown', 'value'),
+#          Input('scenario-3-dropdown', 'value')])
+# def page_1_dropdown(val1, val2, val3):
 
-    scenario_list = [val1, val2, val3]
+#     scenario_list = [val1, val2, val3]
     
-    trips_dict = {}
-    tours_dict = {}
-    persons_dict = {}
+#     trips_dict = {}
+#     tours_dict = {}
+#     persons_dict = {}
 
-    for x in range(0, len(scenario_list)):
-         if scenario_list[x] is not None:
-             trips = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))
-             trips_dict[scenario_list[x]] = trips.to_json(orient='split')
+#     for x in range(0, len(scenario_list)):
+#          if scenario_list[x] is not None:
+#              trips = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))
+#              trips_dict[scenario_list[x]] = trips.to_json(orient='split')
 
-             tours = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_purpose_mode.csv'))
-             tours_dict[scenario_list[x]] = tours.to_json(orient='split')
+#              tours = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_purpose_mode.csv'))
+#              tours_dict[scenario_list[x]] = tours.to_json(orient='split')
 
-             pers = pd.read_csv(os.path.join('data', scenario_list[x], 'person_type.csv'))
-             persons_dict[scenario_list[x]] = pers.to_json(orient='split')
+#              pers = pd.read_csv(os.path.join('data', scenario_list[x], 'person_type.csv'))
+#              persons_dict[scenario_list[x]] = pers.to_json(orient='split')
 
-    return json.dumps(trips_dict), json.dumps(tours_dict), json.dumps(persons_dict) # ,
+#     return json.dumps(trips_dict), json.dumps(tours_dict), json.dumps(persons_dict) # ,
 
 # Trips Mode Choice tab ------------------------------------------------------
 @app.callback(
@@ -1009,7 +1009,6 @@ def tour_load_drop_downs(aux):
 def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_district, 
                       share_type, share_type_deptm):
 
-    #datasets = json.loads(json_data)
     data1 = []
     data2 = []
     scenario_list = [scenario1, scenario2, scenario3]
@@ -1018,9 +1017,6 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
     tours_dict = {}
     persons_dict = {}
     
-    #for key in datasets.keys():    
-        #df = pd.read_json(datasets[key], orient='split')
-        
     for x in range(0, len(scenario_list)):
         if scenario_list[x] is not None:
             if end_district != 'All':
@@ -1379,15 +1375,19 @@ def update_headers(dataset_type, format_type, dpurp, aux, aux1):
      Output('dpatt-graph-pptyp-purpose', 'figure')],
     [Input('dpatt-dataset-type', 'value'),
      Input('dpatt-format-type', 'value'),
-     Input('trips', 'children'),
-     Input('tours', 'children'),
-     Input('persons', 'children'),
+     Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value'),
      Input('dpatt-dpurp-dropdown', 'value'),
      Input('dummy_div4', 'children'),
      Input('dummy_div5', 'children')]
     )
-def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json, dpurp,
+def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, dpurp,
                    aux, aux1):
+    def compile_csv_to_dict(filename, scenario_list):
+        dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
+        dfs_dict = dict(zip(scenario_list, dfs))
+        return(dfs_dict)
     def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
         df = table.copy()
         group_cols_list.append(key)
@@ -1455,11 +1455,15 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
         return layout_gen_table 
-    #print('This is the Day Pattern callback')
-    # load all data
-    trips = json.loads(trips_json)
-    tours = json.loads(tours_json)
-    pers = json.loads(pers_json)
+
+    scenario_list  = [scenario1, scenario2, scenario3]
+    vals = [scenario for scenario in scenario_list if scenario is not None]
+
+    tours = compile_csv_to_dict('tour_purpose_mode.csv', vals)
+    trips = compile_csv_to_dict('trip_purpose_mode.csv', vals)
+    pers = compile_csv_to_dict('person_type.csv', vals)
+    print(tours)
+
 
     if dataset_type == 'Tours':
         dataset = tours
@@ -1478,18 +1482,20 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
     keys = dataset.keys()
     keyslist = list(keys)
     if "None" in keyslist: keyslist.remove("None")
-
+    print('========================')
+    # print(keys)
     ## create total table
     alldict = {}
     # sum dataset
-    dataset_sum = map(lambda x: pd.read_json(dataset[x], orient='split')[dataset_weight_col].sum(), keys)
+    dataset_sum = map(lambda x: pd.DataFrame(dataset[x])[dataset_weight_col].sum(), keys)
+    print(dataset_sum)
     dataset_dict = dict(zip(keys, dataset_sum))
     alldict['Total ' + dataset_type] = dataset_dict
     # sum persons
     pkeys = pers.keys()
     dtype = 'Total Persons'
     expfac = 'psexpfac'
-    sum = map(lambda x: pd.read_json(pers[x], orient='split')[expfac].sum(), pkeys)
+    sum = map(lambda x: pd.DataFrame(pers[x])[expfac].sum(), pkeys)
     d = dict(zip(pkeys, sum))
     alldict[dtype] = d
     # compile and calculate per person
@@ -1507,13 +1513,13 @@ def update_visuals(dataset_type, format_type, trips_json, tours_json, pers_json,
          
     # generate 'by Purpose' tables
     for key in keys:
-        df = pd.read_json(dataset[key], orient='split')
+        df = pd.DataFrame(dataset[key])
 
         df_dpurp_gen = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col]].reset_index()
         df_dpurp_gen = df_dpurp_gen.rename(columns={dataset_weight_col: key})
         datalist_dpurp_gen.append(df_dpurp_gen[[dataset_dpurp_col, key]]) # X by purpose (percent)
 
-        df_pers = pd.read_json(pers[key], orient='split')
+        df_pers = pd.DataFrame(pers[key])
         df_pers = df_pers.groupby(['pptyp']).sum()[['psexpfac']]
         
         # X per person by purpose
@@ -1693,13 +1699,12 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
      Output('hhpers-graph-container', 'figure')
      ],
     [Input('hhpers-dataset-type', 'value'),
-     Input('persons', 'children'),
      Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value'),
      Input('dummy_div3', 'children')]
     )
-def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
+def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
@@ -1713,7 +1718,7 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
         keys = pers_tbl.keys()
         dtype = 'Total Persons'
         expfac = 'psexpfac'
-        sum = map(lambda x: pd.read_json(pers_tbl[x], orient='split')[expfac].sum(), keys)
+        sum = map(lambda x: pd.DataFrame(pers_tbl[x])[expfac].sum(), keys)
         d = dict(zip(keys, sum))
         alldict[dtype] = d
 
@@ -1723,7 +1728,7 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
         alldict['Total Households'] = hh_d
 
         # workers
-        pers_df = map(lambda x: pd.read_json(pers_tbl[x], orient='split'), keys)
+        pers_df = map(lambda x: pd.DataFrame(pers_tbl[x]), keys)
         pers_dict = dict(zip(keys, pers_df))
         wrkrs_df = map(lambda x: pers_dict[x][pers_dict[x]['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])][expfac].sum(), keys)
         wrkrs_dict = dict(zip(keys, wrkrs_df))
@@ -1775,42 +1780,23 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
         return {'data': datalist, 'layout': layout}
 
     def create_workers_table(wrkrs_tbl):
-        #taz_geog = pd.read_csv(r'data/data/taz_geography.csv')
 
-        datalist = []
+        df = pd.DataFrame()
         for key in wrkrs_tbl.keys():
+            _df = wrkrs_tbl[key]
+            _df = _df.groupby(['person_county','person_work_county']).sum()[['psexpfac']]
+            _df['Scenario'] = key
+            df = df.append(_df)
+        df.rename(columns={'person_county': 'Home County', 'person_work_county': 'Work County'}, inplace=True)
 
-            df = wrkrs_tbl[key]
-
-            df = df.merge(taz_geog, left_on='hhtaz', right_on='taz')
-            df.rename(columns={'geog_name': 'hh_county'}, inplace=True)
-
-            df = df.merge(taz_geog, left_on='pwtaz', right_on='taz')
-            df.rename(columns={'geog_name': 'work_county'}, inplace=True)
-
-            df.drop(['taz_x', 'taz_y'], axis=1, inplace=True)
-            df = df.groupby(['hh_county', 'work_county']).sum()[['psexpfac']]
-
-            df.rename(columns={'psexpfac': key}, inplace=True)
-            df = df.reset_index()
-
-            datalist.append(df)
-
-        df_scenarios = pd.merge(datalist[0], datalist[1], on=['hh_county', 'work_county'])
-        df_scenarios.rename(columns={'hh_county': 'Household County', 'work_county': 'Work County'}, inplace=True)
-        # format numbers with separator
-        format_number_dp = functools.partial(format_number, decimal_places=0)
-        for i in range(2, len(df_scenarios.columns)):
-            df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
-
-        return df_scenarios
+        return df
 
     scenario_list = [scenario1, scenario2, scenario3]
     vals = [scenario for scenario in scenario_list if scenario]
    
-    pers_tbl = json.loads(pers_json)
+    pers_tbl = compile_csv_to_dict('person_type.csv', vals)
     hh_tbl = compile_csv_to_dict('household_size_vehs_workers.csv', vals)
-    wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
+    wrkrs_tbl = compile_csv_to_dict('person_home_work_county.csv', vals)
     auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
 
     totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
@@ -1821,20 +1807,18 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
     elif data_type == 'Auto Ownership':
         agraph = create_simple_bar_graph(auto_tbl, 'hhvehs', 'hhexpfac', 'Number of Vehicles', 'Households')
         agraph_header = 'Auto Ownership'
-
     elif data_type == 'Workers by County':
-        wdf = create_workers_table(wrkrs_tbl)
-        wdf_melt = pd.melt(wdf, id_vars=['Household County', 'Work County'],
-                           value_vars=vals,
-                           var_name='Scenario', value_name='Workers')
+        df = create_workers_table(wrkrs_tbl)
+        df = df.reset_index()
+
         agraph = px.bar(
-            wdf_melt,
+            df,
             height=900,
             #width=950,
             barmode='group',
-            facet_row='Household County',
-            x='Work County',
-            y='Workers',
+            facet_row='person_county',
+            x='person_work_county',
+            y='psexpfac',
             color='Scenario'
         )
         agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
@@ -1843,7 +1827,6 @@ def update_visuals(data_type, pers_json, scenario1, scenario2, scenario3, aux):
         agraph_header = 'Workers by Household County by Work County'
 
     return totals_table, agraph_header, agraph
-
 
 # Taz Map tab ------------------------------------------------------------------
 # load drop downs
