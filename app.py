@@ -332,9 +332,6 @@ tab_tours2_mc_filter = [dbc.Card(
 )]
 
 tab_tours2_mc_layout = [
-
-
-
     dbc.Row(children=[
          dbc.Col(
             dbc.Card(
@@ -599,6 +596,28 @@ tab_work_layout = [
     html.Div(id='dummy_div7')
 ]
 
+tab_work_filter = [
+    dbc.Card(
+        [
+            dbc.CardHeader(html.H1('Graph')),
+            dbc.CardBody(
+                [
+                    dbc.Label('Person Type:'),
+                    dbc.RadioItems(
+                        id='work-person-type',
+                        options=[{'label': i, 'value': i} for i in
+                                 ['On-site Workers','Work-from-Home Workers',
+                                  'Non-Workers']],
+                        value='On-site Workers'
+                    ),
+                    html.Br(),
+                ],
+            ),  # end of CardBody
+        ],
+        className='aside-card'
+    )  # of Card
+    ]
+
 # Tab Households and Persons Layout
 tab_hh_pers_filter = [
     dbc.Card(
@@ -810,8 +829,8 @@ def render_content_filter(tab):
         return tab_tours2_mc_filter
     elif tab == 'tab-day-pattern':
         return tab_day_pattern_filter
-    #elif tab == 'tab-work':
-    #    return tab_work_filter
+    elif tab == 'tab-work':
+       return tab_work_filter
     elif tab == 'tab-hh-pers':
         return tab_hh_pers_filter
     elif tab == 'taz-map':
@@ -1391,8 +1410,6 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
     def calc_dpatt_per_person(table, group_cols_list, weight_name, key):
         df = table.copy()
         group_cols_list.append(key)
-        #print('inside the thing')
-        #print(df)
         df['day_pattern_per_person'] = df[weight_name]/df['psexpfac']
         df = df.rename(columns={'day_pattern_per_person': key})
         df = df[group_cols_list]
@@ -1462,8 +1479,6 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
     tours = compile_csv_to_dict('tour_purpose_mode.csv', vals)
     trips = compile_csv_to_dict('trip_purpose_mode.csv', vals)
     pers = compile_csv_to_dict('person_type.csv', vals)
-    print(tours)
-
 
     if dataset_type == 'Tours':
         dataset = tours
@@ -1482,13 +1497,11 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
     keys = dataset.keys()
     keyslist = list(keys)
     if "None" in keyslist: keyslist.remove("None")
-    print('========================')
-    # print(keys)
+
     ## create total table
     alldict = {}
     # sum dataset
     dataset_sum = map(lambda x: pd.DataFrame(dataset[x])[dataset_weight_col].sum(), keys)
-    print(dataset_sum)
     dataset_dict = dict(zip(keys, dataset_sum))
     alldict['Total ' + dataset_type] = dataset_dict
     # sum persons
@@ -1525,13 +1538,11 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
         # X per person by purpose
         df_dpurp = df.groupby(dataset_dpurp_col).sum()[[dataset_weight_col]].reset_index()
         df_dpurp['psexpfac'] = df_pers['psexpfac'].sum()
-        #print(df_dpurp)
         datalist_all_dpurp.append(calc_dpatt_per_person(df_dpurp, [dataset_dpurp_col], dataset_weight_col, key))
         
         # X per person by person type and purpose 
         df = df.groupby(['pptyp', dataset_dpurp_col]).sum()[[dataset_weight_col]].reset_index().merge(df_pers, on='pptyp')
         df_ptype = df[df[dataset_dpurp_col] == dpurp]
-        #print('should not see this')
         datalist.append(calc_dpatt_per_person(df_ptype, ['pptyp', dataset_dpurp_col], dataset_weight_col, key)) 
         
         # X by person type and purpose (percent)
@@ -1592,31 +1603,31 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
 @app.callback(
     Output('table-totals-container-work', 'children')
      ,
-    [Input('persons', 'children'),
+    [Input('work-person-type', 'value'),
      Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value'),
      Input('work-county-data-type', 'value'),
      Input('dummy_div7', 'children')]
     )
-def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
-    #print('work update graph callback')
+def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux):
+
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_totals_table(work_home_tbl, work_from_home_tours_tbl, data_type):
-        #taz_geog = pd.read_csv(r'data/data/taz_geography.csv')
+    def create_totals_table(work_home_tbl, work_from_home_tours_tbl, person_type_tbl, data_type, person_type):
 
         datalist = []
         datalist2 = []
         for key in work_home_tbl.keys():
 
             df = work_home_tbl[key]
+            df_pptyp = person_type_tbl[key]
             df.index = df['person_county']
             df.drop('person_county', axis=1, inplace=True)
-            total_wfh = df['psexpfac'].sum()
+            person_total = df['psexpfac'].sum()    # Total WFH workers
 
             if data_type == 'Distribution':
                 df['psexpfac'] = df['psexpfac']/df['psexpfac'].sum()
@@ -1629,13 +1640,19 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
             df.rename(columns={'psexpfac': key}, inplace=True)
             df = df.reset_index()
             datalist.append(df)
-
-                
+     
             # Tour Rates
             df = work_from_home_tours_tbl[key]
+            print(person_type)
+            if person_type == 'On-site Workers':
+                df = df[df['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]
+                person_total = df_pptyp[df_pptyp['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]['psexpfac'].sum()
+            elif person_type == 'Non-Workers':
+                df = df[-df['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]
+                person_total = df_pptyp[-df_pptyp['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]['psexpfac'].sum()
             df = df.groupby('pdpurp').sum()[['toexpfac']]
             df = df.reset_index()
-            df['toexpfac'] = df['toexpfac']/total_wfh
+            df['toexpfac'] = df['toexpfac']/person_total
             df.rename(columns={'toexpfac': key}, inplace=True)
 
             datalist2.append(df)
@@ -1684,11 +1701,15 @@ def update_visuals(pers_json, scenario1, scenario2, scenario3, data_type, aux):
     scenario_list = [scenario1, scenario2, scenario3]
     vals = [scenario for scenario in scenario_list if scenario is not None]
     
-    #print(vals)
     work_home_tbl = compile_csv_to_dict('wfh_county.csv', vals)
-    work_from_home_tours_tbl = compile_csv_to_dict('work_from_home_tours.csv', vals)
+    person_type_tbl = compile_csv_to_dict('person_type.csv', vals)
 
-    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl, data_type)
+    dataset_source = {'On-site Workers': 'non_wfh_tours.csv',
+                      'Work-from-Home Workers': 'work_from_home_tours.csv',
+                      'Non-Workers':'non_wfh_tours.csv'}
+    # Select tours based on filters
+    work_from_home_tours_tbl = compile_csv_to_dict(dataset_source[person_type], vals)
+    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl, person_type_tbl, data_type, person_type)
 
     return totals_table
 
@@ -1796,7 +1817,7 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
    
     pers_tbl = compile_csv_to_dict('person_type.csv', vals)
     hh_tbl = compile_csv_to_dict('household_size_vehs_workers.csv', vals)
-    wrkrs_tbl = compile_csv_to_dict('person_home_work_county.csv', vals)
+    wrkrs_tbl = compile_csv_to_dict('work_flows.csv', vals)
     auto_tbl = compile_csv_to_dict('auto_ownership.csv', vals)
 
     totals_table = create_totals_table(pers_tbl, hh_tbl, wrkrs_tbl)
