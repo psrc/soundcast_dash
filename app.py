@@ -127,21 +127,32 @@ tab_trips_mc_filter = [dbc.Card(
                     id='dpurp-dropdown'
                 ),
                 html.Br(),
-                dbc.Label('Trip End:'),
-                dbc.RadioItems(
-                    options=[{'label': i, 'value': i} for i
-                                 in ['Origin', 'Destination']],
-                    value='Origin',
-                    id='trip-end'
+                html.Div(
+                    [dbc.Label('District:'),
+                    dcc.Dropdown(
+                        value='All',
+                        clearable=False,
+                        id='trip-district'
+                    ),
+                    html.Br(),
+                    dbc.Label('Trip End:'),
+                    dbc.RadioItems(
+                        options=[{'label': i, 'value': i, 'disabled': True} for i
+                                     in ['Origin', 'Destination']],
+                        #value='Origin',
+                        id='trip-end'
                     
-                ),
-                html.Br(),
-                dbc.Label('District:'),
-                dcc.Dropdown(
-                    value='All',
-                    clearable=False,
-                    id='trip-district'
-                ),
+                    ),
+                    ],
+                    className="box-group"
+                ), # end Div
+                #html.Br(),
+                #dbc.Label('District:'),
+                #dcc.Dropdown(
+                #    value='All',
+                #    clearable=False,
+                #    id='trip-district'
+                #),
                 html.Br(),
                 html.Div(id='dummy_div'),
             ],
@@ -954,6 +965,21 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+
+@app.callback(
+    [Output('trip-end', 'options'),
+     Output('trip-end', 'value')],
+    [Input('trip-district', 'value')]
+    )
+def disable_trip_ends(trip_dist_choice):
+    if trip_dist_choice != 'All':
+        o = [{'label': i, 'value': i} for i in ['Origin', 'Destination']]
+        v = 'Origin'
+    else:
+        o = [{'label': i, 'value': i, 'disabled': True} for i in ['Origin', 'Destination']]
+        v = None
+       
+    return o, v
 
 
 # Tours Mode Choice tab -----------------------------------------------------

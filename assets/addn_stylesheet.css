@@ -20,3 +20,9 @@ h2 {
 .additional-header {
     border-top: #e0e0e0 solid 1px;
 }
+
+.box-group {
+    border: 1px solid #bababa;
+    border-radius: .5rem;
+    padding: 1rem;
+}
