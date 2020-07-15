@@ -221,23 +221,24 @@ tab_tours_mc_filter = [dbc.Card(
                     id='tour-dpurp-dropdown'
                 ),
                 html.Br(),
-                dbc.Label('Trip End:'),
-                dbc.RadioItems(
-                    options=[{'label': i, 'value': i} for i
-                                 in ['Origin', 'Destination']],
-                    value='Origin',
-                    id='tour-trip-end'
-                    
-                ),
-                html.Br(),
-                dbc.Label('District:'),
-                dcc.Dropdown(
-                    value='All',
-                    clearable=False,
-                    id='tour-trip-district'
-
-                ),
-                
+                html.Div(
+                    [dbc.Label('District:'),
+                    dcc.Dropdown(
+                        value='All',
+                        clearable=False,
+                        id='tour-district'
+                    ),
+                    html.Br(),
+                    dbc.Label('Trip End:'),
+                    dbc.RadioItems(
+                        options=[{'label': i, 'value': i} for i
+                                     in ['Origin', 'Destination']],
+                        value='Origin',
+                        id='tour-end'
+                    ),
+                    ],
+                    className='box-group'
+                ), # end Div
                 html.Br(),
                 #html.Div(id='df', style={'display': 'none'}),
                 html.Div(id='dummy_div2'),
@@ -1006,7 +1007,7 @@ def disable_trip_ends(trip_dist_choice):
 @app.callback(
     [Output('tour-person-type-dropdown', 'options'),
      Output('tour-dpurp-dropdown', 'options'),
-     Output('tour-trip-district', 'options')],
+     Output('tour-district', 'options')],
     [Input('dummy_div2', 'children')])
 def tour_load_drop_downs(aux):
 
@@ -1021,8 +1022,8 @@ def tour_load_drop_downs(aux):
               #Input('tours', 'children'),
                Input('tour-person-type-dropdown', 'value'),
                Input('tour-dpurp-dropdown', 'value'),
-               Input('tour-trip-end', 'value'),
-               Input('tour-trip-district', 'value'),
+               Input('tour-end', 'value'),
+               Input('tour-district', 'value'),
                Input('tour-mode-share-type', 'value'),
                Input('tour-mode-share-type-deptm', 'value')])
 def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_district, 
@@ -1100,6 +1101,21 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
             font=dict(family='Segoe UI', color='#7f7f7f')
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
+
+@app.callback(
+    [Output('tour-end', 'options'),
+     Output('tour-end', 'value')],
+    [Input('tour-district', 'value')]
+    )
+def disable_tour_ends(tour_dist_choice):
+    if tour_dist_choice != 'All':
+        o = [{'label': i, 'value': i} for i in ['Origin', 'Destination']]
+        v = 'Origin'
+    else:
+        o = [{'label': i, 'value': i, 'disabled': True} for i in ['Origin', 'Destination']]
+        v = None
+       
+    return o, v
 
 
 # Tour 2; trips by tour
