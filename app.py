@@ -666,20 +666,6 @@ tab_hh_pers_layout = [
             ),  # end Col
         ]
         ),  # end Row
-    #dbc.Row(children=[
-    #    dbc.Col(
-    #        dbc.Card(
-    #            dbc.CardBody(
-    #                [
-    #                    html.H2("Workers"),
-    #                    html.Br(),
-    #                    html.Div(id='table-wrkr-container'),
-    #                    ]
-    #                ), style= {"margin-top": "20px"}
-    #            ),
-    #        width=5
-    #        ), # end col
-    #    ]),
     html.Div(id='dummy_div3')
     ]
 
@@ -739,6 +725,99 @@ taz_map_layout = [
     ),
 ]
 
+tab_traffic_counts_layout = [
+    
+    dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2("Totals"),
+            html.Br(),
+            html.Div(id='traffic-totals-container'),
+            ]
+        ), style={"margin-top": "20px"}
+    ),
+    dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2(id='traffic-graffic-header'),
+                        dcc.Graph(id='traffic-graffic-container',
+                                figure={ 'data': [], 'layout': go.Layout()}),
+                        ]
+                    ), style={"margin-top": "20px"}
+                ),
+            width=12
+            ),  # end Col
+        ]
+        ),  # end Row
+        dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H2(id='counts-scatterplot-header'),
+                        dcc.Graph(id='counts-scatterplot-container',
+                                figure={ 'data': [], 'layout': go.Layout()}),
+                        ]
+                    ), style={"margin-top": "20px"}
+                ),
+            width=12
+            ),  # end Col
+        ]
+        ),  # end Row
+    dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2("Screenlines"),
+            html.Br(),
+            html.Div(id='screenlines-container'),
+            ]
+        ), style={"margin-top": "20px"}
+    ),
+    dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2("Exernals"),
+            html.Br(),
+            html.Div(id='externals-container'),
+            ]
+        ), style={"margin-top": "20px"}
+    ),
+    
+]
+
+tab_traffic_counts_filter = [dbc.Card(
+    [
+        dbc.CardHeader(html.H1('Filters')),
+        dbc.Card(
+        dbc.CardBody(
+            [
+                dbc.Label('Validation Scenario:'),
+                dcc.Dropdown(
+                    clearable=False,
+                    id='validation-scenario'
+                ),
+                html.Br(),
+            ],
+            ), style={"margin-top": "20px"}
+        ),
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    dbc.Label('County:'),
+                    dcc.Dropdown(
+                        value='All',
+                        clearable=False,
+                        id='traffic-count-county'
+                    ),
+                    html.Br(),
+                ],
+                ), style={"margin-top": "20px"}
+            #className = 'bg-light',
+            )],
+        className='aside-card'
+    )]
 
 # Main Layout
 navbar = dbc.NavbarSimple(
@@ -772,7 +851,9 @@ tabs = dbc.Tabs(
         dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
         dbc.Tab(label="Work", tab_id="tab-work"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
-        dbc.Tab(label="TAZ Map", tab_id="taz-map")
+        dbc.Tab(label="TAZ Map", tab_id="taz-map"),
+        dbc.Tab(label="Traffic Counts", tab_id="traffic-counts")
+
     ],
     id="tabs-list"
 )
@@ -800,18 +881,7 @@ main_body = html.Div(
     className="main-body-container"
 )
 
-hidden_divs = dbc.Container([
-    html.Div(id='trips', style={'display': 'none'}),
-    html.Div(id='tours', style={'display': 'none'}),
-    html.Div(id='persons', style={'display': 'none'}),
-    html.Div(id='tours_duration', style={'display': 'none'}),
-    #html.Div(id='taz_geog', style={'display': 'none'}),
-    #html.Div(id='dtaz_trips', style={'display': 'none'}),
-    #html.Div(id='auto_own', style={'display': 'none'}),
-    #html.Div(id='workers', style={'display': 'none'},)
-])
-
-app.layout = html.Div([navbar, main_body, hidden_divs])
+app.layout = html.Div([navbar, main_body])
 
 # App Callbacks --------------------------------------------------------------
 
@@ -835,6 +905,8 @@ def render_content_filter(tab):
         return tab_hh_pers_filter
     elif tab == 'taz-map':
         return taz_map_filter
+    elif tab == 'traffic-counts':
+        return tab_traffic_counts_filter
     else:
         return None
 
@@ -858,37 +930,9 @@ def render_content(tab):
         return tab_hh_pers_layout
     elif tab == 'taz-map':
         return taz_map_layout
+    elif tab == 'traffic-counts':
+        return tab_traffic_counts_layout
 
-
-# Scenario Selection callback ------------------------------------------------
-# @app.callback(
-#         [Output('trips', 'children'),
-#          Output('tours', 'children'),
-#          Output('persons', 'children'),
-#          ],
-#         [Input('scenario-1-dropdown', 'value'),
-#          Input('scenario-2-dropdown', 'value'),
-#          Input('scenario-3-dropdown', 'value')])
-# def page_1_dropdown(val1, val2, val3):
-
-#     scenario_list = [val1, val2, val3]
-    
-#     trips_dict = {}
-#     tours_dict = {}
-#     persons_dict = {}
-
-#     for x in range(0, len(scenario_list)):
-#          if scenario_list[x] is not None:
-#              trips = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_purpose_mode.csv'))
-#              trips_dict[scenario_list[x]] = trips.to_json(orient='split')
-
-#              tours = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_purpose_mode.csv'))
-#              tours_dict[scenario_list[x]] = tours.to_json(orient='split')
-
-#              pers = pd.read_csv(os.path.join('data', scenario_list[x], 'person_type.csv'))
-#              persons_dict[scenario_list[x]] = pers.to_json(orient='split')
-
-#     return json.dumps(trips_dict), json.dumps(tours_dict), json.dumps(persons_dict) # ,
 
 # Trips Mode Choice tab ------------------------------------------------------
 @app.callback(
@@ -1018,7 +1062,6 @@ def tour_load_drop_downs(aux):
               [Input('scenario-1-dropdown', 'value'),
                Input('scenario-2-dropdown', 'value'),
                Input('scenario-3-dropdown', 'value'),
-              #Input('tours', 'children'),
                Input('tour-person-type-dropdown', 'value'),
                Input('tour-dpurp-dropdown', 'value'),
                Input('tour-trip-end', 'value'),
@@ -1978,6 +2021,130 @@ def display_selected_data(selectedData, json_data, aux):
             )
 
     return {'data': data1, 'layout': layout1}
+
+# Traffic Counts Tab
+# --------------------------------------------------------------------------------
+@app.callback(
+    [Output('traffic-count-county', 'options'),
+     Output('validation-scenario', 'options')],
+    [Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value')])
+def tour2_load_drop_downs(scen1, scen2, scen3):
+    print([{'label': i, 'value': i} for i in config['county_list']])
+    scen_list = []
+    for scen in [scen1, scen2, scen3]:
+        # Validation data only available for scenario runs, check if it exists before adding to available scen list
+        fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
+        if os.path.isfile(fname_path):
+            scen_list.append(scen)
+
+    return [[{'label': i, 'value': i} for i in config['county_list']], [{'label': i, 'value': i} for i in scen_list]]
+
+@app.callback(
+    [Output('traffic-totals-container', 'children'),
+    Output('traffic-graffic-container', 'figure'),
+    Output('traffic-graffic-header', 'children'),
+    Output('counts-scatterplot-container', 'figure'),
+    Output('screenlines-container', 'children'),
+    Output('externals-container', 'children')],
+    [Input('traffic-count-county', 'value'),
+     Input('validation-scenario', 'value')]
+    )
+def update_visuals(county, selected_scen):
+
+    def create_totals_table(df, groupby_val, county, selected_scen):
+
+        if county != 'All':
+            df = df[df['county'] == county]
+        df = df.groupby(groupby_val).sum().reset_index()[[groupby_val,'modeled','observed']]
+        df['Percent Difference'] = (df['modeled'] - df['observed'])/df['observed']
+
+        t = html.Div(
+            [dash_table.DataTable(id='traffic-table-totals',
+                                  columns=[{"name": i, "id": i} for i in df.columns],
+                                  data=df.to_dict('rows'),
+                                  style_cell={
+                                      'font-family': 'Segoe UI',
+                                      'font-size': 14,
+                                      'text-align': 'center'}
+                                  )
+             ]
+            )
+        return t
+
+    def create_validation_bar_graph(df, xcol, observed_col, modeled_col, xaxis_title, yaxis_title):
+        datalist = []
+        for colname in [observed_col, modeled_col]:
+            trace = go.Bar(
+                x=df[xcol].copy(),
+                y=df[colname].copy(),
+                name=colname
+                )
+            datalist.append(trace)
+
+        layout = go.Layout(
+            barmode='group',
+            xaxis={'title': xaxis_title, 'type': 'category'},
+            yaxis={'title': yaxis_title, 'zeroline': False},
+            hovermode='closest',
+            autosize=True,
+            margin={'t':20},
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+        return {'data': datalist, 'layout': layout}
+
+    def create_scatterplot(df, county, xcol, ycol, xaxis_title, yaxis_title):
+        
+        if county != 'All':
+            df = df[df['county'] == county]
+
+        trace = go.Scatter(
+                x=df[xcol].astype('float').copy(),
+                y=df[ycol].astype('float').copy(),
+                mode='markers',
+                )
+
+        layout = go.Layout(
+            xaxis={'title': xaxis_title},
+            yaxis={'title': yaxis_title},
+            hovermode='closest',
+            autosize=True,
+            margin={'t':20},
+            font=dict(family='Segoe UI', color='#7f7f7f')
+            )
+        return {'data': [trace], 'layout': layout}
+
+    totals_table = ''
+    agraph = {'data': [], 'layout': go.Layout()}
+    agraph_header = ''
+    scatter_graph = {'data': [], 'layout': go.Layout()}
+    screenline_table = ''
+    externals_table = ''
+    if selected_scen is not None:
+        counts_df = pd.read_csv(os.path.join('data',selected_scen, 'daily_volume_county_facility.csv'))
+        totals_table = create_totals_table(counts_df, '@facilitytype', county, selected_scen)
+        agraph = create_validation_bar_graph(counts_df, 'county', 'observed', 'modeled', 'County', 'Daily Volume')
+        agraph_header = 'Traffic Counts by County'
+
+        # Scatter plot of counts
+        scatter_df = pd.read_csv(os.path.join('data',selected_scen,'daily_volume.csv'))
+        scatter_graph = create_scatterplot(scatter_df, county, 'observed', 'modeled', 'Observed', 'Modeled')
+
+        # Screenlines
+        screenlines_df = pd.read_csv(os.path.join('data',selected_scen,'screenlines.csv'))
+        screenline_table = create_totals_table(screenlines_df, 'name', county, selected_scen)
+
+        # Externals
+        externals_df = pd.read_csv(os.path.join('data',selected_scen,'external_volumes.csv'))
+        externals_table = create_totals_table(externals_df, 'location', county, selected_scen)
+
+    return totals_table, agraph, agraph_header, scatter_graph, screenline_table, externals_table
+
+    # externals
+
+    # corridor speeds (separate tab?)
+
 
 
 # Run app ------------------------------------------------------------------------
