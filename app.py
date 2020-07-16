@@ -972,9 +972,9 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
         if scenario_list[x] is not None:
             if end_district != 'All':
                 end_type = 'o' if end == 'Origin' else 'd'
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig_trip_' + end_type + '_district_' + end_district + '.csv'))  
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_total_trip_' + end_type + '_district_' + end_district + '.csv'))  
             else:
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_tlvorig.csv'))   
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'trip_total.csv'))   
             if person_type != 'All':
                 df = df[df['pptyp'] == person_type]
             if dpurp != 'All':
@@ -1085,9 +1085,9 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
             if end_district != 'All':
                 end_type = 'o' if end == 'Origin' else 'd'
                 #print(os.path.join('data', scenario_list[x], 'tour_tlvorig_tour_' + end_type + '_district_' + end_district + '.csv'))
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_tlvorig_tour_' + end_type + '_district_' + end_district + '.csv'))  
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_total_tour_' + end_type + '_district_' + end_district + '.csv'))  
             else:
-                df = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_tlvorig.csv'))   
+                df = pd.read_csv(os.path.join('data', scenario_list[x], 'tour_total.csv'))   
             if person_type != 'All':
                 df = df[df['pptyp'] == person_type]
             if dpurp != 'All':
