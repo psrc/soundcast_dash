@@ -1660,8 +1660,7 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
 
 # Work tab ------------------------------------------------------------------
 @app.callback(
-    Output('table-totals-container-work', 'children')
-     ,
+    Output('table-totals-container-work', 'children'),
     [Input('work-person-type', 'value'),
      Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
@@ -1676,10 +1675,12 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_totals_table(work_home_tbl, work_from_home_tours_tbl, person_type_tbl, data_type, person_type):
+    def create_totals_table(work_home_tbl, work_from_home_tours_tbl, trip_dist_tbl, 
+                            person_type_tbl, data_type, person_type):
 
         datalist = []
         datalist2 = []
+        datalist3 = []
         for key in work_home_tbl.keys():
 
             df = work_home_tbl[key]
@@ -1702,7 +1703,6 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
      
             # Tour Rates
             df = work_from_home_tours_tbl[key]
-            print(person_type)
             if person_type == 'On-site Workers':
                 df = df[df['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]
                 person_total = df_pptyp[df_pptyp['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]['psexpfac'].sum()
@@ -1715,6 +1715,24 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
             df.rename(columns={'toexpfac': key}, inplace=True)
 
             datalist2.append(df)
+
+            # Trip Distance
+            df = trip_dist_tbl[key]
+            if person_type == 'On-site Workers':
+                df = df[df['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]
+            elif person_type == 'Non-Workers':
+                df = df[-df['pptyp'].isin(['Full-Time Worker','Part-Time Worker'])]
+            df = df.groupby(['dpurp','travdist_bin']).sum()[['trexpfac']].reset_index()
+            df['wt_sum'] = df['trexpfac']*1.0*df['travdist_bin']
+            result = {}
+            for purp in pd.unique(df['dpurp']):
+                _df = df[df['dpurp'] == purp]
+                result[purp] = _df['wt_sum'].sum()/_df['trexpfac'].sum()
+                
+            df = pd.DataFrame.from_dict(result, orient='index').reset_index()
+            df.columns = ['Purpose',key]
+
+            datalist3.append(df)
 
         df_scenarios = pd.merge(datalist[0], datalist[1], on='person_county')
         if len(datalist) == 3:
@@ -1731,6 +1749,12 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
         for i in range(1, len(df_tour_scenarios.columns)):
             df_tour_scenarios.iloc[:, i] = df_tour_scenarios.iloc[:, i].apply(format_number_dp)
 
+        df_trip_distance = pd.merge(datalist3[0], datalist3[1], on='Purpose')
+        if len(datalist) == 3:
+            df_trip_distance = pd.merge(df_trip_distance, datalist3[2], on='Purpose')
+        for i in range(1, len(df_trip_distance.columns)):
+            df_trip_distance.iloc[:, i] = df_trip_distance.iloc[:, i].apply(format_number_dp)
+
         t = html.Div(
             [dash_table.DataTable(id='table-totals-work',
                                   columns=[{"name": i, "id": i} for i in df_scenarios.columns],
@@ -1741,12 +1765,23 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   ),
-             html.Br(),
-             html.H2("Tour Rate by Purpose for Work-From-Home Workers"),
-             dash_table.DataTable(id='table-totals-work2',
+            html.Br(),
+            html.H2("Tour Rate by Purpose"),
+            dash_table.DataTable(id='table-totals-work2',
                                   columns=[{"name": i, "id": i} for i in df_tour_scenarios.columns],
                                   # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
                                   data=df_tour_scenarios.to_dict('rows'),
+                                  style_cell={
+                                      'font-family': 'Segoe UI',
+                                      'font-size': 14,
+                                      'text-align': 'center'}
+                                  ),
+            html.Br(),
+            html.H2("Average Trip Distance by Purpose"),
+            dash_table.DataTable(id='table-totals-work3',
+                                  columns=[{"name": i, "id": i} for i in df_trip_distance.columns],
+                                  # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
+                                  data=df_trip_distance.to_dict('rows'),
                                   style_cell={
                                       'font-family': 'Segoe UI',
                                       'font-size': 14,
@@ -1762,13 +1797,20 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
     
     work_home_tbl = compile_csv_to_dict('wfh_county.csv', vals)
     person_type_tbl = compile_csv_to_dict('person_type.csv', vals)
+    
 
     dataset_source = {'On-site Workers': 'non_wfh_tours.csv',
                       'Work-from-Home Workers': 'work_from_home_tours.csv',
                       'Non-Workers':'non_wfh_tours.csv'}
+    distance_data_source = {'On-site Workers': 'trip_distance_non_wfh.csv',
+                      'Work-from-Home Workers': 'trip_distance_wfh.csv',
+                      'Non-Workers':'trip_distance.csv'}
     # Select tours based on filters
     work_from_home_tours_tbl = compile_csv_to_dict(dataset_source[person_type], vals)
-    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl, person_type_tbl, data_type, person_type)
+    trip_dist_tbl = compile_csv_to_dict(distance_data_source[person_type], vals)
+
+    totals_table = create_totals_table(work_home_tbl, work_from_home_tours_tbl, trip_dist_tbl,
+                                        person_type_tbl, data_type, person_type)
 
     return totals_table
 
