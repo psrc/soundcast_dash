@@ -1292,7 +1292,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, st
     vals = [scenario for scenario in scenario_list if scenario is not None]
    
     trips_by_tour_tbl = compile_csv_to_dict('trips_by_tour.csv', vals)
-    stops_by_tour_tbl = compile_csv_to_dict('tour_stops.csv', vals)
+    stops_by_tour_tbl = compile_csv_to_dict('tour_stops_outbound.csv', vals)
     agraph = create_bar_chart_horiz(trips_by_tour_tbl, ['pdpurp','dpurp'], 'trexpfac', format_type, 
         mode, dpurp, 'Purpose', format_type)
 
