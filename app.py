@@ -43,6 +43,14 @@ def format_percent(x, decimal_places):
 available_scenarios = [name for name in os.listdir('data')
                        if os.path.isdir(os.path.join('data', name))
                        and name != 'data']
+# List of model scenarios
+model_scenarios = []
+for scen in available_scenarios:
+    # Validation data only available for scenario runs, check if it exists before adding to available scen list
+    fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
+    if os.path.isfile(fname_path):
+        model_scenarios.append(scen)
+
 #available_scenarios.insert(0,"None")
 mode_dict = {1: 'walk', 2: 'bike', 3: 'sov', 4: 'hov2', 5: 'hov3',
              6: 'w_transit', 7: 'd_transit', 8: 'school_bus', 9: 'other',
@@ -731,7 +739,7 @@ tab_traffic_counts_layout = [
     dbc.Card(
     dbc.CardBody(
         [
-            html.H2("Totals"),
+            html.H2(id='traffic-totals-header'),
             html.Br(),
             html.Div(id='traffic-totals-container'),
             ]
@@ -752,25 +760,25 @@ tab_traffic_counts_layout = [
             ),  # end Col
         ]
         ),  # end Row
-        dbc.Row(children=[
-         dbc.Col(
-            dbc.Card(
-                dbc.CardBody(
-                    [
-                        html.H2(id='counts-scatterplot-header'),
-                        dcc.Graph(id='counts-scatterplot-container',
-                                figure={ 'data': [], 'layout': go.Layout()}),
-                        ]
-                    ), style={"margin-top": "20px"}
-                ),
-            width=12
-            ),  # end Col
-        ]
-        ),  # end Row
+    dbc.Row(children=[
+     dbc.Col(
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H2(id='counts-scatterplot-header'),
+                    dcc.Graph(id='counts-scatterplot-container',
+                            figure={ 'data': [], 'layout': go.Layout()}),
+                    ]
+                ), style={"margin-top": "20px"}
+            ),
+        width=12
+        ),  # end Col
+    ]
+    ),  # end Row
     dbc.Card(
     dbc.CardBody(
         [
-            html.H2("Screenlines"),
+            html.H2(id="screenlines-header"),
             html.Br(),
             html.Div(id='screenlines-container'),
             ]
@@ -779,7 +787,7 @@ tab_traffic_counts_layout = [
     dbc.Card(
     dbc.CardBody(
         [
-            html.H2("Exernals"),
+            html.H2(id="externals-header"),
             html.Br(),
             html.Div(id='externals-container'),
             ]
@@ -796,6 +804,7 @@ tab_traffic_counts_filter = [dbc.Card(
             [
                 dbc.Label('Validation Scenario:'),
                 dcc.Dropdown(
+                    value=model_scenarios[0],
                     clearable=False,
                     id='validation-scenario'
                 ),
@@ -814,10 +823,16 @@ tab_traffic_counts_filter = [dbc.Card(
                     ),
                     html.Br(),
                 ],
-                ), style={"margin-top": "20px"}
+                ), 
+            style={"margin-top": "20px"}
             #className = 'bg-light',
-            )],
-        className='aside-card'
+            
+            ),
+            html.Div(id='dummy_div9'),
+        ],
+        className='aside-card',
+        
+
     )]
 
 # Main Layout
@@ -1737,9 +1752,6 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
         df_scenarios = pd.merge(datalist[0], datalist[1], on='person_county')
         if len(datalist) == 3:
             df_scenarios = pd.merge(df_scenarios, datalist[2], on='person_county')
-        # format numbers with separator
-        # for i in range(1, len(df_scenarios.columns)):
-        #     df_scenarios.iloc[:, i] = df_scenarios.iloc[:, i].apply(format_number_dp)
 
         # Calculate tour rates
         df_tour_scenarios = pd.merge(datalist2[0], datalist2[1], on=['pdpurp'])
@@ -1755,33 +1767,37 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
         for i in range(1, len(df_trip_distance.columns)):
             df_trip_distance.iloc[:, i] = df_trip_distance.iloc[:, i].apply(format_number_dp)
 
+        tour_rate_header = "Tour Rate by Purpose for " + person_type
+        avg_trip_dist_header = "Average Trip Distance by Purpose for " + person_type
+
+
         t = html.Div(
             [dash_table.DataTable(id='table-totals-work',
                                   columns=[{"name": i, "id": i} for i in df_scenarios.columns],
-                                  # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
                                   data=df_scenarios.to_dict('rows'),
+                                  sort_action="native",
                                   style_cell={
                                       'font-family': 'Segoe UI',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   ),
             html.Br(),
-            html.H2("Tour Rate by Purpose"),
+            html.H2(tour_rate_header),
             dash_table.DataTable(id='table-totals-work2',
                                   columns=[{"name": i, "id": i} for i in df_tour_scenarios.columns],
-                                  # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
                                   data=df_tour_scenarios.to_dict('rows'),
+                                  sort_action="native",
                                   style_cell={
                                       'font-family': 'Segoe UI',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   ),
             html.Br(),
-            html.H2("Average Trip Distance by Purpose"),
+            html.H2(avg_trip_dist_header),
             dash_table.DataTable(id='table-totals-work3',
                                   columns=[{"name": i, "id": i} for i in df_trip_distance.columns],
-                                  # columns=[{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'},{'name':'test','id':'test1'}],
                                   data=df_trip_distance.to_dict('rows'),
+                                  sort_action="native",
                                   style_cell={
                                       'font-family': 'Segoe UI',
                                       'font-size': 14,
@@ -2089,7 +2105,6 @@ def display_selected_data(selectedData, json_data, aux):
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value')])
 def tour2_load_drop_downs(scen1, scen2, scen3):
-    print([{'label': i, 'value': i} for i in config['county_list']])
     scen_list = []
     for scen in [scen1, scen2, scen3]:
         # Validation data only available for scenario runs, check if it exists before adding to available scen list
@@ -2099,29 +2114,61 @@ def tour2_load_drop_downs(scen1, scen2, scen3):
 
     return [[{'label': i, 'value': i} for i in config['county_list']], [{'label': i, 'value': i} for i in scen_list]]
 
+# dynamic headers
+@app.callback(
+    [Output('traffic-graffic-header', 'children'),
+     Output('counts-scatterplot-header', 'children'),
+     Output('traffic-totals-header', 'children'),
+     Output('screenlines-header', 'children'),
+     Output('externals-header', 'children')],
+    [Input('traffic-count-county', 'value')])
+def update_headers(county):
+
+    result = []
+    header_dict = {}
+    traffic_header = 'Traffic Counts '
+    scatterplot_header = 'Count Locations '
+    traffic_table_header = 'Volume by Facility Type '
+    screenline_header = 'Screenlines '
+    externals_header = 'External Stations '
+    for header in [traffic_header, scatterplot_header, traffic_table_header,
+                    screenline_header, externals_header]:
+        if county != 'All':
+            header += ': ' + county + ' County'
+        result.append(header)
+
+    return result
+
 @app.callback(
     [Output('traffic-totals-container', 'children'),
     Output('traffic-graffic-container', 'figure'),
-    Output('traffic-graffic-header', 'children'),
     Output('counts-scatterplot-container', 'figure'),
     Output('screenlines-container', 'children'),
     Output('externals-container', 'children')],
     [Input('traffic-count-county', 'value'),
-     Input('validation-scenario', 'value')]
+     Input('validation-scenario', 'value'),
+     Input('dummy_div9', 'children')]
     )
-def update_visuals(county, selected_scen):
+def update_visuals(county, selected_scen, aux):
 
-    def create_totals_table(df, groupby_val, county, selected_scen):
+    def create_totals_table(df, groupby_val, selected_scen, county='None'):
 
-        if county != 'All':
+        if county != 'All' and county != 'None':
             df = df[df['county'] == county]
         df = df.groupby(groupby_val).sum().reset_index()[[groupby_val,'modeled','observed']]
-        df['Percent Difference'] = (df['modeled'] - df['observed'])/df['observed']
+        df['Percent Difference'] = ((df['modeled'] - df['observed'])/df['observed'])*100
+        df['Percent Difference'] = df['Percent Difference'].map('{:,.2f}%'.format)
+        df = df.sort_values('modeled', ascending=False)
+        for col in ['modeled','observed']:
+            df[col] = df[col].map('{:,}'.format)
+        df.rename(columns={'modeled':'Modeled', 'observed': 'Observed'}, inplace=True)
+
 
         t = html.Div(
             [dash_table.DataTable(id='traffic-table-totals',
                                   columns=[{"name": i, "id": i} for i in df.columns],
                                   data=df.to_dict('rows'),
+                                  sort_action="native",
                                   style_cell={
                                       'font-family': 'Segoe UI',
                                       'font-size': 14,
@@ -2131,7 +2178,12 @@ def update_visuals(county, selected_scen):
             )
         return t
 
-    def create_validation_bar_graph(df, xcol, observed_col, modeled_col, xaxis_title, yaxis_title):
+    def create_validation_bar_graph(df, xcol, observed_col, modeled_col, county, 
+                                xaxis_title, yaxis_title):
+        
+        if county != 'All' and county != 'None':
+            df = df[df['county'] == county]
+
         datalist = []
         for colname in [observed_col, modeled_col]:
             trace = go.Bar(
@@ -2153,7 +2205,7 @@ def update_visuals(county, selected_scen):
         return {'data': datalist, 'layout': layout}
 
     def create_scatterplot(df, county, xcol, ycol, xaxis_title, yaxis_title):
-        
+
         if county != 'All':
             df = df[df['county'] == county]
 
@@ -2175,14 +2227,15 @@ def update_visuals(county, selected_scen):
 
     totals_table = ''
     agraph = {'data': [], 'layout': go.Layout()}
-    agraph_header = ''
     scatter_graph = {'data': [], 'layout': go.Layout()}
     screenline_table = ''
     externals_table = ''
     if selected_scen is not None:
+
         counts_df = pd.read_csv(os.path.join('data',selected_scen, 'daily_volume_county_facility.csv'))
-        totals_table = create_totals_table(counts_df, '@facilitytype', county, selected_scen)
-        agraph = create_validation_bar_graph(counts_df, 'county', 'observed', 'modeled', 'County', 'Daily Volume')
+        counts_df.rename(columns={'@facilitytype': 'Facility'}, inplace=True)
+        totals_table = create_totals_table(counts_df, 'Facility', selected_scen, county)
+        agraph = create_validation_bar_graph(counts_df, 'county', 'observed', 'modeled', county, 'County', 'Daily Volume')
         agraph_header = 'Traffic Counts by County'
 
         # Scatter plot of counts
@@ -2191,19 +2244,15 @@ def update_visuals(county, selected_scen):
 
         # Screenlines
         screenlines_df = pd.read_csv(os.path.join('data',selected_scen,'screenlines.csv'))
-        screenline_table = create_totals_table(screenlines_df, 'name', county, selected_scen)
+        screenlines_df[['modeled','observed']] = screenlines_df[['modeled','observed']].astype('int')
+        screenline_table = create_totals_table(screenlines_df, 'name', selected_scen)
 
         # Externals
         externals_df = pd.read_csv(os.path.join('data',selected_scen,'external_volumes.csv'))
-        externals_table = create_totals_table(externals_df, 'location', county, selected_scen)
+        externals_df[['modeled','observed']] = externals_df[['modeled','observed']].astype('int')
+        externals_table = create_totals_table(externals_df, 'location', selected_scen)
 
-    return totals_table, agraph, agraph_header, scatter_graph, screenline_table, externals_table
-
-    # externals
-
-    # corridor speeds (separate tab?)
-
-
+    return totals_table, agraph, scatter_graph, screenline_table, externals_table
 
 # Run app ------------------------------------------------------------------------
 
