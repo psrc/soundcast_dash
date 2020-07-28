@@ -2254,6 +2254,44 @@ def update_visuals(county, selected_scen, aux):
 
     return totals_table, agraph, scatter_graph, screenline_table, externals_table
 
+# # Transit validation tab
+# @app.callback(
+#     [Output('validation-scenario', 'options')],
+#     [Input('scenario-1-dropdown', 'value'),
+#      Input('scenario-2-dropdown', 'value'),
+#      Input('scenario-3-dropdown', 'value')])
+# def transit_load_drop_downs(scen1, scen2, scen3):
+#     scen_list = []
+#     for scen in [scen1, scen2, scen3]:
+#         # Validation data only available for scenario runs, check if it exists before adding to available scen list
+#         fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
+#         if os.path.isfile(fname_path):
+#             scen_list.append(scen)
+
+#     return [[{'label': i, 'value': i} for i in scen_list]]
+
+# @app.callback(
+#     [Output('boardings-container', 'children')],
+#     [Input('validation-scenario', 'value'),
+#      Input('dummy_div10', 'children')]
+#     )
+# def update_visuals(selected_scen, aux):
+#     df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_by_agency.csv'))
+
+#     t = html.Div(
+#     [dash_table.DataTable(id='boardings-container',
+#                           columns=[{"name": i, "id": i} for i in df.columns],
+#                           data=df.to_dict('rows'),
+#                           sort_action="native",
+#                           style_cell={
+#                               'font-family': 'Segoe UI',
+#                               'font-size': 14,
+#                               'text-align': 'center'}
+#                           )
+#      ]
+#     )
+#     return t
+
 # Run app ------------------------------------------------------------------------
 
 #app.run_server(debug=True)
