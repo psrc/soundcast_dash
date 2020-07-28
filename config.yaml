@@ -11,3 +11,5 @@ district_list: ['All', 'East Side', 'Everett-Lynwood-Edmonds', 'Kitsap',
 
 mode_list: ['Walk','Bike','SOV','HOV2','HOV3+','School Bus',
 'Transit','Other']
+
+county_list: ['All','King','Kitsap','Pierce','Snohomish']
