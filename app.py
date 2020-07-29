@@ -835,6 +835,58 @@ tab_traffic_counts_filter = [dbc.Card(
 
     )]
 
+tab_transit_boardings_layout = [
+    
+    dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2(id='boardings-header'),
+            html.Br(),
+            html.Div(id='boardings-container'),
+            ]
+        ), style={"margin-top": "20px"}
+    ),
+]
+
+tab_transit_boardings_filter = [dbc.Card(
+    [
+        dbc.CardHeader(html.H1('Filters')),
+        dbc.Card(
+        dbc.CardBody(
+            [
+                dbc.Label('Validation Scenario:'),
+                dcc.Dropdown(
+                    value=model_scenarios[0],
+                    clearable=False,
+                    id='validation-scenario-transit'
+                ),
+                html.Br(),
+            ],
+            ), style={"margin-top": "20px"}
+        ),
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    dbc.Label('County:'),
+                    dcc.Dropdown(
+                        value='All',
+                        clearable=False,
+                        id='transit-county'
+                    ),
+                    html.Br(),
+                ],
+                ), 
+            style={"margin-top": "20px"}
+            #className = 'bg-light',
+            
+            ),
+            html.Div(id='dummy_div10'),
+        ],
+        className='aside-card',
+        
+
+    )]
+
 # Main Layout
 navbar = dbc.NavbarSimple(
     children=[
@@ -868,8 +920,8 @@ tabs = dbc.Tabs(
         dbc.Tab(label="Work", tab_id="tab-work"),
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
         dbc.Tab(label="TAZ Map", tab_id="taz-map"),
-        dbc.Tab(label="Traffic Counts", tab_id="traffic-counts")
-
+        dbc.Tab(label="Traffic Counts", tab_id="traffic-counts"),
+        dbc.Tab(label="Transit Boardings", tab_id="transit-boardings")
     ],
     id="tabs-list"
 )
@@ -901,31 +953,6 @@ app.layout = html.Div([navbar, main_body])
 
 # App Callbacks --------------------------------------------------------------
 
-# filters
-@app.callback(Output('tabs-content-filter', 'children'),
-              [Input('tabs-list', 'active_tab')])
-def render_content_filter(tab):
-    if tab == 'tab-trips-mc':
-        return tab_trips_mc_filter
-    elif tab == 'tab-length-distance-mc':
-        return tab_length_distance_mc_filter
-    elif tab == 'tab-tours-mc':
-        return tab_tours_mc_filter
-    elif tab == 'tab-tours2-mc':
-        return tab_tours2_mc_filter
-    elif tab == 'tab-day-pattern':
-        return tab_day_pattern_filter
-    elif tab == 'tab-work':
-       return tab_work_filter
-    elif tab == 'tab-hh-pers':
-        return tab_hh_pers_filter
-    elif tab == 'taz-map':
-        return taz_map_filter
-    elif tab == 'traffic-counts':
-        return tab_traffic_counts_filter
-    else:
-        return None
-
 
 @app.callback(Output('tabs-content', 'children'),
               [Input('tabs-list', 'active_tab')])
@@ -948,6 +975,35 @@ def render_content(tab):
         return taz_map_layout
     elif tab == 'traffic-counts':
         return tab_traffic_counts_layout
+    elif tab == 'transit-boardings':
+        return tab_transit_boardings_layout
+
+# filters
+@app.callback(Output('tabs-content-filter', 'children'),
+              [Input('tabs-list', 'active_tab')])
+def render_content_filter(tab):
+    if tab == 'tab-trips-mc':
+        return tab_trips_mc_filter
+    elif tab == 'tab-length-distance-mc':
+        return tab_length_distance_mc_filter
+    elif tab == 'tab-tours-mc':
+        return tab_tours_mc_filter
+    elif tab == 'tab-tours2-mc':
+        return tab_tours2_mc_filter
+    elif tab == 'tab-day-pattern':
+        return tab_day_pattern_filter
+    elif tab == 'tab-work':
+       return tab_work_filter
+    elif tab == 'tab-hh-pers':
+        return tab_hh_pers_filter
+    elif tab == 'taz-map':
+        return taz_map_filter
+    elif tab == 'traffic-counts':
+        return tab_traffic_counts_filter
+    elif tab == 'transit-boardings':
+        return tab_transit_boardings_filter
+    else:
+        return None
 
 
 # Trips Mode Choice tab ------------------------------------------------------
@@ -2254,43 +2310,53 @@ def update_visuals(county, selected_scen, aux):
 
     return totals_table, agraph, scatter_graph, screenline_table, externals_table
 
-# # Transit validation tab
-# @app.callback(
-#     [Output('validation-scenario', 'options')],
-#     [Input('scenario-1-dropdown', 'value'),
-#      Input('scenario-2-dropdown', 'value'),
-#      Input('scenario-3-dropdown', 'value')])
-# def transit_load_drop_downs(scen1, scen2, scen3):
-#     scen_list = []
-#     for scen in [scen1, scen2, scen3]:
-#         # Validation data only available for scenario runs, check if it exists before adding to available scen list
-#         fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
-#         if os.path.isfile(fname_path):
-#             scen_list.append(scen)
+# Transit validation tab
+@app.callback(
+    [Output('validation-scenario-transit', 'options')],
+    [Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value')])
+def transit_load_drop_downs(scen1, scen2, scen3):
+    scen_list = []
+    for scen in [scen1, scen2, scen3]:
+        # Validation data only available for scenario runs, check if it exists before adding to available scen list
+        fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
+        if os.path.isfile(fname_path):
+            scen_list.append(scen)
 
-#     return [[{'label': i, 'value': i} for i in scen_list]]
+    return [[{'label': i, 'value': i} for i in scen_list]]
 
-# @app.callback(
-#     [Output('boardings-container', 'children')],
-#     [Input('validation-scenario', 'value'),
-#      Input('dummy_div10', 'children')]
-#     )
-# def update_visuals(selected_scen, aux):
-#     df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_by_agency.csv'))
+@app.callback(
+    Output('boardings-container', 'children'),
+    [Input('validation-scenario-transit', 'value'),
+     Input('dummy_div10', 'children')]
+    )
+def update_visuals(selected_scen, aux):
+    df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_by_agency.csv'))
+    df.rename(columns={'observed_5to20': 'Observed', 
+                        'modeled_5to20': 'Modeled',
+                        'agency': 'Agency',
+                        'perc_diff': 'Percent Difference'}, inplace=True)
+    df[['Modeled','Observed']] = df[['Modeled','Observed']].astype('int')
+    df = df[['Agency','Modeled','Observed','Percent Difference']]
+    df['Percent Difference'] = (df['Percent Difference']*100).map('{:,.1f}%'.format)
+    df = df.sort_values('Modeled', ascending=False)
+    for col in ['Modeled','Observed']:
+        df[col] = df[col].map('{:,}'.format)
+    t = html.Div(
+    [dash_table.DataTable(id='boardings-container',
+                          columns=[{"name": i, "id": i} for i in df.columns],
+                          data=df.to_dict('rows'),
+                          sort_action="native",
+                          style_cell={
+                              'font-family': 'Segoe UI',
+                              'font-size': 14,
+                              'text-align': 'center'}
+                          )
+     ]
+    )
 
-#     t = html.Div(
-#     [dash_table.DataTable(id='boardings-container',
-#                           columns=[{"name": i, "id": i} for i in df.columns],
-#                           data=df.to_dict('rows'),
-#                           sort_action="native",
-#                           style_cell={
-#                               'font-family': 'Segoe UI',
-#                               'font-size': 14,
-#                               'text-align': 'center'}
-#                           )
-#      ]
-#     )
-#     return t
+    return t
 
 # Run app ------------------------------------------------------------------------
 
