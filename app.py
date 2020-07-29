@@ -846,6 +846,15 @@ tab_transit_boardings_layout = [
             ]
         ), style={"margin-top": "20px"}
     ),
+    dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2(id='boardings-header'),
+            html.Br(),
+            html.Div(id='key-route-boardings'),
+            ]
+        ), style={"margin-top": "20px"}
+    ),
 ]
 
 tab_transit_boardings_filter = [dbc.Card(
@@ -867,11 +876,11 @@ tab_transit_boardings_filter = [dbc.Card(
         dbc.Card(
             dbc.CardBody(
                 [
-                    dbc.Label('County:'),
+                    dbc.Label('Agency:'),
                     dcc.Dropdown(
                         value='All',
                         clearable=False,
-                        id='transit-county'
+                        id='agency-selection'
                     ),
                     html.Br(),
                 ],
@@ -2312,7 +2321,8 @@ def update_visuals(county, selected_scen, aux):
 
 # Transit validation tab
 @app.callback(
-    [Output('validation-scenario-transit', 'options')],
+    [Output('validation-scenario-transit', 'options'),
+    Output('agency-selection','options')],
     [Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value')])
@@ -2324,15 +2334,20 @@ def transit_load_drop_downs(scen1, scen2, scen3):
         if os.path.isfile(fname_path):
             scen_list.append(scen)
 
-    return [[{'label': i, 'value': i} for i in scen_list]]
+    return [[{'label': i, 'value': i} for i in scen_list], [{'label': i, 'value': i} for i in config['agency_list']]]
 
 @app.callback(
-    Output('boardings-container', 'children'),
+    [Output('boardings-container', 'children'),
+     Output('key-route-boardings', 'children')],
     [Input('validation-scenario-transit', 'value'),
+     Input('agency-selection', 'value'),
      Input('dummy_div10', 'children')]
     )
-def update_visuals(selected_scen, aux):
+def update_visuals(selected_scen, agency, aux):
+
     df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_by_agency.csv'))
+    if agency != 'All':
+        df = df[df['agency'] == agency]
     df.rename(columns={'observed_5to20': 'Observed', 
                         'modeled_5to20': 'Modeled',
                         'agency': 'Agency',
@@ -2344,19 +2359,46 @@ def update_visuals(selected_scen, aux):
     for col in ['Modeled','Observed']:
         df[col] = df[col].map('{:,}'.format)
     t = html.Div(
-    [dash_table.DataTable(id='boardings-container',
-                          columns=[{"name": i, "id": i} for i in df.columns],
-                          data=df.to_dict('rows'),
-                          sort_action="native",
-                          style_cell={
-                              'font-family': 'Segoe UI',
-                              'font-size': 14,
-                              'text-align': 'center'}
-                          )
-     ]
+        [dash_table.DataTable(id='boardings-container',
+                              columns=[{"name": i, "id": i} for i in df.columns],
+                              data=df.to_dict('rows'),
+                              sort_action="native",
+                              style_cell={
+                                  'font-family': 'Segoe UI',
+                                  'font-size': 14,
+                                  'text-align': 'center'}
+                              )
+         ]
     )
 
-    return t
+    df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_key_routes.csv'))
+    if agency != 'All':
+        df = df[df['agency'] == agency]
+    df.rename(columns={'observed_5to20': 'Observed', 
+                        'modeled_5to20': 'Modeled',
+                        'agency': 'Agency',
+                        'description': 'Route Name',
+                        'perc_diff': 'Percent Difference'}, inplace=True)
+    df[['Modeled','Observed']] = df[['Modeled','Observed']].astype('int')
+    df = df[['Route Name','Agency','Modeled','Observed','Percent Difference']]
+    df['Percent Difference'] = (df['Percent Difference']*100).map('{:,.1f}%'.format)
+    df = df.sort_values('Modeled', ascending=False)
+    for col in ['Modeled','Observed']:
+        df[col] = df[col].map('{:,}'.format)
+    key_routes = html.Div(
+        [dash_table.DataTable(id='boardings-container',
+                              columns=[{"name": i, "id": i} for i in df.columns],
+                              data=df.to_dict('rows'),
+                              sort_action="native",
+                              style_cell={
+                                  'font-family': 'Segoe UI',
+                                  'font-size': 14,
+                                  'text-align': 'center'}
+                              )
+         ]
+    )
+
+    return t, key_routes
 
 # Run app ------------------------------------------------------------------------
 
