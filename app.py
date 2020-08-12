@@ -2367,17 +2367,26 @@ def update_visuals(county, selected_scen, aux):
         if county != 'All' and county != 'None':
             df = df[df['county'] == county]
         df = df.groupby(groupby_val).sum().reset_index()[[groupby_val,'modeled','observed']]
-        df['Percent Difference'] = ((df['modeled'] - df['observed'])/df['observed'])*100
-        df['Percent Difference'] = df['Percent Difference'].map('{:,.2f}%'.format)
+        df['Percent Difference'] = ((df['modeled'] - df['observed'])/df['observed'])#*100
+        #df['Percent Difference'] = df['Percent Difference'].map('{:,.2f}%'.format)
         df = df.sort_values('modeled', ascending=False)
-        for col in ['modeled','observed']:
-            df[col] = df[col].map('{:,}'.format)
+        #for col in ['modeled','observed']:
+        #    df[col] = df[col].map('{:,}'.format)
         df.rename(columns={'modeled':'Modeled', 'observed': 'Observed'}, inplace=True)
+        column_list =[]
+        for col in df.columns:
+            if col not in ['Modeled', 'Observed', 'Percent Difference']:
+                column_list.append({"name": col, "id": col})
+            elif col in ['Modeled', 'Observed']:
+                column_list.append({"name": col, "id": col, 'type':'numeric','format': {'specifier': ',.0f'}})
+            elif col == 'Percent Difference':
+                column_list.append({"name": col, "id": col, 'type':'numeric', 'format': {'specifier': '.2%'}})
 
 
         t = html.Div(
             [dash_table.DataTable(id='traffic-table-totals',
-                                  columns=[{"name": i, "id": i} for i in df.columns],
+                                  #columns=[{"name": i, "id": i} for i in df.columns],
+                                  columns= column_list,
                                   data=df.to_dict('rows'),
                                   sort_action="native",
                                   style_cell={
