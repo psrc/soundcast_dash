@@ -1,6 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+from collections import OrderedDict
 import dash_html_components as html
 import dash_core_components as dcc
 import dash_table
@@ -836,7 +837,6 @@ tab_traffic_counts_filter = [dbc.Card(
     )]
 
 tab_transit_boardings_layout = [
-    
     dbc.Card(
     dbc.CardBody(
         [
@@ -849,12 +849,77 @@ tab_transit_boardings_layout = [
     dbc.Card(
     dbc.CardBody(
         [
-            html.H2(id='boardings-header'),
+            html.H2(id='key-route-header'),
             html.Br(),
             html.Div(id='key-route-boardings'),
             ]
         ), style={"margin-top": "20px"}
     ),
+    dbc.Card(
+    dbc.CardBody(
+        [
+            html.H2(id='light-rail-boardings-header'),
+            html.Br(),
+            html.Div(id='light-rail-boardings'),
+            ]
+        ), style={"margin-top": "20px"}
+    ),
+    # dbc.Card(
+    # dbc.CardBody(
+    #     [
+    #         html.H2(id='traffic-totals-header'),
+    #         html.Br(),
+    #         html.Div(id='traffic-totals-container'),
+    #         ]
+    #     ), style={"margin-top": "20px"}
+    # ),
+
+    # dbc.Row(children=[
+    #      dbc.Col(
+    #         dbc.Card(
+    #             dbc.CardBody(
+    #                 [
+    #         html.H2(id='boardings-header'),
+    #         html.Br(),
+    #         html.Div(id='boardings-container'),
+    #                     ]
+    #                 ), style={"margin-top": "20px"}
+    #             ),
+    #         width=12
+    #         ),  # end Col
+    #     ]
+        # ),  # end Row
+    # dbc.Row(children=[
+    #      dbc.Col(
+    #         dbc.Card(
+    #             dbc.CardBody(
+    #                 [
+    #         html.H2(id='key-route-header'),
+    #         html.Br(),
+    #         html.Div(id='key-route-boardings'),
+    #                     ]
+    #                 ), style={"margin-top": "20px"}
+    #             ),
+    #         width=12
+    #         ),  # end Col
+    #     ]
+    #     ),  # end Row
+    # dbc.Row(children=[
+    #      dbc.Col(
+    #         dbc.Card(
+    #             dbc.CardBody(
+    #                 [
+    #         html.H2(id='light-rail-boardings-header'),
+    #         html.Br(),
+    #         html.Div(id='light-rail-boardings'),
+    #                     ]
+    #                 ), style={"margin-top": "20px"}
+    #             ),
+    #         width=12
+    #         ),  # end Col
+    #     ]
+    #     ),  # end Row
+
 ]
 
 tab_transit_boardings_filter = [dbc.Card(
@@ -880,7 +945,7 @@ tab_transit_boardings_filter = [dbc.Card(
                     dcc.Dropdown(
                         value='All',
                         clearable=False,
-                        id='agency-selection'
+                        id='agency-selection-validation'
                     ),
                     html.Br(),
                 ],
@@ -890,6 +955,82 @@ tab_transit_boardings_filter = [dbc.Card(
             
             ),
             html.Div(id='dummy_div10'),
+        ],
+        className='aside-card',
+        
+
+    )]
+
+tab_transit_boardings_scenario_layout = [
+
+    dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+            html.H2(id='boardings-header-scenario'),
+            html.Br(),
+            html.Div(id='boardings-container-scenario'),
+                        ]
+                    ), style={"margin-top": "20px"}
+                ),
+            width=12
+            ),  # end Col
+        ]
+        ),  # end Row
+    # dbc.Row(children=[
+    #      dbc.Col(
+    #         dbc.Card(
+    #             dbc.CardBody(
+    #                 [
+    #         html.H2(id='key-route-header-scenario'),
+    #         html.Br(),
+    #         html.Div(id='key-route-boardings-scenario'),
+    #                     ]
+    #                 ), style={"margin-top": "20px"}
+    #             ),
+    #         width=12
+    #         ),  # end Col
+    #     ]
+    #     ),  # end Row
+    dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+            html.H2(id='light-rail-boardings-header-scenario'),
+            html.Br(),
+            html.Div(id='light-rail-boardings-scenario'),
+                        ]
+                    ), style={"margin-top": "20px"}
+                ),
+            width=12
+            ),  # end Col
+        ]
+        ),  # end Row
+
+]
+
+tab_transit_boardings_scenario_filter = [dbc.Card(
+    [
+        dbc.CardHeader(html.H1('Filters')),
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    dbc.Label('Agency:'),
+                    dcc.Dropdown(
+                        value='All',
+                        clearable=False,
+                        id='agency-selection-scenario'
+                    ),
+                    html.Br(),
+                    html.Div(id='dummy_div11'),
+                ],
+                ), 
+            style={"margin-top": "20px"}
+            #className = 'bg-light',
+            
+            ),
         ],
         className='aside-card',
         
@@ -930,7 +1071,8 @@ tabs = dbc.Tabs(
         dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
         dbc.Tab(label="TAZ Map", tab_id="taz-map"),
         dbc.Tab(label="Traffic Counts", tab_id="traffic-counts"),
-        dbc.Tab(label="Transit Boardings", tab_id="transit-boardings")
+        dbc.Tab(label="Transit Boardings", tab_id="transit-boardings"),
+        dbc.Tab(label="Transit Boardings Scenario", tab_id="transit-boardings-scenario")
     ],
     id="tabs-list"
 )
@@ -986,6 +1128,8 @@ def render_content(tab):
         return tab_traffic_counts_layout
     elif tab == 'transit-boardings':
         return tab_transit_boardings_layout
+    elif tab == 'transit-boardings-scenario':
+        return tab_transit_boardings_scenario_layout
 
 # filters
 @app.callback(Output('tabs-content-filter', 'children'),
@@ -1011,6 +1155,8 @@ def render_content_filter(tab):
         return tab_traffic_counts_filter
     elif tab == 'transit-boardings':
         return tab_transit_boardings_filter
+    elif tab == 'transit-boardings-scenario':
+        return tab_transit_boardings_scenario_filter
     else:
         return None
 
@@ -2322,7 +2468,7 @@ def update_visuals(county, selected_scen, aux):
 # Transit validation tab
 @app.callback(
     [Output('validation-scenario-transit', 'options'),
-    Output('agency-selection','options')],
+    Output('agency-selection-validation','options')],
     [Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value')])
@@ -2338,27 +2484,32 @@ def transit_load_drop_downs(scen1, scen2, scen3):
 
 @app.callback(
     [Output('boardings-container', 'children'),
-     Output('key-route-boardings', 'children')],
-    [Input('validation-scenario-transit', 'value'),
-     Input('agency-selection', 'value'),
-     Input('dummy_div10', 'children')]
-    )
-def update_visuals(selected_scen, agency, aux):
+     Output('key-route-boardings', 'children'),
+     Output('light-rail-boardings', 'children')],
+    [Input('agency-selection-validation', 'value'),
+     Input('validation-scenario-transit', 'value'),
+     Input('dummy_div10', 'children')])
+def update_visuals(agency, selected_scen, aux):
+    def process_df(df, column_dict, agency, table_id, agency_filter):
 
-    df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_by_agency.csv'))
-    if agency != 'All':
-        df = df[df['agency'] == agency]
-    df.rename(columns={'observed_5to20': 'Observed', 
-                        'modeled_5to20': 'Modeled',
-                        'agency': 'Agency',
-                        'perc_diff': 'Percent Difference'}, inplace=True)
-    df[['Modeled','Observed']] = df[['Modeled','Observed']].astype('int')
-    df = df[['Agency','Modeled','Observed','Percent Difference']]
-    df['Percent Difference'] = (df['Percent Difference']*100).map('{:,.1f}%'.format)
-    df = df.sort_values('Modeled', ascending=False)
-    for col in ['Modeled','Observed']:
-        df[col] = df[col].map('{:,}'.format)
-    t = html.Div(
+        df = df[column_dict.keys()]
+
+        if agency != 'All' and agency_filter is True:
+
+            df = df[df['agency'] == agency]
+        if 'perc_diff' not in column_dict.keys():
+            df['Percent Difference'] = (df['modeled_5to20']-df['observed_5to20'])/df['observed_5to20']
+
+        df.rename(columns=column_dict, inplace=True)
+
+        df[['Modeled','Observed']] = df[['Modeled','Observed']].astype('int')
+        df['Percent Difference'] = (df['Percent Difference']*100).map('{:,.1f}%'.format)
+        df = df.sort_values('Modeled', ascending=False)
+        for col in ['Modeled','Observed']:
+            df[col] = df[col].map('{:,}'.format)
+
+        
+        t = html.Div(
         [dash_table.DataTable(id='boardings-container',
                               columns=[{"name": i, "id": i} for i in df.columns],
                               data=df.to_dict('rows'),
@@ -2367,38 +2518,128 @@ def update_visuals(selected_scen, agency, aux):
                                   'font-family': 'Segoe UI',
                                   'font-size': 14,
                                   'text-align': 'center'}
-                              )
-         ]
-    )
+                              )]
+        )
+        print(table_id)
+        return t
 
-    df = pd.read_csv(os.path.join('data',selected_scen,'daily_boardings_key_routes.csv'))
-    if agency != 'All':
-        df = df[df['agency'] == agency]
-    df.rename(columns={'observed_5to20': 'Observed', 
-                        'modeled_5to20': 'Modeled',
-                        'agency': 'Agency',
-                        'description': 'Route Name',
-                        'perc_diff': 'Percent Difference'}, inplace=True)
-    df[['Modeled','Observed']] = df[['Modeled','Observed']].astype('int')
-    df = df[['Route Name','Agency','Modeled','Observed','Percent Difference']]
-    df['Percent Difference'] = (df['Percent Difference']*100).map('{:,.1f}%'.format)
-    df = df.sort_values('Modeled', ascending=False)
-    for col in ['Modeled','Observed']:
-        df[col] = df[col].map('{:,}'.format)
-    key_routes = html.Div(
-        [dash_table.DataTable(id='boardings-container',
-                              columns=[{"name": i, "id": i} for i in df.columns],
-                              data=df.to_dict('rows'),
-                              sort_action="native",
-                              style_cell={
-                                  'font-family': 'Segoe UI',
-                                  'font-size': 14,
-                                  'text-align': 'center'}
-                              )
-         ]
-    )
+    if selected_scen is not None:
+        column_dict = OrderedDict([('agency','Agency'),
+                                ('observed_5to20','Observed'), 
+                                ('modeled_5to20','Modeled'),
+                                ('perc_diff','Percent Difference')])
+        df = pd.read_csv(os.path.join('data',selected_scen, 'daily_boardings_by_agency.csv'))
+        agency_table = process_df(df, column_dict, agency, 'boardings-container', agency_filter=True)
+        # agency_table = create_table(df, 'boardings-container')
 
-    return t, key_routes
+    # # print(agency)
+    # df = pd.read_csv(os.path.join(os.getcwd(),'data','daily_boardings_by_agency.csv'))
+        
+        column_dict = OrderedDict([('agency','Agency'),
+                                    ('description','Description'),
+                                    ('observed_5to20','Observed'), 
+                                    ('modeled_5to20','Modeled'),
+                                    ('perc_diff','Percent Difference')])
+        df2 = pd.read_csv(os.path.join('data',selected_scen, 'daily_boardings_key_routes.csv'))
+        key_routes_table = process_df(df2, column_dict, agency, 'key-route-boardings', agency_filter=True)
+        # key_routes_table = create_table(df, 'key-route-boardings')
+
+    # df = process_df('daily_boardings_key_routes', column_dict, agency)
+    # key_routes_table = create_table(df, 'key-route-boardings')
+
+        column_dict = OrderedDict([('station_name','Station'),
+                                    ('observed_5to20','Observed'), 
+                                    ('modeled_5to20','Modeled')])
+        df = pd.read_csv(os.path.join('data',selected_scen, 'light_rail_boardings.csv'))
+        lr_table = process_df(df, column_dict, agency, 'light-rail-boardings', agency_filter=False)
+        # lr_table = create_table(df, 'light-rail-boardings')
+
+        # df = process_df('light_rail_boardings', column_dict, agency, agency_filter=False)
+        # lr_table = create_table(df, 'light-rail-boardings')
+
+    return agency_table, key_routes_table, lr_table
+    # return agency_table
+
+#####################################################
+# Transit boardings comparisons across scenarios tab
+@app.callback(
+    [Output('agency-selection-scenario','options')],
+    [Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value')])
+def transit_load_drop_downs(scen1, scen2, scen3):
+    scen_list = []
+    for scen in [scen1, scen2, scen3]:
+        # Validation data only available for scenario runs, check if it exists before adding to available scen list
+        fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
+        if os.path.isfile(fname_path):
+            scen_list.append(scen)
+
+    return [[{'label': i, 'value': i} for i in config['agency_list']]]
+
+@app.callback(
+    [Output('boardings-container-scenario', 'children'),
+     # Output('key-route-boardings-scenario', 'children'),
+     Output('light-rail-boardings-scenario', 'children')],
+    [Input('scenario-1-dropdown', 'value'),
+     Input('scenario-2-dropdown', 'value'),
+     Input('scenario-3-dropdown', 'value'),
+     Input('agency-selection-scenario', 'value'),
+     Input('dummy_div11', 'children')]
+    )
+def update_visuals(scen1, scen2, scen3, agency, aux):
+    print('test')
+
+    def compile_csv_to_dict(filename, scenario_list):
+        dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
+        dfs_dict = dict(zip(scenario_list, dfs))
+        return(dfs_dict)
+
+    def create_totals_table(id_name, table):
+        t = html.Div(
+            [
+                dash_table.DataTable(
+                    id=id_name,
+                    columns=[{"name": i, "id": i} for i in table.columns],
+                    data=table.to_dict('rows'),
+                    style_cell={
+                        'font-family': 'Segoe UI',
+                        'text-align': 'center'}
+                )
+            ]
+        )
+        return t
+
+    scenario_list = [scen1, scen2, scen3]
+    vals = [scenario for scenario in scenario_list if scenario]
+
+    dataset = compile_csv_to_dict('daily_boardings_by_agency.csv', vals)
+    result = []
+    for key in vals:
+        df = pd.DataFrame(dataset[key])
+        df.set_index('agency', inplace=True)
+        df.rename(columns={'modeled_5to20': key}, inplace=True)
+        df.loc['Total'] = df.sum(numeric_only=True, axis=0)
+        df[key] = df[key].map('{:,.0f}'.format)
+        df.reset_index(inplace=True)
+        result.append(df[['agency',key]])
+    result = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on='agency'), result)
+    result = create_totals_table('boardings-container-scenario', result)
+
+    dataset = compile_csv_to_dict('light_rail_boardings.csv', vals)
+    result2 = []
+    for key in vals:
+        df = pd.DataFrame(dataset[key])
+        df.set_index('station_name', inplace=True)
+        df.rename(columns={'modeled_5to20': key}, inplace=True)
+        df.loc['Total'] = df.sum(numeric_only=True, axis=0)
+        df[key] = df[key].map('{:,.0f}'.format)
+        df.reset_index(inplace=True)
+        result2.append(df[['station_name',key]])
+    result2 = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on='station_name'), result2)
+    result2 = create_totals_table('light-rail-boardings-scenario', result2)
+
+    return result, result2
 
 # Run app ------------------------------------------------------------------------
 
