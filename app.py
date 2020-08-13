@@ -971,6 +971,8 @@ tab_transit_boardings_scenario_layout = [
             html.H2(id='boardings-header-scenario'),
             html.Br(),
             html.Div(id='boardings-container-scenario'),
+            html.Br(),
+            html.Div(id='scen-list'),
                         ]
                     ), style={"margin-top": "20px"}
                 ),
@@ -978,21 +980,21 @@ tab_transit_boardings_scenario_layout = [
             ),  # end Col
         ]
         ),  # end Row
-    # dbc.Row(children=[
-    #      dbc.Col(
-    #         dbc.Card(
-    #             dbc.CardBody(
-    #                 [
-    #         html.H2(id='key-route-header-scenario'),
-    #         html.Br(),
-    #         html.Div(id='key-route-boardings-scenario'),
-    #                     ]
-    #                 ), style={"margin-top": "20px"}
-    #             ),
-    #         width=12
-    #         ),  # end Col
-    #     ]
-    #     ),  # end Row
+    dbc.Row(children=[
+         dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+            html.H2(id='key-route-header-scenario'),
+            html.Br(),
+            html.Div(id='key-route-boardings-scenario'),
+                        ]
+                    ), style={"margin-top": "20px"}
+                ),
+            width=12
+            ),  # end Col
+        ]
+        ),  # end Row
     dbc.Row(children=[
          dbc.Col(
             dbc.Card(
@@ -2141,7 +2143,7 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
         return df
 
     scenario_list = [scenario1, scenario2, scenario3]
-    vals = [scenario for scenario in scenario_list if scenario]
+    vals = [scenario for scenario in scenario_list if scenario is not None]
    
     pers_tbl = compile_csv_to_dict('person_type.csv', vals)
     hh_tbl = compile_csv_to_dict('household_size_vehs_workers.csv', vals)
@@ -2474,6 +2476,7 @@ def update_visuals(county, selected_scen, aux):
 
     return totals_table, agraph, scatter_graph, screenline_table, externals_table
 
+####################################
 # Transit validation tab
 @app.callback(
     [Output('validation-scenario-transit', 'options'),
@@ -2519,8 +2522,7 @@ def update_visuals(agency, selected_scen, aux):
 
         
         t = html.Div(
-        [dash_table.DataTable(id='boardings-container',
-                              columns=[{"name": i, "id": i} for i in df.columns],
+        [dash_table.DataTable(columns=[{"name": i, "id": i} for i in df.columns],
                               data=df.to_dict('rows'),
                               sort_action="native",
                               style_cell={
@@ -2539,10 +2541,6 @@ def update_visuals(agency, selected_scen, aux):
                                 ('perc_diff','Percent Difference')])
         df = pd.read_csv(os.path.join('data',selected_scen, 'daily_boardings_by_agency.csv'))
         agency_table = process_df(df, column_dict, agency, 'boardings-container', agency_filter=True)
-        # agency_table = create_table(df, 'boardings-container')
-
-    # # print(agency)
-    # df = pd.read_csv(os.path.join(os.getcwd(),'data','daily_boardings_by_agency.csv'))
         
         column_dict = OrderedDict([('agency','Agency'),
                                     ('description','Description'),
@@ -2551,28 +2549,20 @@ def update_visuals(agency, selected_scen, aux):
                                     ('perc_diff','Percent Difference')])
         df2 = pd.read_csv(os.path.join('data',selected_scen, 'daily_boardings_key_routes.csv'))
         key_routes_table = process_df(df2, column_dict, agency, 'key-route-boardings', agency_filter=True)
-        # key_routes_table = create_table(df, 'key-route-boardings')
-
-    # df = process_df('daily_boardings_key_routes', column_dict, agency)
-    # key_routes_table = create_table(df, 'key-route-boardings')
 
         column_dict = OrderedDict([('station_name','Station'),
                                     ('observed_5to20','Observed'), 
                                     ('modeled_5to20','Modeled')])
         df = pd.read_csv(os.path.join('data',selected_scen, 'light_rail_boardings.csv'))
         lr_table = process_df(df, column_dict, agency, 'light-rail-boardings', agency_filter=False)
-        # lr_table = create_table(df, 'light-rail-boardings')
-
-        # df = process_df('light_rail_boardings', column_dict, agency, agency_filter=False)
-        # lr_table = create_table(df, 'light-rail-boardings')
 
     return agency_table, key_routes_table, lr_table
-    # return agency_table
 
 #####################################################
 # Transit boardings comparisons across scenarios tab
 @app.callback(
-    [Output('agency-selection-scenario','options')],
+    [Output('agency-selection-scenario','options'),
+     Output('scen-list','value')],
     [Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value')])
@@ -2580,35 +2570,53 @@ def transit_load_drop_downs(scen1, scen2, scen3):
     scen_list = []
     for scen in [scen1, scen2, scen3]:
         # Validation data only available for scenario runs, check if it exists before adding to available scen list
-        fname_path = os.path.join('data', scen, 'daily_volume_county_facility.csv')
+        fname_path = os.path.join('data', scen, 'daily_boardings_by_agency.csv')
         if os.path.isfile(fname_path):
             scen_list.append(scen)
 
-    return [[{'label': i, 'value': i} for i in config['agency_list']]]
+    return [[{'label': i, 'value': i} for i in config['agency_list']], scen_list]
 
 @app.callback(
     [Output('boardings-container-scenario', 'children'),
-     # Output('key-route-boardings-scenario', 'children'),
+     Output('key-route-boardings-scenario', 'children'),
      Output('light-rail-boardings-scenario', 'children')],
-    [Input('scenario-1-dropdown', 'value'),
-     Input('scenario-2-dropdown', 'value'),
-     Input('scenario-3-dropdown', 'value'),
+     [Input('scen-list','value'),
      Input('agency-selection-scenario', 'value'),
      Input('dummy_div11', 'children')]
     )
-def update_visuals(scen1, scen2, scen3, agency, aux):
-    print('test')
+# def update_visuals(scen1, scen2, scen3, agency, aux):
+def update_visuals(scen_list, agency, aux):
 
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
+    def process_dataset(dataset, agency, scen_list, index_col, join_col):
+        result = []
+        for scen in scen_list:
+            df = pd.DataFrame(dataset[scen])
+            if agency != 'All':
+                df = df[df['agency'] == agency] 
+            df.set_index(index_col, inplace=True)
+            df.rename(columns={'modeled_5to20': scen}, inplace=True)
+            df.loc['Total'] = df.sum(numeric_only=True, axis=0)
+            df[scen] = df[scen].map('{:,.0f}'.format)
+            df.reset_index(inplace=True)
+            if isinstance(join_col, list):
+                col_list = join_col + [scen]
+            else:
+                col_list = [join_col,scen]
+
+            result.append(df[col_list])        
+        result = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on=join_col), result)
+
+        return result
+
     def create_totals_table(id_name, table):
         t = html.Div(
             [
                 dash_table.DataTable(
-                    id=id_name,
                     columns=[{"name": i, "id": i} for i in table.columns],
                     data=table.to_dict('rows'),
                     style_cell={
@@ -2619,36 +2627,19 @@ def update_visuals(scen1, scen2, scen3, agency, aux):
         )
         return t
 
-    scenario_list = [scen1, scen2, scen3]
-    vals = [scenario for scenario in scenario_list if scenario]
+    dataset = compile_csv_to_dict('daily_boardings_by_agency.csv', scen_list)
+    result = process_dataset(dataset, agency, scen_list, index_col='agency', join_col='agency')
+    agency_boardings = create_totals_table('boardings-container-scenario', result)
 
-    dataset = compile_csv_to_dict('daily_boardings_by_agency.csv', vals)
-    result = []
-    for key in vals:
-        df = pd.DataFrame(dataset[key])
-        df.set_index('agency', inplace=True)
-        df.rename(columns={'modeled_5to20': key}, inplace=True)
-        df.loc['Total'] = df.sum(numeric_only=True, axis=0)
-        df[key] = df[key].map('{:,.0f}'.format)
-        df.reset_index(inplace=True)
-        result.append(df[['agency',key]])
-    result = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on='agency'), result)
-    result = create_totals_table('boardings-container-scenario', result)
+    dataset = compile_csv_to_dict('daily_boardings_key_routes.csv', scen_list)
+    result = process_dataset(dataset, agency, scen_list, index_col='description', join_col=['description','agency'])
+    key_route_boardings = create_totals_table('key-route-boardings-scenario-scenario', result)
 
-    dataset = compile_csv_to_dict('light_rail_boardings.csv', vals)
-    result2 = []
-    for key in vals:
-        df = pd.DataFrame(dataset[key])
-        df.set_index('station_name', inplace=True)
-        df.rename(columns={'modeled_5to20': key}, inplace=True)
-        df.loc['Total'] = df.sum(numeric_only=True, axis=0)
-        df[key] = df[key].map('{:,.0f}'.format)
-        df.reset_index(inplace=True)
-        result2.append(df[['station_name',key]])
-    result2 = functools.reduce(lambda df1, df2: pd.merge(df1, df2, on='station_name'), result2)
-    result2 = create_totals_table('light-rail-boardings-scenario', result2)
+    dataset = compile_csv_to_dict('light_rail_boardings.csv', scen_list)
+    result = process_dataset(dataset, agency, scen_list, index_col='station_name', join_col='station_name')
+    light_rail_boardings = create_totals_table('light-rail-boardings-scenario', result)
 
-    return result, result2
+    return agency_boardings, key_route_boardings, light_rail_boardings
 
 # Run app ------------------------------------------------------------------------
 
