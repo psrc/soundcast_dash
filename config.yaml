@@ -13,3 +13,6 @@ mode_list: ['Walk','Bike','SOV','HOV2','HOV3+','School Bus',
 'Transit','Other']
 
 county_list: ['All','King','Kitsap','Pierce','Snohomish']
+
+agency_list: ['All','King County Metro', 'Sound Transit','Pierce Transit','Everett Transit',
+             'Community Transit', 'Kitsap Transit','Washington Ferries']
