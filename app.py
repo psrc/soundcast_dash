@@ -41,6 +41,14 @@ def format_percent(x, decimal_places):
     return formula.format(x)    
 
 
+def datatable_format_number(col, decimal_places):
+    return {"name": col, "id": col, 'type':'numeric','format': {'specifier': ',.' + str(decimal_places) + 'f'}}
+    
+
+def datatable_format_percent(col, decimal_places):
+    return {"name": col, "id": col, 'type':'numeric','format': {'specifier': '.' + str(decimal_places) + '%'}}
+
+
 available_scenarios = [name for name in os.listdir('data')
                        if os.path.isdir(os.path.join('data', name))
                        and name != 'data']
@@ -1917,11 +1925,11 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
 
             if data_type == 'Distribution':
                 df['psexpfac'] = df['psexpfac']/df['psexpfac'].sum()
-                df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_percent, decimal_places=1))
+                #df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_percent, decimal_places=1))
             else:
-                format_number_dp = functools.partial(format_number, decimal_places=0)
+                #format_number_dp = functools.partial(format_number, decimal_places=0)
                 df.loc['Total',:] = df['psexpfac'].sum(axis=0)
-                df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_number, decimal_places=0))
+                #df['psexpfac'] = df['psexpfac'].apply(functools.partial(format_number, decimal_places=0))
 
             df.rename(columns={'psexpfac': key}, inplace=True)
             df = df.reset_index()
@@ -1981,10 +1989,20 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
         tour_rate_header = "Tour Rate by Purpose for " + person_type
         avg_trip_dist_header = "Average Trip Distance by Purpose for " + person_type
 
-
+        # Formating columns from within dash_table to avoid sorting errors
+        cols_df_scenarios = []
+        for col in df_scenarios.columns:
+            if col == 'person_county':
+                cols_df_scenarios.append({"name": col, "id": col})
+            elif data_type == 'Distribution':
+                cols_df_scenarios.append(datatable_format_percent(col, 1))
+            else:
+                cols_df_scenarios.append(datatable_format_number(col, 0))
+        
         t = html.Div(
             [dash_table.DataTable(id='table-totals-work',
-                                  columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+                                  #columns=[{"name": i, "id": i} for i in df_scenarios.columns],
+                                  columns= cols_df_scenarios,
                                   data=df_scenarios.to_dict('rows'),
                                   sort_action="native",
                                   style_cell={
@@ -2378,10 +2396,9 @@ def update_visuals(county, selected_scen, aux):
             if col not in ['Modeled', 'Observed', 'Percent Difference']:
                 column_list.append({"name": col, "id": col})
             elif col in ['Modeled', 'Observed']:
-                column_list.append({"name": col, "id": col, 'type':'numeric','format': {'specifier': ',.0f'}})
+                column_list.append(datatable_format_number(col, 0))
             elif col == 'Percent Difference':
-                column_list.append({"name": col, "id": col, 'type':'numeric', 'format': {'specifier': '.2%'}})
-
+                column_list.append(datatable_format_percent(col, 2))
 
         t = html.Div(
             [dash_table.DataTable(id='traffic-table-totals',
