@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work
+from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, trans_board_scen
 from app import app, config
 from collections import OrderedDict
 import dash_html_components as html
@@ -189,16 +189,16 @@ def render_content(tab):
         return day_patt.tab_day_pattern_layout
     elif tab == 'tab-work':
         return work.tab_work_layout
-    #elif tab == 'tab-hh-pers':
-    #    return tab_hh_pers_layout
-    #elif tab == 'taz-map':
-    #    return taz_map_layout
-    #elif tab == 'traffic-counts':
-    #    return tab_traffic_counts_layout
-    #elif tab == 'transit-boardings':
-    #    return tab_transit_boardings_layout
-    #elif tab == 'transit-boardings-scenario':
-    #    return tab_transit_boardings_scenario_layout
+    elif tab == 'tab-hh-pers':
+        return hh_pers.tab_hh_pers_layout
+    elif tab == 'taz-map':
+        return taz_map.taz_map_layout
+    elif tab == 'traffic-counts':
+        return traff_count.tab_traffic_counts_layout
+    elif tab == 'transit-boardings':
+        return trans_board.tab_transit_boardings_layout
+    elif tab == 'transit-boardings-scenario':
+        return trans_board_scen.tab_transit_boardings_scenario_layout
 
 # filters
 @app.callback(Output('tabs-content-filter', 'children'),
@@ -216,16 +216,16 @@ def render_content_filter(tab):
         return day_patt.tab_day_pattern_filter
     elif tab == 'tab-work':
        return work.tab_work_filter
-    #elif tab == 'tab-hh-pers':
-    #    return tab_hh_pers_filter
-    #elif tab == 'taz-map':
-    #    return taz_map_filter
-    #elif tab == 'traffic-counts':
-    #    return tab_traffic_counts_filter
-    #elif tab == 'transit-boardings':
-    #    return tab_transit_boardings_filter
-    #elif tab == 'transit-boardings-scenario':
-    #    return tab_transit_boardings_scenario_filter
+    elif tab == 'tab-hh-pers':
+        return hh_pers.tab_hh_pers_filter
+    elif tab == 'taz-map':
+        return taz_map.taz_map_filter
+    elif tab == 'traffic-counts':
+        return traff_count.tab_traffic_counts_filter
+    elif tab == 'transit-boardings':
+        return trans_board.tab_transit_boardings_filter
+    elif tab == 'transit-boardings-scenario':
+        return trans_board_scen.tab_transit_boardings_scenario_filter
     else:
         return None
 
