@@ -144,7 +144,8 @@ navbar = dbc.NavbarSimple(
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem('Traffic Counts', id= 'traffic-counts', n_clicks=0),
-                dbc.DropdownMenuItem('Transit',id= 'transit', n_clicks=0)
+                dbc.DropdownMenuItem('Transit',id= 'transit', n_clicks=0),
+                dbc.DropdownMenuItem('Transit Boarding',id= 'transit-boarding', n_clicks=0)
             ],
             nav=True,
             in_navbar=True,
@@ -225,6 +226,7 @@ app.layout = html.Div([navbar, main_body])
                Input('work' , 'n_clicks'),
                Input('traffic-counts' , 'n_clicks'),
                Input('transit' , 'n_clicks'),
+               Input('transit-boarding', 'n_clicks'),
                Input('mode-choice-and-departure-hour', 'n_clicks')#,
                #Input('home-button', 'n_clicks')
                ])
@@ -251,6 +253,8 @@ def tripdropdown(*args):
         return traff_count.tab_traffic_counts_layout
     elif button_id == 'transit':
         return  trans_board.tab_transit_boardings_layout
+    elif button_id == 'transit-boarding':
+        return  trans_board_scen.tab_transit_boardings_scenario_layout
     # elif button_id == 'home-button':
         # return  home.tab_home_layout
 
@@ -268,6 +272,7 @@ def tripdropdown(*args):
                Input('work' , 'n_clicks'),
                Input('traffic-counts' , 'n_clicks'),
                Input('transit' , 'n_clicks'),
+               Input('transit-boarding', 'n_clicks'),
                Input('mode-choice-and-departure-hour', 'n_clicks')#,
                #Input('home-button', 'n_clicks')
                ])
@@ -294,6 +299,8 @@ def tripdropdown_filter(*args):
         return traff_count.tab_traffic_counts_filter
     elif button_id == 'transit':
         return trans_board.tab_transit_boardings_filter
+    elif button_id == 'transit-boarding':
+        return  trans_board_scen.tab_transit_boardings_scenario_filter
     # elif button_id == 'home-button':
         # return home.tab_home_filter
 
