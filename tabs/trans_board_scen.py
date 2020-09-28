@@ -14,7 +14,7 @@ import plotly.express as px
 import functools
 
 tab_transit_boardings_scenario_layout = [
-
+    html.H6('Transit Boarding'),
     dbc.Row(children=[
          dbc.Col(
             dbc.Card(

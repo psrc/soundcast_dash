@@ -67,40 +67,42 @@ tab_trips_mc_filter = [dbc.Card(
     )  # end dbc.Card
     ]
 
-tab_trips_mc_layout = [dbc.Card(
-    dbc.CardBody(
-        [
-            html.H2("Trip Mode Choice"),
-            html.Br(),
-            dbc.RadioItems(
-                id='mode-share-type',
-                options=[{'label': i, 'value': i} for i
-                         in ['Mode Share', 'Trips by Mode']],
-                value='Mode Share',
-                inline=True
-                ),
-            dcc.Graph(id='mode-choice-graph'),
-        ],
-    ),  # end dbc.CardBody
-    style={"margin-top": "20px"},
-    ),  # end dbc.Card
+tab_trips_mc_layout = [
+    html.H6('Mode Choice and Departure Hour'),
     dbc.Card(
         dbc.CardBody(
             [
-                html.H2('Trip Departure Hour:'),
+                html.H2("Trip Mode Choice"),
                 html.Br(),
                 dbc.RadioItems(
-                    id='mode-share-type-deptm',
+                    id='mode-share-type',
                     options=[{'label': i, 'value': i} for i
-                             in ['Distribution', 'Total Trips']],
-                    value='Distribution',
+                             in ['Mode Share', 'Trips by Mode']],
+                    value='Mode Share',
                     inline=True
                     ),
-                dcc.Graph(id='trip-deptm-graph'),
-            ]
-        ),
+                dcc.Graph(id='mode-choice-graph'),
+            ],
+        ),  # end dbc.CardBody
         style={"margin-top": "20px"},
-    )
+        ),  # end dbc.Card
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H2('Trip Departure Hour:'),
+                    html.Br(),
+                    dbc.RadioItems(
+                        id='mode-share-type-deptm',
+                        options=[{'label': i, 'value': i} for i
+                                 in ['Distribution', 'Total Trips']],
+                        value='Distribution',
+                        inline=True
+                        ),
+                    dcc.Graph(id='trip-deptm-graph'),
+                ]
+            ),
+            style={"margin-top": "20px"},
+        )
 ]
 
 @app.callback(

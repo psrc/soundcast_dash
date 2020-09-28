@@ -58,6 +58,7 @@ tab_tours_mc_filter = [dbc.Card(
 )]
 
 tab_tours_mc_layout = [
+    html.H6('Tour Mode Choice and Departure Hour'),
     dbc.Card(
         dbc.CardBody(
             [

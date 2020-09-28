@@ -32,6 +32,7 @@ for scen in available_scenarios:
         model_scenarios.append(scen)
 
 tab_transit_boardings_layout = [
+    html.H6('Transit'),
     dbc.Card(
     dbc.CardBody(
         [

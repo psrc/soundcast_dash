@@ -41,6 +41,7 @@ tab_hh_pers_filter = [
     ]
 
 tab_hh_pers_layout = [
+    html.H6('HH & Persons'),
     dbc.Card(
         dbc.CardBody(
             [

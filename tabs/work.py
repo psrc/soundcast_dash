@@ -23,6 +23,7 @@ def datatable_format_percent(col, decimal_places):
 
 # Tab Work Layout
 tab_work_layout = [
+    html.H6('Work'),
     dbc.Card(
         dbc.CardBody(
             [

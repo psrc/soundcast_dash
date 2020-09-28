@@ -63,6 +63,7 @@ tab_day_pattern_filter = [
 ]
 
 tab_day_pattern_layout = [
+    html.H6('Day Pattern'),
     dbc.Row(children=[
         dbc.Col(            
             # insert top table: Totals

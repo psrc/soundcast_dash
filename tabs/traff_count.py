@@ -30,7 +30,7 @@ for scen in available_scenarios:
         model_scenarios.append(scen)
 
 tab_traffic_counts_layout = [
-    
+    html.H6('Traffic Counts'),
     dbc.Card(
     dbc.CardBody(
         [

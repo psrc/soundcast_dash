@@ -57,6 +57,7 @@ tab_tours2_mc_filter = [dbc.Card(
 )]
 
 tab_tours2_mc_layout = [
+    html.H6('Trips and Stops by Tour (Tour 2 tab)'),
     dbc.Row(children=[
          dbc.Col(
             dbc.Card(
