@@ -1,28 +1,19 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, trans_board_scen, home
+from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, trans_board_scen
 from app import app, config
 from collections import OrderedDict
 import dash_html_components as html
 import dash_core_components as dcc
-#import dash_table
 import pandas as pd
 import geopandas as gpd
 import numpy as np
 import os
 import json
-#import plotly.graph_objs as go
 import plotly.express as px
-#import functools
-#import yaml
-
-#def format_number(x, decimal_places):
-#    formula = "{:,." + str(decimal_places) + "f}"
-#    return formula.format(x)
 
 def format_percent(x, decimal_places):
-    # formula = "{:. " + str(decimal_places) + "f%}"
     formula = '{:.'+str(decimal_places)+'%}'
     return formula.format(x)    
 
@@ -38,6 +29,7 @@ def datatable_format_percent(col, decimal_places):
 available_scenarios = [name for name in os.listdir('data')
                        if os.path.isdir(os.path.join('data', name))
                        and name != 'data']
+
 # List of model scenarios
 model_scenarios = []
 for scen in available_scenarios:
@@ -228,7 +220,6 @@ app.layout = html.Div([navbar, main_body])
                Input('transit' , 'n_clicks'),
                Input('transit-boarding', 'n_clicks'),
                Input('mode-choice-and-departure-hour', 'n_clicks')#,
-               #Input('home-button', 'n_clicks')
                ])
 def tripdropdown(*args):
     ctx = dash.callback_context

@@ -9,7 +9,7 @@ district_list: ['All', 'East Side', 'Everett-Lynwood-Edmonds', 'Kitsap',
 'North Seattle-Shoreline', 'Renton-FedWay-Kent', 'S.Kitsap', 'Seattle CBD', 
 'South Pierce', 'Suburban Snohomish', 'Tacoma', 'West-South Seattle']
 
-mode_list: ['Walk','Bike','SOV','HOV2','HOV3+','School Bus',
+mode_list: ['All','Walk','Bike','SOV','HOV2','HOV3+','School Bus',
 'Transit','Other']
 
 county_list: ['All','King','Kitsap','Pierce','Snohomish']

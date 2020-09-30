@@ -26,33 +26,8 @@ tab_tours2_mc_filter = [dbc.Card(
                     html.Div(id='dummy-format-type'),
                 ],
                 ),  # end of CardBody
-        dbc.CardHeader(html.H1('Filters')),
-        dbc.CardBody(
-            [
 
-                html.Br(),
-                dbc.Label('Mode:'),
-                dcc.Dropdown(
-                    value='All',
-                    clearable=False,
-                    id='tour2-mode-dropdown'
-                ),
-                html.Br(),
-                #html.Div(id='df', style={'display': 'none'}),
-                html.Div(id='dummy_div8'),
-                html.Br(),
-                dbc.Label('Purpose:'),
-                dcc.Dropdown(
-                    value='Work',
-                    clearable=False,
-                    id='tour2-purpose-dropdown'
-                ),
-                html.Br(),
-                #html.Div(id='df', style={'display': 'none'}),
-                html.Div(id='dummy_div8'),
-            ],
-            #className = 'bg-light',
-        )],
+        ],
     className='aside-card'
 )]
 
@@ -65,6 +40,14 @@ tab_tours2_mc_layout = [
                     [
                         html.H2(id='trips-tour-header'), # make header dynamic to dataset type ""
                         # html.Div(id='distance-tot-container'),
+                        html.Br(),
+                        dcc.Dropdown(
+                            id='tour2-mode-dropdown',
+                            options=[{'label': i, 'value': i} for i
+                                     in config['mode_list']],
+                            value='All',
+                            clearable=False
+                        ),
                         dcc.Graph(id='trips-by-tour'),
                         ]
                     ), style={"margin-top": "20px"}
@@ -88,6 +71,14 @@ tab_tours2_mc_layout = [
                             value='Entire Tour',
                             inline=True
                         ),
+                        html.Br(),
+                        dcc.Dropdown(
+                            id='stops-by-tour-purpose',
+                            options=[{'label': i, 'value': i} for i
+                                     in config['trip_purpose_list']],
+                            value='All',
+                            clearable=False
+                        ),
                         dcc.Graph(id='stops-by-tour'),
                         ]
                     ), style={"margin-top": "20px"}
@@ -101,20 +92,12 @@ tab_tours2_mc_layout = [
 
 # Tour 2; trips by tour
 # Tours Mode Choice tab -----------------------------------------------------
-# load drop downs
-@app.callback(
-    [Output('tour2-purpose-dropdown', 'options'),
-     Output('tour2-mode-dropdown', 'options')],
-    [Input('dummy_div8', 'children')])
-def tour2_load_drop_downs(aux):
-    #print('length and distance filter callback')
-    return [{'label': i, 'value': i} for i in config['trip_purpose_list']], [{'label': i, 'value': i} for i in config['mode_list']]
 
 @app.callback(
     [Output('trips-tour-header', 'children'),
      Output('stops-by-tour-header', 'children')],
     [Input('tour2-mode-dropdown', 'value'),
-     Input('tour2-purpose-dropdown', 'value'),
+     Input('stops-by-tour-purpose', 'value'),
      Input('stops-by-tour-type', 'value')
      ])
 def update_headers(mode, dpurp, stop_type):
@@ -126,9 +109,7 @@ def update_headers(mode, dpurp, stop_type):
 
     result.append(header_graph1)
 
-    header_graph2 = 'Stops on Tour: ' + dpurp + ' Tours ' 
-    if mode != 'All':
-        header_graph2 += 'by ' + mode 
+    header_graph2 = 'Stops on Tour: ' + dpurp + ' Tours' 
     header_graph2 += ' | ' + stop_type
     result.append(header_graph2)
     return result
@@ -140,26 +121,27 @@ def update_headers(mode, dpurp, stop_type):
                 Input('scenario-3-dropdown', 'value'),
                 Input('tour2-format-type', 'value'),
                 Input('tour2-mode-dropdown', 'value'),
-                Input('tour2-purpose-dropdown', 'value'),
-                Input('stops-by-tour-type', 'value')])
-def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, stop_type):
-    #print('tours 2 callback')
+                Input('stops-by-tour-type', 'value'),
+                Input('stops-by-tour-purpose', 'value')])
+def update_visuals(scenario1, scenario2, scenario3, format_type, mode, stop_type, radio_dpurp):
     
     def compile_csv_to_dict(filename, scenario_list):
         dfs = list(map(lambda x: pd.read_csv(os.path.join('data', x, filename)), scenario_list))
         dfs_dict = dict(zip(scenario_list, dfs))
         return(dfs_dict)
 
-    def create_bar_chart_horiz(table, xcol, weightcol, format_type, mode, dpurp, xaxis_title, yaxis_title):
+    def create_bar_chart_horiz(table, xcol, weightcol, format_type, mode, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
             if key != 'None':
                 df = table[key]
-
+                # df.drop(['mode','pdpurp'], axis=1, inplace=True)
+                
                 # Apply mode, and purpose filters
-                for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
+                for filter_name, filter_value in {'tmodetp': mode}.items():
                     if filter_value != 'All':
                         df = df[df[filter_name] == filter_value]
+
                 df = df[xcol+[weightcol]].groupby(xcol).sum()[[weightcol]]
 
                 df = df.reset_index()
@@ -168,7 +150,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, st
                 # Calculate shares if selected
                 if format_type == 'Percent':
                     df[weightcol] = df[weightcol]/df[weightcol].sum()
-
+                # print(df.head())
                 trace = go.Bar(
                     y=df['dpurp'].copy(),
                     x=df[weightcol].copy(),
@@ -186,7 +168,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, st
             )
         return {'data': datalist, 'layout': layout}
 
-    def create_bar_chart(table, xcol, weightcol, format_type, mode, dpurp, xaxis_title, yaxis_title):
+    def create_bar_chart(table, xcol, weightcol, format_type, radio_dpurp, xaxis_title, yaxis_title):
         datalist = []
         for key in table.keys():
             if key != 'None':
@@ -195,7 +177,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, st
                 df['all_stops'] = df['tripsh1'] + df['tripsh2'] 
 
                 # Apply mode, purpose, and tour part filters
-                for filter_name, filter_value in {'pdpurp': dpurp, 'tmodetp': mode}.items():
+                for filter_name, filter_value in {'pdpurp': radio_dpurp}.items():
                     if filter_value != 'All':
                         df = df[df[filter_name] == filter_value]
                 df = df[[xcol,weightcol]].groupby(xcol).sum()[[weightcol]]
@@ -231,13 +213,13 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, dpurp, st
    
     trips_by_tour_tbl = compile_csv_to_dict('trips_by_tour.csv', vals)
     stops_by_tour_tbl = compile_csv_to_dict('tour_stops_outbound.csv', vals)
-    agraph = create_bar_chart_horiz(trips_by_tour_tbl, ['pdpurp','dpurp'], 'trexpfac', format_type, 
-        mode, dpurp, 'Purpose', format_type)
+    agraph = create_bar_chart_horiz(trips_by_tour_tbl, ['dpurp'], 'trexpfac', format_type, 
+        mode, 'Purpose', format_type)
 
     stop_type_dict = {'Entire Tour': 'all_stops', 'First Half': 'tripsh1', 'Second Half': 'tripsh2'}
     stop_type_val = stop_type_dict[stop_type]
     # Use toggle value to define which tour half is displayed
     bgraph = create_bar_chart(stops_by_tour_tbl, stop_type_val, 'toexpfac', format_type, 
-        mode, dpurp, 'Stops', format_type)
+        radio_dpurp, 'Stops', format_type)
 
     return agraph, bgraph
