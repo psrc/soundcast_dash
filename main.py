@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, trans_board_scen
+from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, trans_board_scen, topsheet
 from app import app, config
 from collections import OrderedDict
 import dash_html_components as html
@@ -103,8 +103,8 @@ scenario_select_layout = dbc.Card(
 # Main Layout
 navbar = dbc.NavbarSimple(
     children=[
-        #dbc.NavItem(dbc.NavLink("Home", id= 'home-button', n_clicks=0, href="#")),
-        dbc.NavItem(dbc.NavLink("Home", href="#")),
+        dbc.NavItem(dbc.NavLink("Home", id= 'topsheet', n_clicks=0, href="#")),
+        # dbc.NavItem(dbc.NavLink("Home", href="#")),
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem('Mode Choice and Departure Hour', id= 'mode-choice-and-departure-hour', n_clicks=0),
@@ -137,7 +137,6 @@ navbar = dbc.NavbarSimple(
             children=[
                 dbc.DropdownMenuItem('Traffic Counts', id= 'traffic-counts', n_clicks=0),
                 dbc.DropdownMenuItem('Transit',id= 'transit', n_clicks=0),
-                dbc.DropdownMenuItem('Transit Boarding',id= 'transit-boarding', n_clicks=0)
             ],
             nav=True,
             in_navbar=True,
@@ -218,8 +217,8 @@ app.layout = html.Div([navbar, main_body])
                Input('work' , 'n_clicks'),
                Input('traffic-counts' , 'n_clicks'),
                Input('transit' , 'n_clicks'),
-               Input('transit-boarding', 'n_clicks'),
-               Input('mode-choice-and-departure-hour', 'n_clicks')#,
+               Input('mode-choice-and-departure-hour', 'n_clicks'),
+               Input('topsheet', 'n_clicks')
                ])
 def tripdropdown(*args):
     ctx = dash.callback_context
@@ -244,10 +243,8 @@ def tripdropdown(*args):
         return traff_count.tab_traffic_counts_layout
     elif button_id == 'transit':
         return  trans_board.tab_transit_boardings_layout
-    elif button_id == 'transit-boarding':
-        return  trans_board_scen.tab_transit_boardings_scenario_layout
-    # elif button_id == 'home-button':
-        # return  home.tab_home_layout
+    elif button_id == 'topsheet':
+        return  topsheet.topsheet_layout
 
 
 
@@ -263,9 +260,8 @@ def tripdropdown(*args):
                Input('work' , 'n_clicks'),
                Input('traffic-counts' , 'n_clicks'),
                Input('transit' , 'n_clicks'),
-               Input('transit-boarding', 'n_clicks'),
-               Input('mode-choice-and-departure-hour', 'n_clicks')#,
-               #Input('home-button', 'n_clicks')
+               Input('mode-choice-and-departure-hour', 'n_clicks'),
+               Input('topsheet', 'n_clicks')
                ])
 def tripdropdown_filter(*args):
     ctx = dash.callback_context
@@ -290,10 +286,8 @@ def tripdropdown_filter(*args):
         return traff_count.tab_traffic_counts_filter
     elif button_id == 'transit':
         return trans_board.tab_transit_boardings_filter
-    elif button_id == 'transit-boarding':
-        return  trans_board_scen.tab_transit_boardings_scenario_filter
-    # elif button_id == 'home-button':
-        # return home.tab_home_filter
+    elif button_id == 'topsheet':
+        return topsheet.topsheet_filter
 
 
 
