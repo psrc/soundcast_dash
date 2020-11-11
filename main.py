@@ -10,6 +10,7 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 import os
+import yaml
 import json
 import plotly.express as px
 
@@ -346,4 +347,18 @@ def tripdropdown_filter(*args):
     # else:
         # return None
 
-if __name__ == '__main__': app.run_server(debug=True)
+# if __name__ == '__main__': 
+#     app.run_server(debug=True)
+
+DEPLOY = True
+
+config = yaml.safe_load(open("config.yaml"))
+
+if DEPLOY:
+    app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], requests_pathname_prefix='/soundcast_dash/')
+    app.config.suppress_callback_exceptions = True
+    server = app.server
+else:
+    app.run_server(debug=True)
+    server = app.server
+    app.config.suppress_callback_exceptions = True
