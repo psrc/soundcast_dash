@@ -14,6 +14,19 @@ import yaml
 import json
 import plotly.express as px
 
+#DEPLOY = False
+
+#config = yaml.safe_load(open("config.yaml"))
+
+#if DEPLOY:
+#    app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], requests_pathname_prefix='/soundcast_dash/')
+#    app.config.suppress_callback_exceptions = True
+#    server = app.server
+#else:
+#    #external_stylesheets = [dbc.themes.BOOTSTRAP]  # [dbc.themes.MATERIA]
+#    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+#    app.config.suppress_callback_exceptions = True
+
 def format_percent(x, decimal_places):
     formula = '{:.'+str(decimal_places)+'%}'
     return formula.format(x)    
@@ -350,15 +363,6 @@ def tripdropdown_filter(*args):
 # if __name__ == '__main__': 
 #     app.run_server(debug=True)
 
-DEPLOY = True
 
-config = yaml.safe_load(open("config.yaml"))
 
-if DEPLOY:
-    app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], requests_pathname_prefix='/soundcast_dash/')
-    app.config.suppress_callback_exceptions = True
-    server = app.server
-else:
-    app.run_server(debug=True)
-    server = app.server
-    app.config.suppress_callback_exceptions = True
+if __name__ == '__main__': app.run_server(debug=True)

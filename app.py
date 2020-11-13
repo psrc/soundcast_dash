@@ -2,7 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 import yaml
 
-DEPLOY = False
+DEPLOY = True
 
 config = yaml.safe_load(open("config.yaml"))
 
