@@ -21,26 +21,6 @@ def create_tooltip(cell):
 
 # Topsheet Tab Layout
 topsheet_filter = []
-#     dbc.Card(
-#         [
-#             dbc.CardHeader(html.H1('Graph')),
-#             dbc.CardBody(
-#                 [
-#                     dbc.Label('Select dataset:'),
-#                     dbc.RadioItems(
-#                         id='data-type',
-#                         options=[{'label': i, 'value': i} for i in
-#                                  ['VMT', 'VHT',
-#                                   'Delay']],
-#                         value='VMT'
-#                     ),
-#                     html.Br(),
-#                 ],
-#             ),  # end of CardBody
-#         ],
-#         className='aside-card'
-#     )  # of Card
-#     ]
 
 topsheet_layout = [
     html.H6('VMT, VHT, Delay'),
@@ -59,55 +39,33 @@ topsheet_layout = [
                 ]
             ), style={"margin-top": "20px"}
         ),
-    html.Div(id='dummy_div7')
-]
-    # dbc.Row(children=[
-    #      dbc.Col(
-    #         dbc.Card(
-    #             dbc.CardBody(
-    #                 [
-    #                     # html.H2(id='top-table-header'), # make header dynamic to dataset type ""
-    #                     # # html.Div(id='distance-tot-container'),
-    #                     # html.Br(),
-    #                     # dbc.RadioItems
-    #                     #     id='data-type',
-    #                     #     options=[{'label': i, 'value': i} for i
-    #                     #              in ['VMT','VHT', 'Delay']],
-    #                     #     value='Delay',
-    #                     #     inline=True
-    #                     # ),
-    #                     html.Br(),
-    #                     html.Div(id='vmt-container'),
-    #                     ]
-    #                 ), style={"margin-top": "20px"}
-    #             ),
-    #         width=12
-    #         ),  # end Col
-    #     ]
-    #     ), 
-    # ]
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H2('Transit Boardings'),
+                    html.Br(),
+                    html.Div(id='transit-boardings'),
+                ]
+            ),
+            style={"margin-top": "20px"},
+        ),
+    html.Div(id='dummy_div7'),
 
+]
 
 
 
 # Households and Persons tab ------------------------------------------------------------------
 @app.callback(
-    Output('vmt-container', 'children'),
+    [Output('vmt-container', 'children'),
+     Output('transit-boardings', 'children')],
     [Input('scenario-1-dropdown', 'value'),
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value'),
      Input('data-type', 'value'),
      Input('dummy_div7', 'children')])
 def update_visuals(scenario1, scenario2, scenario3, data_type, aux):
-    # def mylambda(filename, scenario_list, data_type):
-    #     df = pd.DataFrame()
-    #     for x in scenario_list:
-    #         _df = pd.read_csv(os.path.join(r'data', x, filename))
-    #         _df[data_type] = _df[['arterial','connector','highway']].sum(axis=1)
-    #         _df = _df.groupby('period').sum()[[data_type]].reset_index()
-    #         _df['scenario'] = x
-    #         df = df.append(_df)
-    #     return df
+
     def mylambda(scenario_list):
         df = pd.DataFrame()
         for x in scenario_list:
@@ -120,6 +78,18 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, aux):
                 df = df.append(_df)
         return df
 
+
+    def transit_lambda(scenario_list):
+        df = pd.DataFrame()
+        for x in scenario_list:
+            _df = pd.read_csv(os.path.join(r'data', x, 'daily_boardings_by_agency.csv'))
+            print(_df)
+            _df = _df.groupby('agency').sum()[['modeled_5to20']].reset_index()
+            _df['scenario'] = x
+            df = df.append(_df)
+        print(df)
+        return df
+
     def create_totals_table(df, data_type):
         # calculate totals and collate into master dictionary
 
@@ -127,7 +97,7 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, aux):
 
         # df = mylambda(filename, scenario_list, data_type)
         df = df.pivot_table(index='period', columns='scenario', values='values', aggfunc='sum')
-        print(df)
+
         df = df.astype('int').round(-3)
         df = df.loc[['am','md','pm','ev','ni']]
         df = df.reset_index()
@@ -154,21 +124,46 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, aux):
                                   )
              ]
             )
-        # print(t)
+
         return t
 
-    # if 
+    def create_boardings_table(df):
+
+        df = df.pivot_table(index='agency', columns='scenario', values='modeled_5to20', aggfunc='sum')
+        df = df.reset_index()
+        df.loc['Total Boardings']= df.sum(numeric_only=True, axis=0)
+        df['agency'].iloc[-1] = 'Total Boardings'
+
+        # format numbers with separator
+        format_number_dp = functools.partial(format_number, decimal_places=0)
+        for i in range(1, len(df.columns)):
+            df.iloc[:, i] = df.iloc[:, i].apply(format_number_dp)
+
+        t = html.Div(
+            [dash_table.DataTable(id='blah-blah2',
+                                  columns=[{"name": i, "id": i} for i in df.columns],
+                                  data=df.to_dict('rows'),
+                                  style_cell={
+                                      'font-family': 'Segoe UI',
+                                      'font-size': 14,
+                                      'text-align': 'center'}
+                                  )
+             ]
+            )
+
+        return t
+
     scenario_list = [scenario1, scenario2, scenario3]
     vals = [scenario for scenario in scenario_list if scenario is not None]
-    print(data_type)
-    print('///////////////////')
-    # totals_table = create_totals_table(data_type.lower()+'_facility.csv', vals, data_type)
+
+
     big_df = mylambda(scenario_list)
-    # print(big_df)
-    # totals_table=[]
     totals_table = create_totals_table(big_df, str(data_type).lower())
 
-    return totals_table
+    transit_df = transit_lambda(scenario_list)
+    transit_boardings = create_boardings_table(transit_df)
+
+    return totals_table, transit_boardings
 
         
 
