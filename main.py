@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, trans_board_scen, topsheet, traff_count_map
+from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, transit_lines, trans_board_scen, topsheet, traff_count_map
 from app import app, config
 from collections import OrderedDict
 import dash_html_components as html
@@ -152,6 +152,7 @@ navbar = dbc.NavbarSimple(
                 dbc.DropdownMenuItem('Traffic Counts', id= 'traffic-counts', n_clicks=0),
                 dbc.DropdownMenuItem('Traffic Counts Map', id= 'traffic-counts-map', n_clicks=0),
                 dbc.DropdownMenuItem('Transit',id= 'transit', n_clicks=0),
+                dbc.DropdownMenuItem('Transit Lines',id= 'transit-lines', n_clicks=0),
             ],
             nav=True,
             in_navbar=True,
@@ -232,6 +233,7 @@ app.layout = html.Div([navbar, main_body])
                Input('work' , 'n_clicks'),
                Input('traffic-counts' , 'n_clicks'),
                Input('transit' , 'n_clicks'),
+               Input('transit-lines' , 'n_clicks'),
                Input('mode-choice-and-departure-hour', 'n_clicks'),
                Input('traffic-counts-map', 'n_clicks'),
                Input('topsheet', 'n_clicks')
@@ -261,6 +263,8 @@ def tripdropdown(*args):
         return traff_count_map.tab_traffic_counts_map_layout
     elif button_id == 'transit':
         return  trans_board.tab_transit_boardings_layout
+    elif button_id == 'transit-lines':
+        return  transit_lines.tab_transit_lines_layout
     elif button_id == 'topsheet':
         return  topsheet.topsheet_layout
 
@@ -278,6 +282,7 @@ def tripdropdown(*args):
                Input('work' , 'n_clicks'),
                Input('traffic-counts' , 'n_clicks'),
                Input('transit' , 'n_clicks'),
+               Input('transit-lines' , 'n_clicks'),
                Input('mode-choice-and-departure-hour', 'n_clicks'),
                Input('traffic-counts-map', 'n_clicks'),
                Input('topsheet', 'n_clicks')
@@ -307,6 +312,8 @@ def tripdropdown_filter(*args):
         return traff_count_map.tab_traffic_counts_map_filter
     elif button_id == 'transit':
         return trans_board.tab_transit_boardings_filter
+    elif button_id == 'transit-lines':
+        return transit_lines.tab_transit_lines_filter
     elif button_id == 'topsheet':
         return topsheet.topsheet_filter
 

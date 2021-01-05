@@ -287,11 +287,11 @@ def update_visuals(county, selected_scen, aux):
         # Screenlines
         screenlines_df = pd.read_csv(os.path.join('data',selected_scen,'screenlines.csv'))
         screenlines_df[['modeled','observed']] = screenlines_df[['modeled','observed']].astype('int')
-        screenline_table = create_totals_table(screenlines_df, 'name', selected_scen)
+        screenline_table = create_totals_table(screenlines_df, 'name', selected_scen, county)
 
         # Externals
         externals_df = pd.read_csv(os.path.join('data',selected_scen,'external_volumes.csv'))
         externals_df[['modeled','observed']] = externals_df[['modeled','observed']].astype('int')
-        externals_table = create_totals_table(externals_df, 'location', selected_scen)
+        externals_table = create_totals_table(externals_df, 'location', selected_scen, county)
 
     return totals_table, agraph, scatter_graph, screenline_table, externals_table
