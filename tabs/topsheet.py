@@ -35,6 +35,14 @@ topsheet_layout = [
                     inline=True
                     ),
                 html.Br(),
+                dbc.RadioItems(
+                    id='data-type2',
+                    options=[{'label': i, 'value': i} for i
+                             in ['Time of Day', 'Facility Type']],
+                    value='Time of Day',
+                    inline=True
+                    ),
+                html.Br(),
                 html.Div(id='vmt-container'),
                 ]
             ), style={"margin-top": "20px"}
@@ -50,12 +58,8 @@ topsheet_layout = [
             style={"margin-top": "20px"},
         ),
     html.Div(id='dummy_div7'),
-
 ]
 
-
-
-# Households and Persons tab ------------------------------------------------------------------
 @app.callback(
     [Output('vmt-container', 'children'),
      Output('transit-boardings', 'children')],
@@ -63,52 +67,85 @@ topsheet_layout = [
      Input('scenario-2-dropdown', 'value'),
      Input('scenario-3-dropdown', 'value'),
      Input('data-type', 'value'),
+     Input('data-type2', 'value'),
      Input('dummy_div7', 'children')])
-def update_visuals(scenario1, scenario2, scenario3, data_type, aux):
+def update_visuals(scenario1, scenario2, scenario3, data_type, data_type2, aux):
 
-    def mylambda(scenario_list):
+    def mylambda(scenario_list, data_type, data_type2):
+        """Create a dataframe for all scenario road data, in long format"""
         df = pd.DataFrame()
+        print(data_type2)
+        print(data_type)
         for x in scenario_list:
             for data_type in ['vmt','vht','delay']:
-                _df = pd.read_csv(os.path.join(r'data', x, data_type+'_facility.csv'))
-                _df['values'] = _df[['arterial','connector','highway']].sum(axis=1)
-                _df = _df.groupby('period').sum()[['values']].reset_index()
-                _df['scenario'] = x
-                _df['data_type'] = data_type
-                df = df.append(_df)
-        return df
+                fname = os.path.join(r'data', x, data_type+'_facility.csv')
+                if os.path.isfile(fname):
+                    _df = pd.read_csv(fname)
+                    if data_type2 == 'Time of Day':
+                        _df['values'] = _df[['arterial','connector','highway']].sum(axis=1)
+                        _df['index'] = _df['period']
+                    else:
+                        _df = _df[['arterial','connector','highway']].sum(axis=0).reset_index()
+                        _df.rename(columns={0:'values'}, inplace=True)
+                    _df['scenario'] = x
+                    _df['data_type'] = data_type
+                    df = df.append(_df)
 
+        return df
 
     def transit_lambda(scenario_list):
+        """Create a dataframe for transit boarding data, in long format"""
         df = pd.DataFrame()
         for x in scenario_list:
-            _df = pd.read_csv(os.path.join(r'data', x, 'daily_boardings_by_agency.csv'))
-            print(_df)
-            _df = _df.groupby('agency').sum()[['modeled_5to20']].reset_index()
-            _df['scenario'] = x
-            df = df.append(_df)
-        print(df)
+            fname = os.path.join(r'data', x, 'daily_boardings_by_agency.csv')
+            if os.path.isfile(fname):
+                _df = pd.read_csv(fname)
+                # print(_df)
+                _df = _df.groupby('agency').sum()[['modeled_5to20']].reset_index()
+                _df['scenario'] = x
+                df = df.append(_df)
+
         return df
 
-    def create_totals_table(df, data_type):
-        # calculate totals and collate into master dictionary
+    def create_totals_table(df, data_type, data_type2):
+        """ calculate totals and collate into master dictionary """
 
         df = df[df['data_type'] == data_type]
 
-        # df = mylambda(filename, scenario_list, data_type)
-        df = df.pivot_table(index='period', columns='scenario', values='values', aggfunc='sum')
+        # index_col = 'index'
+        # if data_type2 == 'Time of Day':
+        #     index_col = 'period'
+        df_dict = {
+            'Time of Day': {
+                'dict': {
+                    'am': 'AM (5-9am)', 
+                    'md': 'Mid-Day (9am-3pm', 
+                    'pm': 'PM: 3-6pm', 
+                    'ev': 'Evening: 6-8pm', 
+                    'ni': 'Night: 8pm-5am' },
+                'order': ['am','md','pm','ev','ni']
+            },
+            'Facility Type': {
+            'dict': {
+                'arterial': 'Arterial',
+                'connector': 'Connector',
+                'highway': 'Highway'
+                },
+            'order': ['highway','arterial','connector']
+            }
+        }
 
+        df = df.pivot_table(index='index', columns='scenario', values='values', aggfunc='sum')
         df = df.astype('int').round(-3)
-        df = df.loc[['am','md','pm','ev','ni']]
+        
+        df = df.loc[df_dict[data_type2]['order']]
         df = df.reset_index()
-        df['period'] = df['period'].map({'am': 'AM (5-9am)', 'md': 'Mid-Day (9am-3pm', 'pm':
-            'PM: 3-6pm', 'ev': 'Evening: 6-8pm', 'ni': 'Night: 8pm-5am' })
-        df.rename(columns={'period': 'Time of Day'}, inplace=True)
+        df['index'] = df['index'].map(df_dict[data_type2]['dict'])
+        df.rename(columns={'index': data_type2}, inplace=True)
         df.loc['Daily Total']= df.sum(numeric_only=True, axis=0)
-        df['Time of Day'].iloc[-1] = 'Daily Total'
+        df[data_type2].iloc[-1] = 'Daily Total'
 
-
-        # format numbers with separator
+            # format numbers with separator
         format_number_dp = functools.partial(format_number, decimal_places=0)
         for i in range(1, len(df.columns)):
             df.iloc[:, i] = df.iloc[:, i].apply(format_number_dp)
@@ -157,8 +194,8 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, aux):
     vals = [scenario for scenario in scenario_list if scenario is not None]
 
 
-    big_df = mylambda(scenario_list)
-    totals_table = create_totals_table(big_df, str(data_type).lower())
+    big_df = mylambda(scenario_list, data_type, data_type2)
+    totals_table = create_totals_table(big_df, str(data_type).lower(), data_type2)
 
     transit_df = transit_lambda(scenario_list)
     transit_boardings = create_boardings_table(transit_df)
