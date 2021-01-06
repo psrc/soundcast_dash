@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from tabs import trips_mc, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, transit_lines, trans_board_scen, topsheet, traff_count_map
+from tabs import trips_mc, mode_choice_geog, length_dist_mc, tours_mc, tours_2, day_patt, work, hh_pers, taz_map, traff_count, trans_board, transit_lines, trans_board_scen, topsheet, traff_count_map
 from app import app, config
 from collections import OrderedDict
 import dash_html_components as html
@@ -122,6 +122,7 @@ navbar = dbc.NavbarSimple(
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem('Mode Choice and Departure Hour', id= 'mode-choice-and-departure-hour', n_clicks=0),
+                dbc.DropdownMenuItem('Mode Choice by Geography', id= 'mode-choice-geog', n_clicks=0),
                 dbc.DropdownMenuItem('Trip Length Distance',id= 'trip-length-distance', n_clicks=0)
             ],
             nav=True,
@@ -235,6 +236,7 @@ app.layout = html.Div([navbar, main_body])
                Input('transit' , 'n_clicks'),
                Input('transit-lines' , 'n_clicks'),
                Input('mode-choice-and-departure-hour', 'n_clicks'),
+               Input('mode-choice-geog', 'n_clicks'),
                Input('traffic-counts-map', 'n_clicks'),
                Input('topsheet', 'n_clicks')
                ])
@@ -245,6 +247,8 @@ def tripdropdown(*args):
     
     if button_id == 'mode-choice-and-departure-hour':
         return trips_mc.tab_trips_mc_layout
+    elif button_id == 'mode-choice-geog':
+        return mode_choice_geog.mode_choice_geog_layout
     elif button_id == 'trip-length-distance':
         return length_dist_mc.tab_length_distance_mc_layout
     elif button_id == 'tours-mode-choice-and-departure-hour':
@@ -276,6 +280,7 @@ def tripdropdown(*args):
               [#Input('mode-choice-and-departure-hour', 'n_clicks'),
                Input('trip-length-distance', 'n_clicks'),
                Input('tours-mode-choice-and-departure-hour' , 'n_clicks'),
+               Input('mode-choice-geog', 'n_clicks'),
                Input('trips-and-stops-by-tour' , 'n_clicks'),
                Input('day-pattern' , 'n_clicks'),
                Input('hh-persons' , 'n_clicks'),
@@ -294,6 +299,8 @@ def tripdropdown_filter(*args):
     
     if button_id == 'mode-choice-and-departure-hour':
         return trips_mc.tab_trips_mc_filter
+    elif button_id == 'mode-choice-geog':
+        return mode_choice_geog.mode_choice_geog_filter
     elif button_id == 'trip-length-distance':
         return length_dist_mc.tab_length_distance_mc_filter
     elif button_id == 'tours-mode-choice-and-departure-hour':

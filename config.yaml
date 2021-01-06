@@ -19,6 +19,20 @@ agency_list: ['All','King County Metro', 'Sound Transit','Pierce Transit','Evere
 
 transit_mode_list: ['commuter_rail','ferry','litrat','passenger_ferry','trnst']
 
+geog_col:
+  rg:
+    'col': 'hh_rg_proposed'
+    'label': 'Regional Geography'
+  lowinc:
+    'col': 'hh_lowinc'
+    'label': 'Low Income'
+  poc:
+    'col': 'hh_poc'
+    'label': 'Person of Color'
+  county:
+    'col': 'hh_county'
+    'label': 'County'
+
 transit_line_dict:
  '118331': 'E Line SB'
  '119150': 'Link NB'
