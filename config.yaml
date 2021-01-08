@@ -33,6 +33,15 @@ geog_col:
     'col': 'hh_county'
     'label': 'County'
 
+data_source_dict:
+ 'VMT': 'travdist_wt'
+ 'VHT': 'travtime_wt'
+ 'Trips': 'trexpfac'
+ 'Regional Geography': 'hh_rg_proposed'
+ 'Race': 'hh_poc'
+ 'Income': 'hh_lowinc'
+ 'County': 'hh_county'
+
 transit_line_dict:
  '118331': 'E Line SB'
  '119150': 'Link NB'
