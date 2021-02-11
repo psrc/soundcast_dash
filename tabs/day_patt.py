@@ -217,7 +217,7 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
                         } for i in index_list
                     ],
                     style_cell={
-                        'font-family': 'Segoe UI',
+                        'font-family': 'Pragmatica Light',
                         'font-size': fontsize,
                         'text-align': 'center'}
                 )
@@ -227,11 +227,12 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
 
     def create_graph_data(dataset, table, x_col):
         graph_gen_table = []
-        for key in dataset.keys():
+        for idx, key in enumerate(dataset.keys()):
             trace = go.Bar(
                 x=table[x_col].copy(),
                 y=table[key].copy(),
-                name=key
+                name=key,
+                marker_color=config['color_list'][idx]
                 )
             graph_gen_table.append(trace)
         return graph_gen_table
@@ -244,7 +245,7 @@ def update_visuals(dataset_type, format_type, scenario1, scenario2, scenario3, d
             hovermode='closest',
             autosize=True,
             margin={'t':20},
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f')
             )
         return layout_gen_table 
 

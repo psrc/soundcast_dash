@@ -59,7 +59,7 @@ tab_traffic_counts_map_layout = [
                 [
                     html.H2(id='counts-map-scatterplot-header'),
                     dcc.Graph(id='counts-map-scatterplot-map-container',
-                            config={'displayModeBar': True, 'scrollZoom': True}, style={'background':'#00FC87','padding-bottom':'2px','padding-left':'2px','height':'100vh'}),
+                            config={'displayModeBar': True, 'scrollZoom': True}, style={'padding-bottom':'2px','padding-left':'2px','height':'100vh'}),
                     ]
                 ), style={"margin-top": "20px"}
             ),
@@ -132,24 +132,13 @@ def tour2_load_drop_downs(scen1, scen2, scen3):
 @app.callback(
     [#Output('traffic-graffic-header', 'children'),
      Output('counts-map-scatterplot-header', 'children')],
-     #Output('traffic-totals-header', 'children'),
-     #Output('screenlines-header', 'children'),
-     #Output('externals-header', 'children')],
     [Input('traffic-count-map-county', 'value')]) # Headers for All (no county selected) is not activated here, therefore no header shows up initially when no specific county is selected.
 def update_headers(county):
 
     result = []
     header_dict = {}
-    #traffic_header = 'Traffic Counts '
+
     scatterplot_header = 'Count Locations '
-    #traffic_table_header = 'Volume by Facility Type '
-    #screenline_header = 'Screenlines '
-    #externals_header = 'External Stations '
-    # for header in [traffic_header, scatterplot_header, traffic_table_header,
-                    # screenline_header, externals_header]:
-        # if county != 'All':
-            # header += ': ' + county + ' County'
-        # result.append(header)
     for header in [scatterplot_header]:
         if county != 'All':
             header += ': ' + county + ' County'
@@ -168,28 +157,6 @@ def update_headers(county):
     )
 def update_visuals(county, selected_scen, aux, mapsel):
 
-
-    # def create_scatterplot(df, county, xcol, ycol, xaxis_title, yaxis_title):
-
-        # if county != 'All':
-            # df = df[df['county'] == county]
-
-        # trace = go.Scatter(
-                # x=df[xcol].astype('float').copy(),
-                # y=df[ycol].astype('float').copy(),
-                # mode='markers',
-                # )
-
-        # layout = go.Layout(
-            # xaxis={'title': xaxis_title},
-            # yaxis={'title': yaxis_title},
-            # hovermode='closest',
-            # autosize=True,
-            # margin={'t':20},
-            # font=dict(family='Segoe UI', color='#7f7f7f')
-            # )
-        # return {'data': [trace], 'layout': layout}
-        
     def create_scatterplot(df, mapselection, county, xcol, ycol, xaxis_title, yaxis_title):
 
         if county != 'All':
@@ -200,12 +167,10 @@ def update_visuals(county, selected_scen, aux, mapsel):
                 x=df[xcol].astype('float').copy(),
                 y=df[ycol].astype('float').copy(),
                 mode='markers',
+                line_color=config['validation_color_list'][0]
                 )]
         else:
-            #print(mapselection)
             selection = mapselection['points'][0]['customdata']
-            #print(selection)
-            #print(type(selection))
         
             sel_df = df.loc[df['@countid'] == selection]
         
@@ -213,13 +178,15 @@ def update_visuals(county, selected_scen, aux, mapsel):
                     x=df[xcol].astype('float').copy(),
                     y=df[ycol].astype('float').copy(),
                     mode='markers',
+                    line_color=config['validation_color_list'][0]
                     )
                     
             trace_selection = go.Scatter(
                     x=sel_df[xcol].astype('float').copy(),
                     y=sel_df[ycol].astype('float').copy(),
                     mode='markers',
-                    marker=dict(color='red', size=10, opacity=.5)
+                    marker=dict(color='blue', size=10, opacity=.5),
+
                     )
             
             trace = [trace1, trace_selection]
@@ -230,7 +197,7 @@ def update_visuals(county, selected_scen, aux, mapsel):
             hovermode='closest',
             autosize=True,
             margin={'t':20},
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Segoe UI', color='#7f7f7f'),
             )
         return {'data': trace, 'layout': layout}
 
@@ -243,11 +210,10 @@ def update_visuals(county, selected_scen, aux, mapsel):
                     lon = df[xcol],
                     lat = df[ycol],
                     mode='markers',
-                    #marker={'color' : df_sub['color']},
+                    marker=dict(color=config['validation_color_list'][0], size=10, opacity=.5),
                     unselected={'marker' : {'opacity':1}},
                     selected={'marker' : {'opacity':0.5, 'size':25}},
                     hoverinfo='text',
-                    #hovertext='Observed: ' + str(df[observed]) + '\nModeled: ' + str(df[modeled]),
                     hovertext=df[observed],
                     customdata=df[index_key] # set to the index column name so that I can highlight back to scatter plot graph
         )]
@@ -267,7 +233,7 @@ def update_visuals(county, selected_scen, aux, mapsel):
                     lon=-122.32945
                 ),
                 pitch=10,
-                zoom=8
+                zoom=8,
             ),
         )
         
@@ -283,12 +249,11 @@ def update_visuals(county, selected_scen, aux, mapsel):
         
         # Scatter plot of counts
         scatter_df = pd.read_csv(os.path.join('data',selected_scen,'daily_volume.csv'))
-        #scatter_df = pd.read_csv(r'C:\soundcast\soundcast_dash\data\2018_base\daily_volume.csv')
         scatter_graph = create_scatterplot(scatter_df, mapsel, county, 'observed', 'modeled', 'Observed', 'Modeled')
         
         # Scatter map of count locations
         scatter_df_nodups = scatter_df.drop_duplicates()
-        cnt_loc = pd.read_csv(os.path.join('data\data','count_locations_wgs84.csv'))
+        cnt_loc = pd.read_csv(os.path.join('data/data','count_locations_wgs84.csv'))
         cnt_loc = cnt_loc[['F_countid', 'POINT_X', 'POINT_Y']]
         scattermap_df = scatter_df_nodups.join(cnt_loc.set_index('F_countid'), on= '@countid')
         scatter_map = create_scattermap(scattermap_df, county, '@countid', 'POINT_X', 'POINT_Y', 'observed', 'modeled')

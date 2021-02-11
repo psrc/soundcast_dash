@@ -115,7 +115,8 @@ def update_graph(scenario1, scenario2, scenario3, agg_type, selected_mode):
             trace1 = go.Bar(
                 x=df[agg_col].copy(),
                 y=df['mode_share'].copy(),
-                name=scenario_list[x]
+                name=scenario_list[x],
+                marker_color=config['color_list'][x]
             )
             data1.append(trace1)
 

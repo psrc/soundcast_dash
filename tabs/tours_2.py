@@ -132,7 +132,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, stop_type
 
     def create_bar_chart_horiz(table, xcol, weightcol, format_type, mode, xaxis_title, yaxis_title):
         datalist = []
-        for key in table.keys():
+        for idx, key in enumerate(table.keys()):
             if key != 'None':
                 df = table[key]
                 # df.drop(['mode','pdpurp'], axis=1, inplace=True)
@@ -156,6 +156,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, stop_type
                     x=df[weightcol].copy(),
                     name=key,
                     orientation='h',
+                    marker_color=config['color_list'][idx]
                     )
                 datalist.append(trace)
 
@@ -164,13 +165,13 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, stop_type
             yaxis={'type': 'category', 'automargin': True},
             xaxis={'title': yaxis_title, 'zeroline': False},
             hovermode='closest',
-            font=dict(family='Segoe UI', color='#7f7f7f'),
+            font=dict(family='Pragmatica Light', color='#7f7f7f'),
             )
         return {'data': datalist, 'layout': layout}
 
     def create_bar_chart(table, xcol, weightcol, format_type, radio_dpurp, xaxis_title, yaxis_title):
         datalist = []
-        for key in table.keys():
+        for idx, key in enumerate(table.keys()):
             if key != 'None':
                 df = table[key]
 
@@ -196,6 +197,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, stop_type
                     x=df[xcol].astype('int').copy(),
                     y=df[weightcol].copy(),
                     name=key,
+                    marker_color=config['color_list'][idx]
                     )
                 datalist.append(trace)
 
@@ -204,7 +206,7 @@ def update_visuals(scenario1, scenario2, scenario3, format_type, mode, stop_type
             xaxis={'title': xaxis_title, 'type':'category'},
             yaxis={'title': yaxis_title},
             hovermode='closest',
-            font=dict(family='Segoe UI', color='#7f7f7f'),
+            font=dict(family='Pragmatica Light', color='#7f7f7f'),
             )
         return {'data': datalist, 'layout': layout}
 

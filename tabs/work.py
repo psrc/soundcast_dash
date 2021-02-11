@@ -89,7 +89,6 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
         datalist2 = []
         datalist3 = []
         for key in work_home_tbl.keys():
-
             df = work_home_tbl[key]
             df_pptyp = person_type_tbl[key]
             df.index = df['person_county']
@@ -179,7 +178,7 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
                                   data=df_scenarios.to_dict('rows'),
                                   sort_action="native",
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   ),
@@ -190,7 +189,7 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
                                   data=df_tour_scenarios.to_dict('rows'),
                                   sort_action="native",
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   ),
@@ -201,7 +200,7 @@ def update_visuals(person_type, scenario1, scenario2, scenario3, data_type, aux)
                                   data=df_trip_distance.to_dict('rows'),
                                   sort_action="native",
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   ),

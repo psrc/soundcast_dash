@@ -42,20 +42,12 @@ tab_trips_mc_filter = [dbc.Card(
                     dbc.RadioItems(
                         options=[{'label': i, 'value': i, 'disabled': True} for i
                                      in ['Origin', 'Destination']],
-                        #value='Origin',
                         id='trip-end'
                     
                     ),
                     ],
                     className="box-group"
                 ), # end Div
-                #html.Br(),
-                #dbc.Label('District:'),
-                #dcc.Dropdown(
-                #    value='All',
-                #    clearable=False,
-                #    id='trip-district'
-                #),
                 html.Br(),
                 html.Div(id='dummy_div'),
             ],
@@ -160,7 +152,8 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
             trace1 = go.Bar(
                 x=df_mode_share['mode'].copy(),
                 y=df_mode_share['trexpfac'].copy(),
-                name=scenario_list[x]
+                name=scenario_list[x],
+                marker_color=config['color_list'][x]
             )
             data1.append(trace1)
 
@@ -176,7 +169,8 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
             trace2 = go.Scatter(
                 x=df_deptm_share['deptm_hr'],
                 y=df_deptm_share['trexpfac'].astype(int),
-                name=scenario_list[x])
+                name=scenario_list[x],
+                marker_color=config['color_list'][x])
 
             data2.append(trace2)
 
@@ -186,7 +180,7 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
             yaxis={'title': share_type, 'zeroline': False},
             hovermode='closest',
             autosize=True,
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f')
             )
 
     layout2 = go.Layout(
@@ -195,7 +189,7 @@ def update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, end_d
             yaxis={'title': share_type_deptm, 'zeroline': False},
             hovermode='closest',
             autosize=True,
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f')
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 

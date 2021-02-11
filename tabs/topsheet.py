@@ -32,7 +32,7 @@ topsheet_layout = [
                     options=[{'label': i, 'value': i} for i
                              in ['VMT', 'VHT', 'Delay']],
                     value='VMT',
-                    inline=True
+                    inline=True,
                     ),
                 html.Br(),
                 dbc.RadioItems(
@@ -223,7 +223,7 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, data_type2, data_
                                   columns=[{"name": i, "id": i} for i in df.columns],
                                   data=df.to_dict('rows'),
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   )
@@ -249,7 +249,7 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, data_type2, data_
                                   columns=[{"name": i, "id": i} for i in df.columns],
                                   data=df.to_dict('rows'),
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   )
@@ -280,7 +280,7 @@ def update_visuals(scenario1, scenario2, scenario3, data_type, data_type2, data_
                                   columns=[{"name": i, "id": i} for i in df.columns],
                                   data=df.to_dict('rows'),
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   )

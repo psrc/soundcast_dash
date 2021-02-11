@@ -153,8 +153,8 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
             trace1 = go.Bar(
                 x=df_mode_share['tmodetp'].copy(),
                 y=df_mode_share['toexpfac'].copy(),
-                #name=key
-                name=scenario_list[x]
+                name=scenario_list[x],
+                marker_color=config['color_list'][x]
                 )
             data1.append(trace1)
 
@@ -170,8 +170,8 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
             trace2 = go.Scatter(
                 x=df_deptm_share['tlvorg_hr'],
                 y=df_deptm_share['toexpfac'].astype(int),
-                #name=key
-                name=scenario_list[x]
+                name=scenario_list[x],
+                marker_color=config['color_list'][x]
             )
             data2.append(trace2)
         
@@ -181,7 +181,7 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
             yaxis={'title': share_type, 'zeroline': False},
             hovermode='closest',
             autosize=True,
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f'),
             )
 
     layout2 = go.Layout(
@@ -190,7 +190,8 @@ def tour_update_graph(scenario1, scenario2, scenario3, person_type, dpurp, end, 
             yaxis={'title': share_type_deptm, 'zeroline': False},
             hovermode='closest',
             autosize=True,
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f'),
+
             )
     return {'data': data1, 'layout': layout1}, {'data': data2, 'layout': layout2}
 

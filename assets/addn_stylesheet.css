@@ -1,28 +1,38 @@
 h1 {
   font-size: 1.2vw;
   margin-top: 0.5vw;
+  font-family: 'Pragmatica Light';
 }
 
 h2 {
   font-size: 1.1vw;
   padding-bottom: .5vw;
   border-bottom: #bababa solid 1px;
+  font-family: 'Pragmatica Light';
 }
 
 .main-body-container {
   margin: 2rem 3rem;
+  font-family: 'Pragmatica Light';
 }
 
 .aside-card {
   margin-top: 1rem;
+  font-family: 'Pragmatica Light';
 }
 
 .additional-header {
     border-top: #e0e0e0 solid 1px;
+    font-family: 'Pragmatica Light';
 }
 
 .box-group {
     border: 1px solid #bababa;
     border-radius: .5rem;
     padding: 1rem;
+    font-family: 'Pragmatica Light';
+}
+
+.navbar-brand {
+    font-family: 'Pragmatica Light';
 }

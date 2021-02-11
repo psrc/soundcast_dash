@@ -155,6 +155,7 @@ def update_visuals(scenario1, scenario2, scenario3, person_type, dpurp, mode, fo
 
     def create_line_graph(table, xcol, weightcol, person_type, mode, dpurp, format_type, xaxis_title, yaxis_title):
         datalist = []
+        i = 0
         for key in table.keys():
             df = table[key]
             df = df[df[xcol] > 0]
@@ -180,9 +181,11 @@ def update_visuals(scenario1, scenario2, scenario3, person_type, dpurp, mode, fo
                 line_shape='linear',
                 x=df[xcol].copy(),
                 y=df[weightcol].copy(),
-                name=key
+                name=key,
+                marker_color=config['color_list'][i]
                 )
             datalist.append(trace)
+            i+=1
 
         layout = go.Layout(
             barmode='group',

@@ -122,7 +122,7 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
                                   columns=[{"name": i, "id": i} for i in df.columns],
                                   data=df.to_dict('rows'),
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   )
@@ -132,7 +132,7 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
 
     def create_simple_bar_graph(table, xcol, weightcol, xaxis_title, yaxis_title):
         datalist = []
-        for key in table.keys():
+        for idx, key in enumerate(table.keys()):
             df = table[key]
             df = df[[xcol, weightcol]].groupby(xcol).sum()[[weightcol]]
             df = df.reset_index()
@@ -140,7 +140,8 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
             trace = go.Bar(
                 x=df[xcol].copy(),
                 y=df[weightcol].copy(),
-                name=key
+                name=key,
+                marker_color=config['color_list'][idx]
                 )
             datalist.append(trace)
 
@@ -151,7 +152,7 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
             hovermode='closest',
             autosize=True,
             margin={'t':20},
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f')
             )
         return {'data': datalist, 'layout': layout}
 
@@ -197,7 +198,7 @@ def update_visuals(data_type, scenario1, scenario2, scenario3, aux):
             y='psexpfac',
             color='Scenario'
         )
-        agraph.update_layout(font=dict(family='Segoe UI', color='#7f7f7f'))
+        agraph.update_layout(font=dict(family='Pragmatica Light', color='#7f7f7f'))
         agraph.for_each_annotation(lambda a: a.update(text=a.text.replace("Household County=", "")))
         agraph.for_each_trace(lambda t: t.update(name=t.name.replace("Scenario=", "")))
         agraph_header = 'Workers by Household County by Work County'

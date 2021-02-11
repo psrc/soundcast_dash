@@ -1,3 +1,6 @@
+color_list: ['#C388C2', '#F7A489','#73CFCB']
+validation_color_list: ['#C388C2','#d6d6d6']
+
 trip_purpose_list: ['All', 'Change Mode Inserted Purpose', 'Escort', 
 'Meal', 'None/Home', 'Personal Business', 'School', 'Shop', 'Social', 'Work']
 

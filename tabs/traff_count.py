@@ -212,7 +212,7 @@ def update_visuals(county, selected_scen, aux):
                                   data=df.to_dict('rows'),
                                   sort_action="native",
                                   style_cell={
-                                      'font-family': 'Segoe UI',
+                                      'font-family': 'Pragmatica Light',
                                       'font-size': 14,
                                       'text-align': 'center'}
                                   )
@@ -227,11 +227,12 @@ def update_visuals(county, selected_scen, aux):
             df = df[df['county'] == county]
 
         datalist = []
-        for colname in [observed_col, modeled_col]:
+        for idx, colname in enumerate([observed_col, modeled_col]):
             trace = go.Bar(
                 x=df[xcol].copy(),
                 y=df[colname].copy(),
-                name=colname
+                name=colname,
+                marker_color=config['validation_color_list'][idx]
                 )
             datalist.append(trace)
 
@@ -242,7 +243,7 @@ def update_visuals(county, selected_scen, aux):
             hovermode='closest',
             autosize=True,
             margin={'t':20},
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f')
             )
         return {'data': datalist, 'layout': layout}
 
@@ -255,6 +256,7 @@ def update_visuals(county, selected_scen, aux):
                 x=df[xcol].astype('float').copy(),
                 y=df[ycol].astype('float').copy(),
                 mode='markers',
+                line_color=config['validation_color_list'][0]
                 )
 
         layout = go.Layout(
@@ -263,7 +265,7 @@ def update_visuals(county, selected_scen, aux):
             hovermode='closest',
             autosize=True,
             margin={'t':20},
-            font=dict(family='Segoe UI', color='#7f7f7f')
+            font=dict(family='Pragmatica Light', color='#7f7f7f')
             )
         return {'data': [trace], 'layout': layout}
 
@@ -277,7 +279,8 @@ def update_visuals(county, selected_scen, aux):
         counts_df = pd.read_csv(os.path.join('data',selected_scen, 'daily_volume_county_facility.csv'))
         counts_df.rename(columns={'@facilitytype': 'Facility'}, inplace=True)
         totals_table = create_totals_table(counts_df, 'Facility', selected_scen, county)
-        agraph = create_validation_bar_graph(counts_df, 'county', 'observed', 'modeled', county, 'County', 'Daily Volume')
+        county_counts_df = counts_df.groupby('county').sum().reset_index()
+        agraph = create_validation_bar_graph(county_counts_df, 'county', 'observed', 'modeled', county, 'County', 'Daily Volume')
         agraph_header = 'Traffic Counts by County'
 
         # Scatter plot of counts

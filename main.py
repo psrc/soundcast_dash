@@ -117,8 +117,7 @@ scenario_select_layout = dbc.Card(
 # Main Layout
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Home", id= 'topsheet', n_clicks=0, href="#")),
-        # dbc.NavItem(dbc.NavLink("Home", href="#")),
+        dbc.NavItem(dbc.NavLink("Home", id= 'topsheet', n_clicks=0, href="#", style={'font-family': 'Pragmatica Light'})),
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem('Mode Choice and Departure Hour', id= 'mode-choice-and-departure-hour', n_clicks=0),
@@ -128,6 +127,7 @@ navbar = dbc.NavbarSimple(
             nav=True,
             in_navbar=True,
             label="Trips",
+            style={'font-family': 'Pragmatica Light'}
         ),
         dbc.DropdownMenu(
             children=[
@@ -138,6 +138,7 @@ navbar = dbc.NavbarSimple(
             nav=True,
             in_navbar=True,
             label="Tours",
+            style={'font-family': 'Pragmatica Light'}
         ),
         dbc.DropdownMenu(
             children=[
@@ -147,6 +148,7 @@ navbar = dbc.NavbarSimple(
             nav=True,
             in_navbar=True,
             label="Households & Persons",
+            style={'font-family': 'Pragmatica Light'}
         ),
         dbc.DropdownMenu(
             children=[
@@ -158,43 +160,19 @@ navbar = dbc.NavbarSimple(
             nav=True,
             in_navbar=True,
             label="Validation",
+            style={'font-family': 'Pragmatica Light'}
         ),
         dbc.NavItem(dbc.NavLink("About", href="#")),
-        # dbc.DropdownMenu(
-            # children=[
-                # dbc.DropdownMenuItem("Page 1", header=True),
-                # dbc.DropdownMenuItem("Page 2", href="#")
-            # ],
-            # nav=True,
-            # in_navbar=True,
-            # label="Other",
-        # ),
     ],
     fluid=True,
     brand="Soundcast Validation Dashboard",
-    brand_href="#"
+    brand_href="#",
+    className='navbar-brand'
 )
 
 scenario_aside = scenario_select_layout
 filter_aside = html.Div(id='tabs-content-filter')
 content = html.Div(id='tabs-content')
-
-# tabs = dbc.Tabs(
-    # children=[
-        # dbc.Tab(label="Trips", tab_id="tab-trips-mc"),
-        # dbc.Tab(label="Trip Length and Distance", tab_id="tab-length-distance-mc"),
-        # dbc.Tab(label="Tours", tab_id="tab-tours-mc"),
-        # dbc.Tab(label="Tours 2", tab_id="tab-tours2-mc"),
-        # dbc.Tab(label="Day Pattern", tab_id="tab-day-pattern"),
-        # dbc.Tab(label="Work", tab_id="tab-work"),
-        # dbc.Tab(label="HH & Persons", tab_id="tab-hh-pers"),
-        # dbc.Tab(label="TAZ Map", tab_id="taz-map"),
-        # dbc.Tab(label="Traffic Counts", tab_id="traffic-counts"),
-        # dbc.Tab(label="Transit Boardings", tab_id="transit-boardings"),
-        # dbc.Tab(label="Transit Boardings Scenario", tab_id="transit-boardings-scenario")
-    # ],
-    # id="tabs-list"
-# )
 
 main_body = html.Div(
     dbc.Container(
@@ -323,67 +301,5 @@ def tripdropdown_filter(*args):
         return transit_lines.tab_transit_lines_filter
     elif button_id == 'topsheet':
         return topsheet.topsheet_filter
-
-
-
-# @app.callback(Output('tabs-content', 'children'),
-              # [Input('tabs-list', 'active_tab')])
-# def render_content(tab):
-    # if tab == 'tab-trips-mc':
-        # return trips_mc.tab_trips_mc_layout
-    # elif tab == 'tab-length-distance-mc':
-        # return length_dist_mc.tab_length_distance_mc_layout
-    # elif tab == 'tab-tours-mc':
-        # return tours_mc.tab_tours_mc_layout
-    # elif tab == 'tab-tours2-mc':
-        # return tours_2.tab_tours2_mc_layout
-    # elif tab == 'tab-day-pattern':
-        # return day_patt.tab_day_pattern_layout
-    # elif tab == 'tab-work':
-        # return work.tab_work_layout
-    # elif tab == 'tab-hh-pers':
-        # return hh_pers.tab_hh_pers_layout
-    # elif tab == 'taz-map':
-        # return taz_map.taz_map_layout
-    # elif tab == 'traffic-counts':
-        # return traff_count.tab_traffic_counts_layout
-    # elif tab == 'transit-boardings':
-        # return trans_board.tab_transit_boardings_layout
-    # elif tab == 'transit-boardings-scenario':
-        # return trans_board_scen.tab_transit_boardings_scenario_layout
-
-# # filters
-# @app.callback(Output('tabs-content-filter', 'children'),
-              # [Input('tabs-list', 'active_tab')])
-# def render_content_filter(tab):
-    # if tab == 'tab-trips-mc':
-        # return trips_mc.tab_trips_mc_filter
-    # elif tab == 'tab-length-distance-mc':
-        # return length_dist_mc.tab_length_distance_mc_filter
-    # elif tab == 'tab-tours-mc':
-        # return tours_mc.tab_tours_mc_filter
-    # elif tab == 'tab-tours2-mc':
-        # return tours_2.tab_tours2_mc_filter
-    # elif tab == 'tab-day-pattern':
-        # return day_patt.tab_day_pattern_filter
-    # elif tab == 'tab-work':
-       # return work.tab_work_filter
-    # elif tab == 'tab-hh-pers':
-        # return hh_pers.tab_hh_pers_filter
-    # elif tab == 'taz-map':
-        # return taz_map.taz_map_filter
-    # elif tab == 'traffic-counts':
-        # return traff_count.tab_traffic_counts_filter
-    # elif tab == 'transit-boardings':
-        # return trans_board.tab_transit_boardings_filter
-    # elif tab == 'transit-boardings-scenario':
-        # return trans_board_scen.tab_transit_boardings_scenario_filter
-    # else:
-        # return None
-
-# if __name__ == '__main__': 
-#     app.run_server(debug=True)
-
-
 
 if __name__ == '__main__': app.run_server(debug=True)
